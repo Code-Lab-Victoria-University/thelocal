@@ -2,14 +2,14 @@
   "manifest": {
     "publishingInformation": {
       "locales": {
-        "en-US": {
+        "en-AU": {
           "summary": "Sample Short Description",
           "examplePhrases": [
             "Alexa open hello world",
             "hello",
             "help"
           ],
-          "name": "Hello World",
+          "name": "thelocal",
           "description": "Sample Full Description"
         }
       },
@@ -21,8 +21,8 @@
     "apis": {
       "custom": {
         "endpoint": {
-          "sourceDir": "lambda/custom",
-          "uri": "ask-custom-helloworld-default"
+          "sourceDir": "lambda",
+          "uri": "ask-custom-thelocal-default"
         }
       }
     },
