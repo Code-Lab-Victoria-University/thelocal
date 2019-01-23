@@ -2,7 +2,6 @@ import { HandlerInput, ErrorHandler } from "ask-sdk-core";
 import { Response } from "ask-sdk-model"
 
 export class CustomErrorHandler implements ErrorHandler {
-    
     canHandle(): boolean {
         return true;
     }

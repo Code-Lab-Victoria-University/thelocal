@@ -6,10 +6,27 @@
         {
             "type": "npm",
             "script": "build-model",
+            "problemMatcher": [
+                "$tsc"
+            ]
+        },
+        {
+            "type": "npm",
+            "script": "deploy-model",
+            "problemMatcher": [
+                "$tsc",
+            ]
+        },
+        {
+            "type": "npm",
+            "script": "deploy",
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "problemMatcher": [
+                "$tsc",
+            ]
         }
     ]
 }

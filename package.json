@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build-model": "ts-node src/index",
-    "build": "cd lambda && npm run build",
-    "debug": "cd lambda && npm run debug"
+    "deploy-model": "npm run build-model && ask deploy -t model",
+    "deploy": "cd lambda && npm run build && cd .. && ask deploy -t lambda --force",
+    "debug": "cd lambda && npm run debug --inspect 9229"
   },
   "repository": {
     "type": "git",

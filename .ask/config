@@ -13,18 +13,18 @@
             "alexaUsage": [
               "custom/default"
             ],
-            "arn": "arn:aws:lambda:ap-southeast-2:681055161674:function:alexa",
+            "arn": "arn:aws:lambda:us-east-1:681055161674:function:ask-custom-thelocal-default",
             "awsRegion": "us-east-1",
             "codeUri": "lambda",
-            "functionName": "alexa",
-            "handler": "index.handler",
-            "revisionId": "e9907ef3-95b2-4f00-ab8e-093563814c29",
+            "functionName": "ask-custom-thelocal-default",
+            "handler": "dist/index.handler",
+            "revisionId": "53e433b7-9f3f-4d20-b4e6-2b20a70b6bc5",
             "runtime": "nodejs8.10"
           }
         ],
         "interactionModel": {
           "en-AU": {
-            "eTag": "a66a62af43d1bed755028fe4ef321388"
+            "eTag": "f340fb1ab949f123040d35806e8ff670"
           }
         }
       }

@@ -5,14 +5,16 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "debug": "ts-node src/index",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "debug": "npm run build && node dist/index"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@types/node": "^10.12.18",
     "ask-sdk-core": "^2.0.0",
-    "ask-sdk-model": "^1.0.0"
+    "ask-sdk-dynamodb-persistence-adapter": "^2.3.0",
+    "ask-sdk-model": "^1.0.0",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.5"
   }
 }
