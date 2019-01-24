@@ -10,8 +10,8 @@ export class CustomErrorHandler implements ErrorHandler {
         console.log(`Error handled: ${error.message}`);
 
         return handlerInput.responseBuilder
-          .speak('Sorry, I can\'t understand the command. Please say again.')
-          .reprompt('Sorry, I can\'t understand the command. Please say again.')
+          .speak("I didn't get that. Make sure to speak slowly and clearly")
+          .reprompt("Try asking for help if you're lost")
           .getResponse();
     }   
 }

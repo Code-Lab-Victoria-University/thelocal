@@ -3,15 +3,18 @@ import { Response, IntentRequest, Request, Intent, Slot } from "ask-sdk-model";
 
 export class CustomSlot {
     readonly name: string;
-    readonly value: string;
+    readonly spoken: string;
     readonly id?: string;
+    readonly value?: string;
 
     constructor(slot: Slot){
         this.name = slot.name;
-        this.value = slot.value;
+        this.spoken = slot.value;
 
-        if(slot.resolutions && slot.resolutions.resolutionsPerAuthority)
+        if(slot.resolutions && slot.resolutions.resolutionsPerAuthority){
             this.id = slot.resolutions.resolutionsPerAuthority[0].values[0].value.id
+            this.value = slot.resolutions.resolutionsPerAuthority[0].values[0].value.name
+        }
     }
 }
 

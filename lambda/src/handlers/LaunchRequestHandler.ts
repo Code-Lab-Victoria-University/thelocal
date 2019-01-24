@@ -6,12 +6,10 @@ export class LaunchRequestHandler implements RequestHandler {
         return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
     }
 
-    handle(handlerInput: HandlerInput): Response {
-        const speechText = 'Welcome to the local. I can help you find events in New Zealand.';
-        
+    handle(handlerInput: HandlerInput): Response {        
         return handlerInput.responseBuilder
-            .speak(speechText)
-            .reprompt(speechText)
+            .speak("Hi, I'm the local. I can find events around New Zealand.")
+            .reprompt('I can respond to requests for locations, venues, events and help.')
             .getResponse()
     }   
 }

@@ -5,7 +5,8 @@
     "tasks": [
         {
             "type": "npm",
-            "script": "build-model",
+            "script": "tsc-model",
+            "label": "tsc-model",
             "problemMatcher": [
                 "$tsc"
             ]

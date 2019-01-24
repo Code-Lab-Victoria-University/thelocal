@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const InputWrap_1 = require("../lib/InputWrap");
 class IntentHandler {
     constructor(intent, handleSpeech) {
         this.intent = intent;
@@ -13,13 +14,15 @@ class IntentHandler {
             else
                 return this.intent.includes(handlingIntent);
         }
+        else
+            return false;
     }
     handle(handlerInput) {
         if (typeof this.handleSpeech === "string") {
             return handlerInput.responseBuilder.speak(this.handleSpeech).getResponse();
         }
         else {
-            let response = this.handleSpeech(handlerInput.requestEnvelope.request, handlerInput);
+            let response = this.handleSpeech(new InputWrap_1.default(handlerInput));
             if (typeof response === 'string')
                 return handlerInput.responseBuilder.speak(response).getResponse();
             else

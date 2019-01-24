@@ -12,7 +12,7 @@ let locations: LocationNode[];
 })()
 
 export class SetLocationHandler implements RequestHandler {
-    canHandle(input: HandlerInput): boolean {
+    canHandle(input: HandlerInput) {
         let wrap = new InputWrap(input);
 
         if(wrap.intent){
@@ -25,7 +25,7 @@ export class SetLocationHandler implements RequestHandler {
         return false
     }
 
-    handle(input: HandlerInput): Response {
+    handle(input: HandlerInput) {
         let wrap = new InputWrap(input);
 
         if(!wrap.intent)
@@ -35,7 +35,7 @@ export class SetLocationHandler implements RequestHandler {
             let locationSlot = wrap.slots[slotName]
 
             let location = locations.find(loc => loc.url_slug == locationSlot.id)
-                || locations.find(loc => loc.name.includes(locationSlot.value.toLowerCase()))
+                || locations.find(loc => loc.name.includes(locationSlot.spoken.toLowerCase()))
 
             if(location){
                 wrap.setSessionAttr(slotName, location)
