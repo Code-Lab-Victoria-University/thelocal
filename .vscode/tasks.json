@@ -5,8 +5,7 @@
     "tasks": [
         {
             "type": "npm",
-            "script": "tsc-model",
-            "label": "tsc-model",
+            "script": "build-model",
             "problemMatcher": [
                 "$tsc"
             ]
@@ -15,18 +14,33 @@
             "type": "npm",
             "script": "deploy-model",
             "problemMatcher": [
-                "$tsc",
+                "$tsc"
             ]
         },
         {
             "type": "npm",
-            "script": "deploy",
+            "script": "tsc-lambda",
+            "problemMatcher": [
+                "$tsc"
+            ]
+        },
+        {
+            "type": "npm",
+            "script": "deploy-lambda",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
             "problemMatcher": [
-                "$tsc",
+                "$tsc"
+            ]
+        },
+        {
+            "type": "npm",
+            "script": "tsc",
+            "path": "lambda/",
+            "problemMatcher": [
+                "$tsc"
             ]
         }
     ]

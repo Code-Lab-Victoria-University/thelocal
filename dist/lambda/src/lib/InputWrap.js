@@ -11,10 +11,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 class CustomSlot {
     constructor(slot) {
         this.name = slot.name;
-        this.spoken = slot.value;
-        if (slot.resolutions && slot.resolutions.resolutionsPerAuthority) {
-            this.id = slot.resolutions.resolutionsPerAuthority[0].values[0].value.id;
-            this.value = slot.resolutions.resolutionsPerAuthority[0].values[0].value.name;
+        this.value = slot.value;
+        if (slot.resolutions &&
+            slot.resolutions.resolutionsPerAuthority &&
+            slot.resolutions.resolutionsPerAuthority[0].values) {
+            this.resId = slot.resolutions.resolutionsPerAuthority[0].values[0].value.id;
+            this.resValue = slot.resolutions.resolutionsPerAuthority[0].values[0].value.name;
         }
     }
 }
@@ -24,14 +26,15 @@ class InputWrap {
         this.attrs = input.attributesManager;
         this.sessionAttrs = this.attrs.getSessionAttributes();
         this.persistentAttrs = this.attrs.getPersistentAttributes();
-        this.req = input.requestEnvelope.request;
-        this.builder = input.responseBuilder;
-        if (this.req.type === "IntentRequest") {
-            this.intent = this.req.intent;
+        let req = input.requestEnvelope.request;
+        if (req.type === "IntentRequest") {
+            this.intent = req.intent;
             if (this.intent.slots) {
                 this.slots = {};
                 for (let slotKey in this.intent.slots) {
-                    this.slots[slotKey] = new CustomSlot(this.intent.slots[slotKey]);
+                    let slot = this.intent.slots[slotKey];
+                    if (slot.value)
+                        this.slots[slotKey] = new CustomSlot(slot);
                 }
             }
         }

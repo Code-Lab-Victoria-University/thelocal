@@ -7,18 +7,17 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Debug Lambda",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run-script",
-                "debug"
-            ],
-            "port": 9229
+            "name": "Lambda",
+            "program": "${workspaceRoot}/node_modules/bespoken-tools/bin/bst-proxy.js",
+            "runtimeArgs": ["--inspect-brk=9229"],
+            "port": 9229,
+            "args": ["lambda", "lambda/dist/index.js"],
+            "cwd": "${workspaceRoot}"
         },
         {
             "type": "node",
             "request": "launch",
-            "name": "Debug Model",
+            "name": "Model",
             "runtimeExecutable": "npm",
             "runtimeArgs": [
                 "run-script",

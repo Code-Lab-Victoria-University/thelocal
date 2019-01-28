@@ -14,6 +14,7 @@ const util_1 = require("util");
 const alexa_app_1 = require("alexa-app");
 const request_1 = require("../lambda/src/lib/request");
 const Util_1 = require("../lambda/src/lib/Util");
+const Schema_1 = require("../lambda/src/lib/Schema");
 function permutations(string) {
     let strings = string.split(" ");
     let arr = [];
@@ -25,50 +26,74 @@ function permutations(string) {
     }
     return arr;
 }
-let locationTypeName = "LocationType";
-class Intents {
-    constructor() {
-        this.VenueIntent = {
-            slots: { "Venue": "VenueType" },
-            utterances: [
-                "{|Let me know |Tell me }{Is there anything on|Is there something happening|What's|What is|What's on|What can I go to|What is happening|What's happening} {in|at} {-|Venue}"
-            ]
-        };
-        this.SetLocationIntent = {
-            slots: { Location: "LocationType" },
-            utterances: [
-                "{|I live |I am |I'm |I'm located }in {-|Location}",
-                "{|My }{homeName} {|is in |is |is at }{-|Location}",
-                "Set {|my }{homeName} {|to |as }{-|Location}"
-            ]
-        };
-        this.YesIntent = {
-            utterances: [
-                "{Yes|Yep|Correct} {|thanks}",
-            ]
-        };
-        this.NoIntent = {
-            utterances: [
-                "{No|Nope|Incorrect|False} {|thanks}",
-            ]
-        };
-    }
-}
-exports.Intents = Intents;
 (() => __awaiter(this, void 0, void 0, function* () {
     let app = new alexa_app_1.app();
-    let intents = new Intents();
-    Object.keys(intents).forEach(intentName => {
-        app.intent(intentName, intents[intentName]);
-    });
+    app.invocationName = "the local";
     app.dictionary = {
         "homeName": ["location", "home", "house", "residence"],
-        "thanks": ["Please", "Thanks", "Thank you", "Cheers"]
+        "thanks": ["Please", "Thanks", "Thank you", "Cheers"],
+        "whatsOn": ["Is there anything on",
+            "Is there something happening",
+            "What's",
+            "What is",
+            "What's on",
+            "What can I go to",
+            "What is happening",
+            "What's happening"
+        ]
     };
-    app.invocationName = "the local";
+    let eventsUtterances = [];
+    //explores all combinations of these in the different synatatic locations. Will add categories here later.
+    let details = [`{-|${Schema_1.Schema.DateSlot}}`];
+    //explores both types of place as well as no place (use home location)
+    let placeTypes = [Schema_1.Schema.VenueSlot, Schema_1.Schema.LocationSlot, ""];
+    for (let place of placeTypes) {
+        let placeText = place ? `{in|at} {-|${place}} ` : "";
+        for (let detail1 of details.concat("")) {
+            for (let detail2 of (place ? details.concat("") : details).filter(detail2 => detail2 != detail1)) {
+                eventsUtterances
+                    .push(`{|Let me know|Tell me} {whatsOn} ${detail1} ${placeText} ${detail2}`);
+            }
+        }
+    }
+    eventsUtterances.forEach(val => console.log(val));
+    app.intent(Schema_1.Schema.EventsIntent, {
+        slots: {
+            [Schema_1.Schema.VenueSlot]: "VenueType",
+            [Schema_1.Schema.LocationSlot]: "LocationType",
+            [Schema_1.Schema.DateSlot]: "AMAZON.DATE"
+        },
+        utterances: eventsUtterances
+    });
+    app.intent(Schema_1.Schema.SetLocationIntent, {
+        slots: { [Schema_1.Schema.LocationSlot]: "LocationType" },
+        utterances: [
+            "{|I live |I am |I'm |I'm located }in {-|Location}",
+            "{|My }{homeName} {|is in |is |is at }{-|Location}",
+            "Set {|my }{homeName} {|to |as }{-|Location}"
+        ]
+    });
+    app.intent(Schema_1.Schema.YesIntent, {
+        utterances: [
+            "{Yes|Yep|Correct} {|thanks}",
+        ]
+    });
+    app.intent(Schema_1.Schema.NoIntent, {
+        utterances: [
+            "{No|Nope|Incorrect|False} {|thanks}",
+        ]
+    });
+    //remove edge whitespace, replace multi space with single space
+    for (let intent in app.intents) {
+        app.intents[intent].utterances = app.intents[intent].utterances
+            .map(utterance => utterance.replace(/\s{2,}/, " ").trim());
+    }
+    //generate location custom slot
     let locations = yield request_1.getLocations();
     console.log(`${locations.length} locations retrieved`);
+    let locationTypeName = "LocationType";
     app.customSlot(locationTypeName, locations.map(node => { return { id: node.url_slug, value: node.name }; }));
+    //generate venue custom slot
     let venueTypeName = "VenueType";
     let venues = [];
     let topLocations = (yield request_1.getLocations(2)).filter(loc => loc.count_current_events != 0);

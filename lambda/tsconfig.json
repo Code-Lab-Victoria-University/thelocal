@@ -10,13 +10,14 @@
 
         "strictNullChecks": true,
         "noImplicitAny": true,
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+        "esModuleInterop": true
     },
     "include": [
-        "./src/*"
+        "./src/**/*"
     ],
     "exclude": [
         "node_modules",
-        "**/*.d.ts"
+        // "**/*.d.ts"
     ]
 }

@@ -12,7 +12,7 @@
         "moduleResolution": "node",
     },
     "include": [
-        "./src/*", "./lambda/src/*"
+        "src/*", "lambda/src/lib/*"
     ],
     "exclude": [
         "node_modules",

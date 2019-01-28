@@ -4,12 +4,13 @@
   "description": "<img src=\"https://m.media-amazon.com/images/G/01/mobile-apps/dex/alexa/alexa-skills-kit/tutorials/quiz-game/header._TTH_.png\" />",
   "main": "index.js",
   "scripts": {
-    "tsc-model": "rm -Rf dist && tsc",
+    "build-model": "rm -Rf dist && tsc && node dist/src/index",
     "debug-model": "node --inspect-brk=9229 dist/src/index",
-    "deploy-model": "npm run tsc-model && node dist/src/index && ask deploy -t model",
+    "deploy-model": "ask deploy -t model",
     
-    "deploy": "cd lambda && npm run build && cd .. && ask deploy -t lambda",
-    "debug": "cd lambda && npm run debug"
+    "tsc-lambda": "cd lambda && npm run build",
+    "deploy-lambda": "rm -f lambda/asktemp* && ask deploy -t lambda --force",
+    "debug-lambda": "cd lambda && npm run debug"
   },
   "repository": {
     "type": "git",
@@ -28,5 +29,8 @@
     "alexa-utterances": "^0.2.1",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5"
+  },
+  "devDependencies": {
+    "bespoken-tools": "^2.1.9"
   }
 }

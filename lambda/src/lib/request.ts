@@ -1,7 +1,6 @@
 import * as request from 'request-promise-native'
-import { TIMEOUT } from 'dns';
 
-export async function eventFindaRequest(endpoint: string, query?: any): Promise<any>{
+export async function eventFindaRequest<RetType>(endpoint: string, query?: any): Promise<RetType[]>{
     let url = `http://api.eventfinda.co.nz/v2/${endpoint}.json`
     let response =  request.get(url, {
         auth: {
@@ -10,24 +9,24 @@ export async function eventFindaRequest(endpoint: string, query?: any): Promise<
         },
         qs: query
     })
-    // console.log(endpoint + ": " + JSON.stringify(query))
-    return JSON.parse(await response)
+    let ret = JSON.parse(await response)[endpoint] as RetType[]
+    console.log("COMPLETED REQUEST " + endpoint + ":\n" + response.uri.href)
+    // console.log(JSON.stringify(ret))
+    return ret
 }
 
 const rows = 20;
-export async function eventFindaRequestMultiple<RetType>(endpoint: string, query?: any, pages?: number): Promise<RetType[]>{
+export async function eventFindaRequestMultiple<RetType>(endpoint: string, pages: number, query?: any): Promise<RetType[]>{
     let page = 0;
     let returns = [] as RetType[]
 
     query = query || {}
     query.rows = query.rows || rows
 
-    pages = pages || 1
-
     let isMore = true
     while(isMore && (!pages || page < pages)){
         query.offset = page*query.rows
-        let cur = (await eventFindaRequest(endpoint, query))[endpoint] as RetType[]
+        let cur = (await eventFindaRequest<RetType>(endpoint, query))
 
         if(0 < cur.length){
             returns.push(...cur)
@@ -69,11 +68,11 @@ function flattenLocation(node: LocationNode, list?: LocationNode[]): LocationNod
 }
 
 export async function getLocations(levels?: number): Promise<LocationNode[]>{
-    return flattenLocation((await eventFindaRequest('locations', {
+    return flattenLocation((await eventFindaRequest<LocationNode>('locations', {
         fields: "location:(id,name,summary,url_slug,count_current_events,children)",
         levels: levels||4,
         venue: false
-    })).locations[0] as LocationNode)
+    }))[0])
 }
 
 export interface VenueNode extends LocationNode{
@@ -84,13 +83,15 @@ export interface VenueNode extends LocationNode{
     }
 }
 
+let venueFields = "location:(id,name,summary,url_slug,count_current_events,description)"
+
 export async function getVenues(url_slug?: string): Promise<VenueNode[]>{
-    let venues = await eventFindaRequestMultiple<VenueNode>('locations', {
+    let venues = await eventFindaRequestMultiple<VenueNode>('locations', 2, {
         venue: true,
         order: "popularity",
-        fields: "location:(id,name,summary,url_slug,count_current_events,description)",
+        fields: venueFields,
         location_slug: url_slug
-    }, 2)
+    })
 
     return venues
 }
@@ -104,13 +105,23 @@ export interface Event {
     datetime_summary: string
 }
 
-interface EventRequest {
-    location_slug?: string
+export enum EventRequestOrder {
+    popularity = "popularity",
+    date = "date"
+}
+
+export interface EventRequest {
+    location_slug?: string,
+    rows?: number,
+    order?: EventRequestOrder,
+    start_date?: string,
+    end_date?: string
 }
 
 export async function getEvents(req?: EventRequest): Promise<Event[]>{
-    let events = await eventFindaRequestMultiple<Event>('events', Object.assign({
-        order: "popularity",
+    let events = await eventFindaRequest<Event>('events', Object.assign({
+        order: EventRequestOrder.popularity,
+        fields: "event:(id,name,url_slug,description,datetime_end,datetime_start,datetime_summary,location),"+venueFields,
         rows: 10
     }, req))
     

@@ -1,6 +1,9 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const InputWrap_1 = require("../lib/InputWrap");
+const InputWrap_1 = __importDefault(require("../lib/InputWrap"));
 class IntentHandler {
     constructor(intent, handleSpeech) {
         this.intent = intent;
