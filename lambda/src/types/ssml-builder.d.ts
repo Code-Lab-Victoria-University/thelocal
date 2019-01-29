@@ -21,7 +21,11 @@ declare class AmazonSpeech extends Speech{
      * 
      * Interjections: https://developer.amazon.com/docs/custom-skills/speechcon-reference-interjections-english-australia.html
     */
-    sayAs(options: object): this
+    sayAs(options: {
+        interpret: string,
+        word: string,
+        format?: string
+    }): this
 }
 
 declare module 'ssml-builder/amazon_speech' {

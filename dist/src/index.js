@@ -43,14 +43,14 @@ function permutations(string) {
         ]
     };
     let eventsUtterances = [];
-    //explores all combinations of these in the different synatatic locations. Will add categories here later.
-    let details = [`{-|${Schema_1.Schema.DateSlot}}`];
+    //explores all combinations of these in the different synatatic locations. Will add categories here later. This can probably be connected to the places list in some way for simplicity
+    let optionDetails = [`{-|${Schema_1.Schema.DateSlot}}`];
     //explores both types of place as well as no place (use home location)
     let placeTypes = [Schema_1.Schema.VenueSlot, Schema_1.Schema.LocationSlot, ""];
     for (let place of placeTypes) {
         let placeText = place ? `{in|at} {-|${place}} ` : "";
-        for (let detail1 of details.concat("")) {
-            for (let detail2 of (place ? details.concat("") : details).filter(detail2 => detail2 != detail1)) {
+        for (let detail1 of optionDetails.concat("")) {
+            for (let detail2 of (place ? optionDetails.concat("") : optionDetails).filter(detail2 => detail2 != detail1)) {
                 eventsUtterances
                     .push(`{|Let me know|Tell me} {whatsOn} ${detail1} ${placeText} ${detail2}`);
             }
@@ -68,22 +68,22 @@ function permutations(string) {
     app.intent(Schema_1.Schema.SetLocationIntent, {
         slots: { [Schema_1.Schema.LocationSlot]: "LocationType" },
         utterances: [
-            "{|I live |I am |I'm |I'm located }in {-|Location}",
-            "{|My }{homeName} {|is in |is |is at }{-|Location}",
-            "Set {|my }{homeName} {|to |as }{-|Location}"
+            "{I live|I am|I'm|I'm located} in {-|Location}",
+            "{|My }{homeName} {is in|is|is at} {-|Location}",
+            "Set {|my }{homeName} {to|as} {-|Location}"
         ]
     });
     app.intent(Schema_1.Schema.YesIntent, {
         utterances: [
-            "{Yes|Yep|Correct} {|thanks}",
+            "{Yes|Yep|Correct} {|thanks|thank you}",
         ]
     });
     app.intent(Schema_1.Schema.NoIntent, {
         utterances: [
-            "{No|Nope|Incorrect|False} {|thanks}",
+            "{No|Nope|Incorrect|False} {|thanks|thank you}",
         ]
     });
-    //remove edge whitespace, replace multi space with single space
+    //remove edge whitespace (doesn't work on template syntax. Gotta override), replace multi space with single space
     for (let intent in app.intents) {
         app.intents[intent].utterances = app.intents[intent].utterances
             .map(utterance => utterance.replace(/\s{2,}/, " ").trim());

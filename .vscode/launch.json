@@ -7,6 +7,19 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Lambda-test",
+            "runtimeExecutable": "npm",
+            "cwd": "${workspaceFolder}/lambda",
+            "runtimeArgs": [
+                "run-script",
+                "debug"
+            ],
+            "outFiles": ["${workspaceFolder}/lambda/dist"],
+            "port": 9229
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "Lambda",
             "program": "${workspaceRoot}/node_modules/bespoken-tools/bin/bst-proxy.js",
             "runtimeArgs": ["--inspect-brk=9229"],
@@ -25,6 +38,7 @@
             ],
             "port": 9229,
             "sourceMaps": true
-        }
+        },
+        
     ]
 }

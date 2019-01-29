@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const iso_week_1 = __importDefault(require("iso-week"));
 const Util_1 = require("./Util");
+const amazon_speech_1 = __importDefault(require("ssml-builder/amazon_speech"));
 var Season;
 (function (Season) {
     Season["WINTER"] = "WI";
@@ -52,12 +53,15 @@ class AmazonDate {
             return new Date(this.year, 0, 1 + firstMonday + this.week * 7 + weekendMod);
         }
         else if (this.month !== undefined) {
-            //TODO: should it be now or be the whole month including past days?
             //if no specific date and is current month, then start searching from now?
-            if (this.day !== undefined && new Date().getMonth() == this.month)
+            if (this.day !== undefined)
+                return new Date(this.year, this.month, this.day);
+            //if current month, take start as now TODO: am I sure?
+            else if (new Date().getMonth() == this.month)
                 return new Date();
-            //else take start of month or day if exists
-            return new Date(this.year, this.month, this.day);
+            //else just take month
+            else
+                return new Date(this.year, this.month);
             //TODO: handle season
         }
         else
@@ -91,55 +95,94 @@ class AmazonDate {
             return endYear;
         }
     }
-    toString() {
-        let start = this.start();
-        let thisYear = new Date().getFullYear() == this.year;
+    //There are three different print categories: week, month, year. Week should be in relation to the curWeek/date. month can be in relation to curWeek, curMonth, monthname or date. year should just be in relation to curYear/yearname.
+    toSpeech(speech) {
+        speech = speech || new amazon_speech_1.default();
+        const start = this.start();
+        const thisYear = new Date().getFullYear() == this.year;
+        //relative to current year or absolute
+        let yearStr = thisYear ? "????" : this.year.toString();
+        let yearDiff = this.year - new Date().getFullYear();
+        //yearDiff*12 so that it works across the end of the year
+        let monthDiff = (start.getMonth()) + yearDiff * 12 - new Date().getMonth();
+        //TODO: make weekDiff work across year
+        const weekDiff = (iso_week_1.default(start)) - iso_week_1.default();
+        //this value is undefined if the week isn't close enough to be one of the three
+        let adjacentWeekText = undefined;
+        if (weekDiff == 1)
+            adjacentWeekText = "next";
+        else if (weekDiff == 0)
+            adjacentWeekText = "this";
+        else if (weekDiff == -1)
+            adjacentWeekText = "last";
         if (this.week !== undefined) {
-            let weeksToGo = this.week - iso_week_1.default();
-            let prefix = this.weekend ? "weekend" : "week";
-            if (weeksToGo == 1)
-                return "Next " + prefix;
-            else if (weeksToGo == 0)
-                return "This " + prefix;
-            else if (weeksToGo == -1)
-                return "Last " + prefix;
-            let date = thisYear ?
-                `on <say-as interpret-as="date">????${Util_1.mmDD(start)}</say-as>` :
-                `on <say-as interpret-as="date" format="mdy">${Util_1.yyMMDD(start)}</say-as>`;
-            return `The ${prefix} starting on ${date}`;
+            //if week type, then follow that print
+            let weekOrWeekend = this.weekend ? "weekend" : "week";
+            //in relation to this week
+            if (adjacentWeekText)
+                speech.say(adjacentWeekText).say(weekOrWeekend);
+            //other week
+            else
+                speech.say("the").say(weekOrWeekend).say("of").sayAs({
+                    word: yearStr + Util_1.mmDD(start),
+                    interpret: "date"
+                });
         }
         else if (this.month !== undefined) {
-            let monthsToGo = this.month - new Date().getMonth();
-            if (monthsToGo == 1)
-                return "next month";
-            else if (monthsToGo == 0) {
-                if (this.day !== undefined) {
-                    let dayDiff = this.day - new Date().getDate();
-                    if (dayDiff == 1)
-                        return "tomorrow";
-                    else if (dayDiff == 0)
-                        return "today";
-                    else if (dayDiff == -1)
-                        return "yesterday";
-                }
+            //used both for date and month variants
+            let monthStr = Util_1.padN(this.month + 1, 2);
+            if (this.day !== undefined) {
+                let dayDiff = this.day - new Date().getDate();
+                //in relation to today
+                if (dayDiff == 1)
+                    speech.say("tomorrow");
+                else if (dayDiff == 0)
+                    speech.say("today");
+                else if (dayDiff == -1)
+                    speech.say("yesterday");
+                //in relation to curWeek
+                else if (adjacentWeekText)
+                    speech
+                        .say(adjacentWeekText)
+                        .say(new Intl.DateTimeFormat('en-AU', {
+                        weekday: "long"
+                    }).format(start));
+                //other date
                 else
-                    return "this month";
+                    speech.say("on").sayAs({
+                        interpret: "date",
+                        word: yearStr + monthStr + Util_1.padN(this.day, 2)
+                    });
             }
-            else if (monthsToGo == -1)
-                return "last month";
-            let dayStr = this.day !== undefined ? Util_1.padN(start.getDate(), 2) : "??";
-            let monthStr = Util_1.padN(start.getMonth() + 1, 2);
-            let yearStr = thisYear ? "??" : start.getFullYear().toString();
-            return `on <say-as interpret-as="date" format="mdy">${yearStr + monthStr + dayStr}</say-as>`;
+            else {
+                //in relation to curMonth
+                if (monthDiff == 1)
+                    speech.say("next month");
+                else if (monthDiff == 0)
+                    speech.say("this month");
+                else if (monthDiff == -1)
+                    speech.say("last month");
+                //other month
+                else
+                    speech.say("on").sayAs({
+                        word: yearStr + monthStr + "??",
+                        interpret: "date"
+                    });
+            }
         }
-        let yearDiff = this.year - new Date().getFullYear();
-        if (yearDiff == 1)
-            return "next year";
-        else if (yearDiff == 0)
-            return "this year";
-        else if (yearDiff == -1)
-            return "last year";
-        return this.year.toString();
+        else {
+            //relative to curYear
+            if (yearDiff == 1)
+                speech.say("next year");
+            else if (yearDiff == 0)
+                speech.say("this year");
+            else if (yearDiff == -1)
+                speech.say("last year");
+            //other years
+            else
+                speech.say(this.year.toString());
+        }
+        return speech;
     }
 }
 exports.default = AmazonDate;

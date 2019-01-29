@@ -10,12 +10,12 @@
         "strictNullChecks": true,
         "noImplicitAny": true,
         "moduleResolution": "node",
+        "esModuleInterop": true
     },
     "include": [
-        "src/*", "lambda/src/lib/*"
+        "src/*", "lambda/src/lib/*", "lambda/src/types/*"
     ],
     "exclude": [
-        "node_modules",
-        "**/*.d.ts"
+        "node_modules"
     ]
 }

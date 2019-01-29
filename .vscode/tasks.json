@@ -19,13 +19,6 @@
         },
         {
             "type": "npm",
-            "script": "tsc-lambda",
-            "problemMatcher": [
-                "$tsc"
-            ]
-        },
-        {
-            "type": "npm",
             "script": "deploy-lambda",
             "group": {
                 "kind": "build",
@@ -38,6 +31,14 @@
         {
             "type": "npm",
             "script": "tsc",
+            "path": "lambda/",
+            "problemMatcher": [
+                "$tsc"
+            ]
+        },
+        {
+            "type": "npm",
+            "script": "test",
             "path": "lambda/",
             "problemMatcher": [
                 "$tsc"

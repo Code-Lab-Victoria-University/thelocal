@@ -8,9 +8,7 @@
     "debug-model": "node --inspect-brk=9229 dist/src/index",
     "deploy-model": "ask deploy -t model",
     
-    "tsc-lambda": "cd lambda && npm run build",
-    "deploy-lambda": "rm -f lambda/asktemp* && ask deploy -t lambda --force",
-    "debug-lambda": "cd lambda && npm run debug"
+    "deploy-lambda": "rm -f lambda/asktemp* && ask deploy -t lambda --force"
   },
   "repository": {
     "type": "git",

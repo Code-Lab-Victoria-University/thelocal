@@ -14,9 +14,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const InputWrap_1 = __importDefault(require("../lib/InputWrap"));
 const request_1 = require("../lib/request");
 const Schema_1 = require("../lib/Schema");
+const amazon_speech_1 = __importDefault(require("ssml-builder/amazon_speech"));
 const AmazonDate_1 = __importDefault(require("../lib/AmazonDate"));
-// import Ama
-// const AmazonSpeech = import ('ssml-builder/amazon_speech')
 class EventsHandler {
     canHandle(input) {
         let wrap = new InputWrap_1.default(input);
@@ -50,14 +49,21 @@ class EventsHandler {
                             date = new AmazonDate_1.default(dateSlot.value);
                             req.start_date = date.start().toISOString();
                             req.end_date = date.end().toISOString();
-                            console.log(date);
+                            console.log(JSON.stringify(date));
                         }
-                        let events = yield request_1.getEvents();
-                        let speech = `I found the following events ${isVenue ? "at " : "in " + placeName} ${date ? date.toString() : ""}:`;
-                        events.forEach(event => speech += `<sentence>${event.name}</sentence>`);
-                        console.log("SPEECH: " + speech);
+                        let events = yield request_1.getEvents(req);
+                        let speech = new amazon_speech_1.default()
+                            .say("I found the following events")
+                            .say((isVenue ? "at " : "in ") + placeName);
+                        if (date)
+                            date.toSpeech(speech);
+                        speech.say(":");
+                        // let speech = 
+                        // `I found the following events ${isVenue ? "at " : "in " + placeName} ${date ? date.toSpeech() : ""}:`
+                        events.forEach(event => speech.sentence(event.name));
+                        console.log("SPEECH: " + speech.ssml());
                         return input.responseBuilder
-                            .speak(speech)
+                            .speak(speech.ssml())
                             .getResponse();
                     }
                     else

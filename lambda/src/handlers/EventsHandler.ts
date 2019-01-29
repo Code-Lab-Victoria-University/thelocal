@@ -1,13 +1,9 @@
 import { HandlerInput, RequestHandler } from "ask-sdk-core";
-import { Response } from "ask-sdk-model";
 import InputWrap, { CustomSlot } from "../lib/InputWrap"
-import {getLocations, LocationNode, getEvents, EventRequestOrder, EventRequest} from '../lib/request'
+import {getEvents, EventRequestOrder, EventRequest} from '../lib/request'
 import {Schema} from '../lib/Schema'
-import {escape} from '../lib/Util'
 import AmazonSpeech from 'ssml-builder/amazon_speech'
 import AmazonDate from "../lib/AmazonDate";
-// import Ama
-// const AmazonSpeech = import ('ssml-builder/amazon_speech')
 
 export class EventsHandler implements RequestHandler {
     canHandle(input: HandlerInput) {
@@ -49,20 +45,29 @@ export class EventsHandler implements RequestHandler {
                         date = new AmazonDate(dateSlot.value)
                         req.start_date = date.start().toISOString()
                         req.end_date = date.end().toISOString()
-                        console.log(date)
+                        console.log(JSON.stringify(date))
                     }
 
-                    let events = await getEvents()
-                    
-                    let speech = 
-                    `I found the following events ${isVenue ? "at " : "in " + placeName} ${date ? date.toString() : ""}:`
-                        
-                    events.forEach(event => speech += `<sentence>${event.name}</sentence>`)
+                    let events = await getEvents(req)
 
-                    console.log("SPEECH: " + speech)
+                    let speech = new AmazonSpeech()
+                        .say("I found the following events")
+                        .say((isVenue ? "at " : "in ") + placeName)
+
+                    if(date)
+                        date.toSpeech(speech)
+
+                    speech.say(":")
+                    
+                    // let speech = 
+                    // `I found the following events ${isVenue ? "at " : "in " + placeName} ${date ? date.toSpeech() : ""}:`
+                        
+                    events.forEach(event => speech.sentence(event.name))
+
+                    console.log("SPEECH: " + speech.ssml())
         
                     return input.responseBuilder
-                        .speak(speech)
+                        .speak(speech.ssml())
                         .getResponse()
                 } else
                     return input.responseBuilder

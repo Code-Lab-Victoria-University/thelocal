@@ -1,4 +1,3 @@
-import * as request from 'request-promise-native'
 import {writeFile} from 'fs'
 import {join} from 'path'
 import {promisify} from 'util'
@@ -71,21 +70,21 @@ function permutations(string: string): string[] {
     app.intent(Schema.SetLocationIntent, {
         slots: { [Schema.LocationSlot]: "LocationType" },
         utterances: [
-            "{|I live |I am |I'm |I'm located }in {-|Location}",
-            "{|My }{homeName} {|is in |is |is at }{-|Location}",
-            "Set {|my }{homeName} {|to |as }{-|Location}"
+            "{I live|I am|I'm|I'm located} in {-|Location}",
+            "{|My }{homeName} {is in|is|is at} {-|Location}",
+            "Set {|my }{homeName} {to|as} {-|Location}"
         ]
     })
 
     app.intent(Schema.YesIntent, {
         utterances: [
-            "{Yes|Yep|Correct} {|thanks}",
+            "{Yes|Yep|Correct} {|thanks|thank you}",
         ]
     })
 
     app.intent(Schema.NoIntent, {
         utterances: [
-            "{No|Nope|Incorrect|False} {|thanks}",
+            "{No|Nope|Incorrect|False} {|thanks|thank you}",
         ]
     })
 
