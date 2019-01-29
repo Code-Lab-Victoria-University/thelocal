@@ -5,6 +5,8 @@ import {Schema} from '../lib/Schema'
 import AmazonSpeech from 'ssml-builder/amazon_speech'
 import AmazonDate from "../lib/AmazonDate";
 
+//TODO: https://developer.amazon.com/docs/alexa-design/voice-experience.html
+
 export class EventsHandler implements RequestHandler {
     canHandle(input: HandlerInput) {
         let wrap = new InputWrap(input);
@@ -51,8 +53,11 @@ export class EventsHandler implements RequestHandler {
                     let events = await getEvents(req)
 
                     let speech = new AmazonSpeech()
-                        .say("I found the following events")
-                        .say((isVenue ? "at " : "in ") + placeName)
+                        .say(events.length != 0 ? 
+                        "I found the following events" :
+                        "I couldn't find any events")
+                        
+                    speech.say((isVenue ? "at " : "in ") + placeName)
 
                     if(date)
                         date.toSpeech(speech)
@@ -62,7 +67,7 @@ export class EventsHandler implements RequestHandler {
                     // let speech = 
                     // `I found the following events ${isVenue ? "at " : "in " + placeName} ${date ? date.toSpeech() : ""}:`
                         
-                    events.forEach(event => speech.sentence(event.name))
+                    events.forEach(event => speech.sentence(event.name + ""))
 
                     console.log("SPEECH: " + speech.ssml())
         

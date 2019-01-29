@@ -16,6 +16,7 @@ const request_1 = require("../lib/request");
 const Schema_1 = require("../lib/Schema");
 const amazon_speech_1 = __importDefault(require("ssml-builder/amazon_speech"));
 const AmazonDate_1 = __importDefault(require("../lib/AmazonDate"));
+//TODO: https://developer.amazon.com/docs/alexa-design/voice-experience.html
 class EventsHandler {
     canHandle(input) {
         let wrap = new InputWrap_1.default(input);
@@ -53,14 +54,16 @@ class EventsHandler {
                         }
                         let events = yield request_1.getEvents(req);
                         let speech = new amazon_speech_1.default()
-                            .say("I found the following events")
-                            .say((isVenue ? "at " : "in ") + placeName);
+                            .say(events.length != 0 ?
+                            "I found the following events" :
+                            "I couldn't find any events");
+                        speech.say((isVenue ? "at " : "in ") + placeName);
                         if (date)
                             date.toSpeech(speech);
                         speech.say(":");
                         // let speech = 
                         // `I found the following events ${isVenue ? "at " : "in " + placeName} ${date ? date.toSpeech() : ""}:`
-                        events.forEach(event => speech.sentence(event.name));
+                        events.forEach(event => speech.sentence(event.name + ""));
                         console.log("SPEECH: " + speech.ssml());
                         return input.responseBuilder
                             .speak(speech.ssml())
