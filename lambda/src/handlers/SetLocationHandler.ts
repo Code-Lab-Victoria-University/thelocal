@@ -8,14 +8,8 @@ export class SetLocationHandler implements RequestHandler {
     canHandle(input: HandlerInput) {
         let wrap = new InputWrap(input);
 
-        if(wrap.intent){
-            if(wrap.intent.name === Schema.SetLocationIntent)
-                return true
-            else if(["YesIntent", "NoIntent"].includes(wrap.intent.name) && wrap.getSessionAttr(Schema.LocationSlot))
-                return true
-        }
-
-        return false
+        return wrap.isIntent(Schema.SetLocationIntent) ||
+            wrap.isIntent([Schema.YesIntent, Schema.NoIntent]) && wrap.hasSessionAttr(Schema.LocationSlot)
     }
 
     handle(input: HandlerInput) {
@@ -24,13 +18,13 @@ export class SetLocationHandler implements RequestHandler {
         if(!wrap.intent)
             return input.responseBuilder.speak("ERROR: SetLocationHandler No Intent").getResponse();
 
-        if(wrap.intent.name === Schema.SetLocationIntent){
+        if(wrap.isIntent(Schema.SetLocationIntent)){
 
-            let locationSlot = wrap.slots && wrap.slots[Schema.LocationSlot]
+            let locationSlot = wrap.slots[Schema.LocationSlot]
 
             if(locationSlot){
                 if(locationSlot.value){
-                    wrap.setSessionAttr(Schema.LocationSlot, locationSlot)
+                    wrap.sessionAttrs[Schema.LocationSlot] = locationSlot
                     let speech = `Do you want to set your location to ${locationSlot.value}`
         
                     return input.responseBuilder
@@ -45,11 +39,11 @@ export class SetLocationHandler implements RequestHandler {
                 return input.responseBuilder
                     .speak("You tried to set your location but I didn't understand. Make sure to say your location slowly and clearly")
                     .getResponse()
-        } else {
+        } else if (wrap.hasSessionAttr(Schema.LocationSlot)) {
             //assuming value in session attrs, as only other way for handler to return
-            let location = wrap.getSessionAttr<CustomSlot>(Schema.LocationSlot)!
+            let location = wrap.sessionAttrs[Schema.LocationSlot]!
             let speech: string;
-            if(wrap.intent.name === "YesIntent"){
+            if(wrap.isIntent(Schema.YesIntent)){
                 wrap.setPersistentAttr(Schema.LocationSlot, location)
                 speech = `Your location is set to ${location.value}`
             } else
@@ -58,6 +52,7 @@ export class SetLocationHandler implements RequestHandler {
             return input.responseBuilder
                 .speak(speech)
                 .getResponse()
-        }
+        } else
+            throw new Error("SetLocationHandler")
     }   
 }

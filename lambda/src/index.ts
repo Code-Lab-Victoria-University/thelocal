@@ -5,13 +5,15 @@ import { SessionEndedRequestHandler } from "./handlers/SessionEndedRequestHandle
 import { CustomErrorHandler } from "./handlers/CustomErrorHandler";
 import {SetLocationHandler} from "./handlers/SetLocationHandler"
 
-import {IntentHandler} from './handlers/IntentHandler'
+import {EasyIntentHandler} from './handlers/IntentHandler'
 import {EventsHandler} from './handlers/EventsHandler'
 
 import { DynamoDbPersistenceAdapter } from 'ask-sdk-dynamodb-persistence-adapter';
 
 import {getEvents} from './lib/request'
 import InputWrap from "./lib/InputWrap";
+import { EventOptionHandler } from "./handlers/EventOptionHandler";
+import { rand } from "./lib/Util";
 
 const Persistence = new DynamoDbPersistenceAdapter({
     tableName: "thelocal"
@@ -40,10 +42,15 @@ exports.handler = skillBuilder
 
     .addRequestHandlers(
         new LaunchRequestHandler(),
+
+        new EasyIntentHandler("AMAZON.HelpIntent", 'You can say hello to me!'),
+        new EasyIntentHandler(['AMAZON.CancelIntent', 'AMAZON.StopIntent'], 
+            rand('See ya', 'Bye', "Goodbye")),
+
         new SetLocationHandler(),
         new EventsHandler(),
-        new IntentHandler("AMAZON.HelpIntent", 'You can say hello to me!'),
-        new IntentHandler(['AMAZON.CancelIntent', 'AMAZON.StopIntent'], 'Goodbye!'),
+        new EventOptionHandler(),
+
         new SessionEndedRequestHandler()
         )
 
@@ -51,6 +58,9 @@ exports.handler = skillBuilder
     .withPersistenceAdapter(Persistence)
 
     .addResponseInterceptors((input, response) => {
+        //save, etc
+        new InputWrap(input).endRequest()
+            
         if(response)
             console.log("OUTPUT: " + JSON.stringify(response.outputSpeech))
         else

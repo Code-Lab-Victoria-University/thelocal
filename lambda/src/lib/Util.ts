@@ -25,3 +25,7 @@ export function mmDD(date: Date): string {
 export function yyMMDD(date: Date): string {
     return date.getFullYear() + mmDD(date)
 }
+
+export function rand<Val>(...input: Val[]): Val{
+    return input[Math.floor(input.length*Math.random())]
+}

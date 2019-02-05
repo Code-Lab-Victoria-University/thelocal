@@ -8,7 +8,7 @@ export class CustomErrorHandler implements ErrorHandler {
 
     handle(handlerInput: HandlerInput, error: Error): Response {
         if(error){
-            console.log(`Error handled: ${error.message}`);
+            console.log(`Error ${error.name} handled: ${error.message}`);
             if(error.stack)
                 console.log(error.stack)
             

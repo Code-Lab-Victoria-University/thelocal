@@ -2,6 +2,7 @@ import 'mocha'
 import assert, { AssertionError } from 'assert'
 import AmazonDate from "../lib/AmazonDate";
 import {padN} from '../lib/Util'
+import AmazonSpeech from 'ssml-builder/amazon_speech'
 
 let now = new Date()
 let year = now.getFullYear()
@@ -43,4 +44,12 @@ describe("DatePrint", () => {
             assert.equal(ssml, expectedSsml, JSON.stringify(dateObj))
         })
     }
+})
+
+describe("Speech", () => {
+    it("Event print stuff with various tests", () => {
+        let resp = new AmazonSpeech().say("For").say("The event")
+                            .say("ask for number").say((0+1).toString()).pauseByStrength("strong").ssml()
+        assert.equal(resp, "<speak>For The event ask for number 1 <break strength='strong'/></speak>");
+    })
 })

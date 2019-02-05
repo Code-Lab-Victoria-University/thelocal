@@ -29,62 +29,87 @@ function permutations(string: string): string[] {
         "thanks": ["Please", "Thanks", "Thank you", "Cheers"],
         "whatsOn": ["Is there anything on",
             "Is there something happening",
-            "What's",
-            "What is",
             "What's on",
             "What can I go to",
             "What is happening",
-            "What's happening"
-        ]
+            "What's happening",
+            "What events are on",
+            "What events are happening",
+            "events"
+        ],
+        "eventChoice": ["number", "option", "event", "choice"]
     }
 
-    let eventsUtterances = []
+    let eventsUtterances = [] as string[]
 
     //explores all combinations of these in the different synatatic locations. Will add categories here later. This can probably be connected to the places list in some way for simplicity
-    let optionDetails = [`{-|${Schema.DateSlot}}`]
+    let optionDetails = [`{-|${Schema.DateSlot}}`, `{-|${Schema.TimeSlot}}`]
 
     //explores both types of place as well as no place (use home location)
-    let placeTypes = [Schema.VenueSlot, Schema.LocationSlot, ""]
+    let placeTypes = [`at {-|${Schema.VenueSlot}}`, `in {-|${Schema.LocationSlot}}`]
 
-    for(let place of placeTypes){
-        let placeText = place ? `{in|at} {-|${place}} ` : ""
-        for(let detail1 of optionDetails.concat("")){
-            for(let detail2 of (place ? optionDetails.concat("") : optionDetails).filter(detail2 => detail2 != detail1)){
-                eventsUtterances
-                    .push(`{|Let me know|Tell me} {whatsOn} ${detail1} ${placeText} ${detail2}`)
-            }
+    function mix(values: string[]): string[]{
+        if(values.length <= 1)
+            return values
+        else {
+            let myVal = values.splice(0, 1)[0]
+            let mixed = mix(values)
+            // console.log(mixed)
+            //combinations of single val and full mixed list
+            return [myVal].concat(mixed.map(val => myVal+" "+val)).concat(mixed.map(val => val +" "+ myVal)).concat(mixed)
         }
     }
 
-    eventsUtterances.forEach(val => console.log(val))
+    let preTexts = [
+        "{|Let me know |Tell me |Find }{whatsOn}",
+        // `{|What} {-|${Schema.CategorySlot}} {events |shows |concerts |gigs |}{are on|are happening}`
+    ]
+    eventsUtterances.push(...preTexts)
+
+    let mixes = [] as string[]
+    //can't have both places in one request so don't use mixer
+    for(let place of placeTypes){
+        let optionMixes = mix(optionDetails.concat(place))
+
+        mixes.push(...optionMixes
+            .filter(val => !mixes.includes(val)))
+    }
+
+    for(let preText of preTexts){
+        eventsUtterances.push(...mixes.map(mix => preText +" "+ mix))
+    }
+
+    // eventsUtterances.push(...mixes.map(mix => preTexts +" "+ mix).concat(mixes.map()))
 
     app.intent(Schema.EventsIntent, {
         slots: {
             [Schema.VenueSlot]: "VenueType",
             [Schema.LocationSlot]: "LocationType",
-            [Schema.DateSlot]: "AMAZON.DATE"
+            [Schema.DateSlot]: "AMAZON.DATE",
+            [Schema.TimeSlot]: "AMAZON.TIME",
+            [Schema.CategorySlot]: "CategoryType"
         },
         utterances: eventsUtterances
     })
 
-    app.intent(Schema.SetLocationIntent, {
-        slots: { [Schema.LocationSlot]: "LocationType" },
-        utterances: [
-            "{I live|I am|I'm|I'm located} in {-|Location}",
-            "{|My }{homeName} {is in|is|is at} {-|Location}",
-            "Set {|my }{homeName} {to|as} {-|Location}"
-        ]
-    })
+    // app.intent(Schema.SetLocationIntent, {
+    //     slots: { [Schema.LocationSlot]: "LocationType" },
+    //     utterances: [
+    //         "{I live|I am|I'm|I'm located} in {-|Location}",
+    //         "{|My }{homeName} {is in|is|is at} {-|Location}",
+    //         "Set{| my} {homeName} {to|as} {-|Location}"
+    //     ]
+    // })
+    let identityIntent = {slots: {}, utterances: []}
+    app.intent("AMAZON.CancelIntent", identityIntent)
+    app.intent("AMAZON.HelpIntent", identityIntent)
+    app.intent("AMAZON.StopIntent", identityIntent)
 
-    app.intent(Schema.YesIntent, {
+    app.intent(Schema.OptionIntent, {
+        slots: { [Schema.NumberSlot]: "AMAZON.NUMBER" },
         utterances: [
-            "{Yes|Yep|Correct} {|thanks|thank you}",
-        ]
-    })
-
-    app.intent(Schema.NoIntent, {
-        utterances: [
-            "{No|Nope|Incorrect|False} {|thanks|thank you}",
+            "{Tell me|Describe|Explain}{| about| more about}{| eventChoice} {-|Number}",
+            "{eventChoice} {-|Number}"
         ]
     })
 
@@ -95,7 +120,7 @@ function permutations(string: string): string[] {
     }
 
     //generate location custom slot
-    let locations = await getLocations()
+    let locations = await getLocations(3)
     console.log(`${locations.length} locations retrieved`)
     let locationTypeName = "LocationType"
 
@@ -108,11 +133,12 @@ function permutations(string: string): string[] {
     console.log(topLocations.length + " locations being used to find venues")
 
     for(let location of topLocations) {
-        console.log(location.name)
-        for(let checkVenue of await getVenues(location.url_slug)){
+        let oldLength = venues.length
+        for(let checkVenue of await getVenues(location.url_slug, 2)){
             if(!venues.some(goodVenue => baseEqual(goodVenue.url_slug,checkVenue.url_slug) || baseEqual(goodVenue.name,checkVenue.name)))
                 venues.push(checkVenue)
         }
+        console.log(location.name + ": " + (venues.length - oldLength))
     }
     console.log(venues.length + " venues retrieved")
 

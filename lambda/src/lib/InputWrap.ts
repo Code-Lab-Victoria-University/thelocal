@@ -1,5 +1,8 @@
-import { HandlerInput, AttributesManager, ResponseBuilder } from "ask-sdk-core";
-import { Response, IntentRequest, Request, Intent, Slot } from "ask-sdk-model";
+import { HandlerInput, AttributesManager } from "ask-sdk-core";
+import { Intent, Slot } from "ask-sdk-model";
+import {Schema} from './Schema'
+import {lastEventsKey} from "../handlers/EventsHandler"
+import { Event, Response } from "./request";
 
 export class CustomSlot {
     /** name of slot */
@@ -28,8 +31,12 @@ export class CustomSlot {
 
 export default class InputWrap {
 
-    private readonly sessionAttrs: {
+    readonly sessionAttrs: {
         [key: string]: any;
+
+        // prevIntents?: Intent[],
+        [Schema.LocationSlot]?: CustomSlot,
+        [lastEventsKey]?: Response<Event>
     };
     
     private readonly persistentAttrs: Promise<{
@@ -37,10 +44,11 @@ export default class InputWrap {
     }>;
 
     readonly intent?: Intent;
+    readonly prevIntents: Intent[];
     /** Slots that have values */
-    readonly slots?: {
+    readonly slots: {
         [key: string]: CustomSlot | undefined;
-    }
+    } = {}
 
     private readonly attrs: AttributesManager;
 
@@ -51,10 +59,16 @@ export default class InputWrap {
 
         let req = input.requestEnvelope.request
 
+        this.prevIntents = this.sessionAttrs.prevIntents || []
+
         if(req.type === "IntentRequest"){
             this.intent = req.intent;
+            
+            //this should never happen
+            if(this.prevIntents.includes(this.intent))
+                throw new Error("prevIntents already contains current intent. Did you run #endRequest() before end?")
+
             if(this.intent.slots){
-                this.slots = {}
                 for (let slotKey in this.intent.slots){
                     let slot = this.intent.slots[slotKey]
                     if(slot.value)
@@ -64,22 +78,48 @@ export default class InputWrap {
         }
     }
 
-    getSessionAttr<Type>(key: string): Type|undefined{
-        return this.sessionAttrs[key]
+    endRequest() {
+        if(this.intent)
+            this.sessionAttrs.prevIntents = this.prevIntents.concat(this.intent)
+        
+        this.attrs.setSessionAttributes(this.sessionAttrs)
+        this.attrs.savePersistentAttributes()
     }
 
-    setSessionAttr(key: string, val: any){
-        this.sessionAttrs[key] = val
-        this.attrs.setSessionAttributes(this.sessionAttrs)
+    lastIntent(): Intent|undefined {
+        return 0 < this.prevIntents.length ? this.prevIntents[this.prevIntents.length-1] : undefined
+    }
+
+    getSlot(slotName: string): CustomSlot|undefined {
+        return this.slots && this.slots[slotName]
+    }
+
+    /**
+     * Is the wrapper an intent
+     * @param intentName optionally query intent name
+     */
+    isIntent(intentName?: string|string[]): boolean{
+        if(this.intent === undefined)
+            return false
+        //intent exists. If gave intentName, only true if equals intent.name
+        else if(intentName === undefined)
+            return true
+        else if(typeof intentName === "string")
+            return intentName === this.intent.name
+        else
+            return intentName.includes(this.intent.name)
+    }
+
+    hasSessionAttr(key: string): boolean {
+        return this.sessionAttrs[key] !== undefined
     }
 
     async getPresistentArr<RetType>(key: string): Promise<RetType|undefined>{
         return (await this.persistentAttrs)[key] as RetType
     }
 
-    async setPersistentAttr(key: string, val: any){
+    async setPersistentAttr<InType>(key: string, val: InType){
         (await this.persistentAttrs)[key] = val
-        this.attrs.setPersistentAttributes((await this.persistentAttrs))
-        await this.attrs.savePersistentAttributes()
+        this.attrs.setPersistentAttributes(await this.persistentAttrs)
     }
 }

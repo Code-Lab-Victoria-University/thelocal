@@ -9,7 +9,29 @@ export enum Season {
     FALL = "FA"
 }
 
-export default class AmazonDate {
+export abstract class DateRange {
+    //remove the Z indication, meaning local time.
+    startISO(): string {
+        return this.start().toISOString().slice(0, -1)
+    }
+    endISO(): string {
+        return this.end().toISOString().slice(0, -1)
+    }
+
+    protected now(): Date {
+        return new Date(new Date().toLocaleString("eu-AU", {
+            timeZone: "Pacific/Auckland"
+        }))
+    }
+
+    protected abstract start(): Date
+    protected abstract end(): Date
+    abstract toSpeech(speech?: AmazonSpeech): AmazonSpeech
+}
+
+//Should have just used moment.js
+
+export default class AmazonDate extends DateRange {
     readonly year: number;
 
     /** zero indexed month */
@@ -23,6 +45,7 @@ export default class AmazonDate {
     readonly season?: Season;
 
     constructor(parse: string){
+        super()
         let elements = parse.split("-")
         
         //error if year contains no-digit (not supporting decade format)
@@ -52,8 +75,8 @@ export default class AmazonDate {
             this.season = elements[1] as Season
     }
 
-    /** Start for api requests */
-    start(): Date {
+    /** Start in NZ timezone */
+    protected start(): Date {
         if(this.week !== undefined){
             //month is 0-indexed, day isn't.
             let firstDay = new Date(this.year, 0, 1);
@@ -62,15 +85,15 @@ export default class AmazonDate {
             //TODO: consider friday part of the weekend?
             let weekendMod = this.weekend ? 5 : 0
             //first day needs a 1 in the day as it isn't 0-this.start()indexed
-            return new Date(this.year, 0, 1+firstMonday+this.week*7+weekendMod)
+            return new Date(this.year, 0, 1+firstMonday+(this.week-1)*7+weekendMod)
             
         } else if(this.month !== undefined){
             //if no specific date and is current month, then start searching from now?
             if(this.day !== undefined)
                 return new Date(this.year, this.month, this.day)
             //if current month, take start as now TODO: am I sure?
-            else if(new Date().getMonth() == this.month)
-                return new Date()
+            else if(this.now().getMonth() == this.month)
+                return this.now()
             //else just take month
             else
                 return new Date(this.year, this.month)
@@ -80,8 +103,8 @@ export default class AmazonDate {
             return new Date(this.year)
     }
 
-    /** End for api requests */
-    end(): Date {
+    /** End in NZ timezone */
+    protected end(): Date {
         if(this.week !== undefined){
             //end of week/end
             let monday = this.start()
@@ -113,14 +136,16 @@ export default class AmazonDate {
     toSpeech(speech?: AmazonSpeech): AmazonSpeech{
         speech = speech || new AmazonSpeech()
 
+        console.log("curdate: " + this.now().toString())
+
         const start = this.start()
-        const thisYear = new Date().getFullYear() == this.year
+        const thisYear = this.now().getFullYear() == this.year
         //relative to current year or absolute
         let yearStr = thisYear ? "????" : this.year.toString()
 
-        let yearDiff = this.year - new Date().getFullYear()
+        let yearDiff = this.year - this.now().getFullYear()
         //yearDiff*12 so that it works across the end of the year
-        let monthDiff = (start.getMonth())+yearDiff*12 - new Date().getMonth()
+        let monthDiff = (start.getMonth())+yearDiff*12 - this.now().getMonth()
         //TODO: make weekDiff work across year
         const weekDiff = (getWeek(start)) - getWeek()
 
@@ -151,7 +176,7 @@ export default class AmazonDate {
             let monthStr = padN(this.month+1, 2)
 
             if(this.day !== undefined){
-                let dayDiff = this.day - new Date().getDate()
+                let dayDiff = this.day - this.now().getDate()
                 //in relation to today
                 if(dayDiff == 1)
                     speech.say("tomorrow")

@@ -1,41 +1,52 @@
 import * as request from 'request-promise-native'
 
-export async function eventFindaRequest<RetType>(endpoint: string, query?: any): Promise<RetType[]>{
+export async function eventFindaRequest<RetType>(endpoint: string, query?: any): Promise<Response<RetType>>{
     let url = `http://api.eventfinda.co.nz/v2/${endpoint}.json`
-    let response =  request.get(url, {
+    let req =  request.get(url, {
         auth: {
             user: "alexaevents",
             pass: "3pjmvv59cgqc"
         },
         qs: query
     })
-    let ret = JSON.parse(await response)[endpoint] as RetType[]
-    console.log("COMPLETED REQUEST " + endpoint + ":\n" + response.uri.href)
+    let ret = {} as Response<RetType>
+    
+    let res = JSON.parse(await req)
+    console.log("COMPLETED REQUEST " + endpoint + ": " + Object.keys(query).map(key => `(${key}:${query[key]})`).join(" "))
     // console.log(JSON.stringify(ret))
-    return ret
+    return {
+        count: res["@attributes"].count,
+        list: res[endpoint]
+    }
 }
 
 const rows = 20;
-export async function eventFindaRequestMultiple<RetType>(endpoint: string, pages: number, query?: any): Promise<RetType[]>{
-    let page = 0;
-    let returns = [] as RetType[]
-
+export async function eventFindaRequestMultiple<RetType>(endpoint: string, pages: number, query?: any): Promise<Response<RetType>>{
     query = query || {}
     query.rows = query.rows || rows
+    query.offset = 0
 
+    let returns = (await eventFindaRequest<RetType>(endpoint, query))
+
+    let page = 1;
     let isMore = true
     while(isMore && (!pages || page < pages)){
         query.offset = page*query.rows
         let cur = (await eventFindaRequest<RetType>(endpoint, query))
 
-        if(0 < cur.length){
-            returns.push(...cur)
+        if(0 < cur.list.length){
+            returns.list.push(...cur.list)
         } else
             isMore = false;
 
         page++
     }
     return returns
+}
+
+export interface Response<ListType>{
+    count: number,
+    list: ListType[]
 }
 
 export interface LocationNode{
@@ -67,12 +78,12 @@ function flattenLocation(node: LocationNode, list?: LocationNode[]): LocationNod
     return list
 }
 
-export async function getLocations(levels?: number): Promise<LocationNode[]>{
+export async function getLocations(levels: number): Promise<LocationNode[]>{
     return flattenLocation((await eventFindaRequest<LocationNode>('locations', {
         fields: "location:(id,name,summary,url_slug,count_current_events,children)",
-        levels: levels||4,
+        levels: levels,
         venue: false
-    }))[0])
+    })).list[0])
 }
 
 export interface VenueNode extends LocationNode{
@@ -85,15 +96,15 @@ export interface VenueNode extends LocationNode{
 
 let venueFields = "location:(id,name,summary,url_slug,count_current_events,description)"
 
-export async function getVenues(url_slug?: string): Promise<VenueNode[]>{
-    let venues = await eventFindaRequestMultiple<VenueNode>('locations', 2, {
+export async function getVenues(url_slug: string, pages?: number): Promise<VenueNode[]>{
+    let venues = await eventFindaRequestMultiple<VenueNode>('locations', pages||2, {
         venue: true,
         order: "popularity",
         fields: venueFields,
         location_slug: url_slug
     })
 
-    return venues
+    return venues.list
 }
 
 export interface Event {
@@ -118,7 +129,7 @@ export interface EventRequest {
     end_date?: string
 }
 
-export async function getEvents(req?: EventRequest): Promise<Event[]>{
+export async function getEvents(req?: EventRequest): Promise<Response<Event>>{
     let events = await eventFindaRequest<Event>('events', Object.assign({
         order: EventRequestOrder.popularity,
         fields: "event:(id,name,url_slug,description,datetime_end,datetime_start,datetime_summary,location),"+venueFields,
@@ -127,3 +138,13 @@ export async function getEvents(req?: EventRequest): Promise<Event[]>{
     
     return events
 }
+
+// export async function getEvent(req?: EventRequest): Promise<Response<Event>>{
+//     let events = await eventFindaRequest<Event>('events', Object.assign({
+//         order: EventRequestOrder.popularity,
+//         fields: "event:(id,name,url_slug,description,datetime_end,datetime_start,datetime_summary,location),"+venueFields,
+//         rows: 10
+//     }, req))
+    
+//     return events
+// }

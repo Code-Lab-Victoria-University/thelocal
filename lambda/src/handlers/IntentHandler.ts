@@ -7,18 +7,11 @@ interface HandleResponse {
     (handlerInput: InputWrap): string|Response
 }
 
-export class IntentHandler implements RequestHandler {
+export class EasyIntentHandler implements RequestHandler {
     constructor(readonly intent: string|string[], readonly handleSpeech: HandleResponse|string){}
     
     canHandle(handlerInput: HandlerInput): boolean {
-        if(handlerInput.requestEnvelope.request.type === 'IntentRequest'){
-            let handlingIntent = handlerInput.requestEnvelope.request.intent.name
-            if(typeof this.intent === 'string')
-                return handlingIntent == this.intent
-            else
-                return this.intent.includes(handlingIntent)
-        } else
-            return false
+        return new InputWrap(handlerInput).isIntent(this.intent)
     }
     
     handle(handlerInput: HandlerInput): Response {

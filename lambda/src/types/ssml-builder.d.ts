@@ -1,14 +1,19 @@
 declare class Speech{
+
     say(text: string): this
-    /**
-     * @param time "time(s) or strength (eg: 0.5s, x-weak)"
-     */
-    pause(time: string): this
     emphasis(type: string, text: string): this
     prosody(options: object, text: string): this
     paragraph(text: string): this
     sentence(text: string): this
 
+    /**
+     * @param time in seconds eg: 0.5s
+     */
+    pause(time: string): this
+    /**
+     * @param strength https://developer.amazon.com/docs/custom-skills/speech-synthesis-markup-language-ssml-reference.html#break
+     */
+    pauseByStrength(strength: string): this
     /** true to remove the surrounding <speak> tags */
     ssml(noTagsSurround?: boolean): string
 }
