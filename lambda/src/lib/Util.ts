@@ -29,3 +29,11 @@ export function yyMMDD(date: Date): string {
 export function rand<Val>(...input: Val[]): Val{
     return input[Math.floor(input.length*Math.random())]
 }
+
+export function isLambda(): boolean {
+    return process.env.LAMBDA_TASK_ROOT !== undefined;
+}
+
+export function flatMap<Val>(arr: Val[], method: (val: Val) => Val[]): Val[] {
+    return arr.reduce((arr, cur) => arr.concat(method(cur)), [] as Val[])
+}

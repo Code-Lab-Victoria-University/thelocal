@@ -18,10 +18,11 @@ interface OldLocations{
 
 interface LocationFrequency {
     frequency: number,
-    place: CustomSlot,
-    isVenue: boolean
+    place: CustomSlot
 }
 let prevLocationsKey = "prevLocations"
+
+let items = 4
 
 export class EventsHandler implements RequestHandler {
     canHandle(input: HandlerInput) {
@@ -42,16 +43,17 @@ export class EventsHandler implements RequestHandler {
 
             let place = isVenue ? venueSlot : wrap.slots[Schema.LocationSlot]
 
-            let prevLocations = await wrap.getPresistentArr<OldLocations>(prevLocationsKey) || {}
+            let prevLocations = await wrap.getPersistentAttr<OldLocations>(prevLocationsKey) || {}
 
             //if no place from venue or location, load from most recent location used
-            if((!place || !place.resId) && prevLocations && Object.keys(prevLocations).length){
+            if((!place || !place.resId) && Object.keys(prevLocations).length){
                 //replace best place no best or if best is venue and new isn't or if both are equally venuey and new is higher frequency
                 let bestOldLocation = Object.values(prevLocations).reduce((prev, cur) => 
-                    !prev || cur.isVenue < prev.isVenue || (prev.isVenue == cur.isVenue && prev.frequency < cur.frequency) ? cur : prev)
+                    (!prev || prev.frequency < cur.frequency) ? cur : prev)
+
                 if(bestOldLocation){
                     place = bestOldLocation.place
-                    isVenue = bestOldLocation.isVenue
+                    isVenue = false
                 }
             }
             
@@ -62,24 +64,15 @@ export class EventsHandler implements RequestHandler {
                     let slug = place.resId
                     let placeName = place.resValue
 
-                    prevLocations[slug] = prevLocations[slug] || {
-                        frequency: 0,
-                        place: place,
-                        isVenue: isVenue
-                    }
-                    prevLocations[slug].frequency += 1
-
                     //save the last used location in case the user doesn't use a location in future requests
-                    if(!isVenue)
+                    if(!isVenue){
+                        prevLocations[slug] = prevLocations[slug] || {
+                            frequency: 0,
+                            place: place
+                        }
+                        prevLocations[slug].frequency += 1
                         wrap.setPersistentAttr<OldLocations>(prevLocationsKey, prevLocations)
-
-                    //start request object for api request
-                    let req = {
-                        location_slug: slug,
-                        rows: 3,
-                        //sort by date if venue, by popularity if location
-                        order: isVenue ? EventRequestOrder.date : EventRequestOrder.popularity
-                    } as EventRequest
+                    }
 
                     //parse date
                     let dateSlot = wrap.slots[Schema.DateSlot]
@@ -90,23 +83,35 @@ export class EventsHandler implements RequestHandler {
                     else if(timeSlot)
                         range = new AmazonTime(timeSlot.value)
 
-                    if(range){
-                        //load start/end values into request
-                        req.start_date = range.startISO()
-                        req.end_date = range.endISO()
+                    if(range)
                         console.log(JSON.stringify(range))
-                    }
+
+
+                    let category = wrap.slots[Schema.CategorySlot]
+
+                    //start request object for api request
+                    let req = {
+                        location_slug: slug,
+                        rows: items,
+                        start_date: range && range.startISO(),
+                        end_date: range && range.endISO(),
+                        //sort by date if venue or any more specific info was given
+                        order: (isVenue || range || category) ? EventRequestOrder.date : EventRequestOrder.popularity,
+                        category_slug: category && category.resId
+                    } as EventRequest
 
                     //request events list
                     let events = await getEvents(req)
+                        
+                    let categoryName = category && category.resId ? category.value : ""
 
                     //compile response
                     let speech = new AmazonSpeech()
                     if(events.count == 0)
-                        speech.say("I couldn't find any events")
+                        speech.say(`I couldn't find any ${categoryName} events`)
                     else
                         speech.say("I found").say(events.count.toString())
-                            .say(events.count == 1 ? "event" : "events")
+                            .say(categoryName).say(events.count == 1 ? "event" : "events")
                     
                     speech.say((isVenue ? "at " : "in ") + placeName)
 
@@ -115,9 +120,11 @@ export class EventsHandler implements RequestHandler {
                     
                     speech.pauseByStrength("x-strong")
                     
-                    events.list.forEach((event, i) => 
-                        speech.say("For").say(event.name)
-                            .say("say number").say((i+1).toString()).pauseByStrength("x-strong"))
+                    events.list.forEach((event, i) => {
+                        new AmazonDate(event.datetime_start).toSpeech(speech)
+                        speech.say("I have").say(event.name).pauseByStrength("strong")
+                        speech.say("for details say number").say((i+1).toString()).pauseByStrength("x-strong")
+                    })
 
                     console.log("SPEECH: " + speech.ssml())
         

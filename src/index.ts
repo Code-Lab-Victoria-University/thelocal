@@ -1,12 +1,16 @@
-import {writeFile} from 'fs'
+import {writeFile, read} from 'fs'
 import {join} from 'path'
 import {promisify} from 'util'
 
 import { app as alexaApp, CustomSlot } from 'alexa-app'
-import {getLocations, getVenues, VenueNode} from '../lambda/src/lib/request'
-import {baseEqual} from '../lambda/src/lib/Util'
+import {getLocations, getVenues, VenueNode, getCategories} from '../lambda/src/lib/request'
+import {baseEqual, flatMap} from '../lambda/src/lib/Util'
 import {Schema} from '../lambda/src/lib/Schema'
 
+/**
+ * returns all ordered, touching sentense permuatations of length at least 2 excluding original. eg "a1 a2 a3" = ["a1 a2", "a2 a3"]
+ * @param string 
+ */
 function permutations(string: string): string[] {
     let strings = string.split(" ")
     let arr = [] as string[]
@@ -19,24 +23,62 @@ function permutations(string: string): string[] {
     return arr
 }
 
+/**
+ * Mixes values into all possible orders [1,2,3] = [1, 12, 123, 122, 132, 312, 31s etc]
+ * @param values 
+ */
+function mix(values: string[]): string[]{
+    if(values.length <= 1)
+        return values
+    else {
+        let myVal = values.splice(0, 1)[0]
+        let mixed = mix(values)
+        // console.log(mixed)
+        //combinations of single val and full mixed list
+        return [myVal].concat(mixed.map(val => myVal+" "+val)).concat(mixed.map(val => val +" "+ myVal)).concat(mixed)
+    }
+}
+
 (async () => {
+
     let app = new alexaApp()
+
+    let venueTypeName = "VenueType"
+    let locationTypeName = "LocationType"
+    let categoryTypeName = "CategoryType"
 
     app.invocationName = "the local"
 
     app.dictionary = {
         "homeName": ["location","home","house","residence"],
         "thanks": ["Please", "Thanks", "Thank you", "Cheers"],
-        "whatsOn": ["Is there anything on",
-            "Is there something happening",
-            "What's on",
-            "What can I go to",
-            "What is happening",
-            "What's happening",
-            "What events are on",
-            "What events are happening",
-            "events"
+        "whats": [
+            "What's", 
+            "What is", 
+            "What events are", 
+            "Is there",
+
+            "events" ,
+            "events that are", 
+            "are there events",
+            "the events that are", 
+            "any events that are", 
+
+            "the events" ,
+            "any events" ,
+            "is there any events" ,
+            "is there any events that are", 
+
+            "anything", 
+            "anything that is", 
+            "anything thats",
+            "is there anything",
+            "is there anything that is",
+            "is there anything thats"
         ],
+        "happening": ["on", "happening", "playing"],
+        "search": ["Let me know", "Tell me", "Find", "Find me", "Search for", "Search", "Request", "List"],
+        "eventsName": ["events", "shows", "concerts", "gigs", "productions"],
         "eventChoice": ["number", "option", "event", "choice"]
     }
 
@@ -48,21 +90,10 @@ function permutations(string: string): string[] {
     //explores both types of place as well as no place (use home location)
     let placeTypes = [`at {-|${Schema.VenueSlot}}`, `in {-|${Schema.LocationSlot}}`]
 
-    function mix(values: string[]): string[]{
-        if(values.length <= 1)
-            return values
-        else {
-            let myVal = values.splice(0, 1)[0]
-            let mixed = mix(values)
-            // console.log(mixed)
-            //combinations of single val and full mixed list
-            return [myVal].concat(mixed.map(val => myVal+" "+val)).concat(mixed.map(val => val +" "+ myVal)).concat(mixed)
-        }
-    }
-
     let preTexts = [
-        "{|Let me know |Tell me |Find }{whatsOn}",
-        // `{|What} {-|${Schema.CategorySlot}} {events |shows |concerts |gigs |}{are on|are happening}`
+        "{|search }{what} {happening}",
+        `{|search }{What |Any |The |}{-|${Schema.CategorySlot}} {eventsName|} {happening|}`,
+        // `{|search} {-|${Schema.CategorySlot}} {eventsName|} {happening}`,
     ]
     eventsUtterances.push(...preTexts)
 
@@ -83,11 +114,11 @@ function permutations(string: string): string[] {
 
     app.intent(Schema.EventsIntent, {
         slots: {
-            [Schema.VenueSlot]: "VenueType",
-            [Schema.LocationSlot]: "LocationType",
+            [Schema.VenueSlot]: venueTypeName,
+            [Schema.LocationSlot]: locationTypeName,
             [Schema.DateSlot]: "AMAZON.DATE",
             [Schema.TimeSlot]: "AMAZON.TIME",
-            [Schema.CategorySlot]: "CategoryType"
+            [Schema.CategorySlot]: categoryTypeName
         },
         utterances: eventsUtterances
     })
@@ -113,7 +144,7 @@ function permutations(string: string): string[] {
         ]
     })
 
-    //remove edge whitespace (doesn't work on template syntax. Gotta override), replace multi space with single space
+    //remove edge whitespace (doesn't work on template syntax. TODO: work on template syntax underneath), replace multi space with single space
     for(let intent in app.intents){
         app.intents[intent].utterances = app.intents[intent].utterances
             .map(utterance => utterance.replace(/\s{2,}/, " ").trim())
@@ -122,31 +153,43 @@ function permutations(string: string): string[] {
     //generate location custom slot
     let locations = await getLocations(3)
     console.log(`${locations.length} locations retrieved`)
-    let locationTypeName = "LocationType"
+    console.log(`${locations.filter(loc => loc.count_current_events !== 0).length} happenin' locations`)
 
     app.customSlot(locationTypeName, locations.map(node => {return{id:node.url_slug, value:node.name}}))
 
-    //generate venue custom slot
-    let venueTypeName = "VenueType"
-    let venues = [] as VenueNode[]
-    let topLocations = (await getLocations(2)).filter(loc => loc.count_current_events != 0)
-    console.log(topLocations.length + " locations being used to find venues")
 
-    for(let location of topLocations) {
-        let oldLength = venues.length
-        for(let checkVenue of await getVenues(location.url_slug, 2)){
-            if(!venues.some(goodVenue => baseEqual(goodVenue.url_slug,checkVenue.url_slug) || baseEqual(goodVenue.name,checkVenue.name)))
-                venues.push(checkVenue)
-        }
-        console.log(location.name + ": " + (venues.length - oldLength))
-    }
-    console.log(venues.length + " venues retrieved")
+    //generate venue custom slot
+    // let venues = {} as {[key: string]: VenueNode}
+    // let topLocations = (await getLocations(2)).filter(loc => loc.count_current_events != 0)
+    // console.log(topLocations.length + " locations being used to find venues")
+
+
+    // for(let location of topLocations) {
+    //     let topVenues = await getVenues(location.url_slug, 8)
+    //     topVenues.forEach(val => venues[val.id] = val)
+    //     console.log(location.name + ": " + topVenues.length)
+    // }
+    let venues = await getVenues(undefined, 100)
+    console.log(Object.keys(venues).length + " venues retrieved")
+
+    venues = venues.filter(val => val.count_current_events !== 0)
+    console.log(venues.length + " valid venues")
 
     app.customSlot(venueTypeName, venues.map(node => {
         return {
             id: node.url_slug,
             value: node.name,
             synonyms: permutations(node.name).concat(node.summary)
+        } as CustomSlot
+    }))
+
+    let categories = await getCategories()
+    console.log(categories.length + " categories found")
+    app.customSlot(categoryTypeName, categories.map(node => {
+        return {
+            id: node.url_slug,
+            value: node.name,
+            synonyms: flatMap(node.name.split(", "), val => val.split(" & "))
         } as CustomSlot
     }))
 

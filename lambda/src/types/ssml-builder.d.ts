@@ -1,5 +1,4 @@
 declare class Speech{
-
     say(text: string): this
     emphasis(type: string, text: string): this
     prosody(options: object, text: string): this
@@ -19,23 +18,21 @@ declare class Speech{
 }
 
 declare module 'ssml-builder' {
-    export = Speech
-}
-
-declare class AmazonSpeech extends Speech{
-    whisper(text: string): this
-
-    /** Interpretations: https://developer.amazon.com/docs/custom-skills/speech-synthesis-markup-language-ssml-reference.html#say-as 
-     * 
-     * Interjections: https://developer.amazon.com/docs/custom-skills/speechcon-reference-interjections-english-australia.html
-    */
-    sayAs(options: {
-        interpret: string,
-        word: string,
-        format?: string
-    }): this
+    export default Speech
 }
 
 declare module 'ssml-builder/amazon_speech' {
-    export = AmazonSpeech
+    export default class AmazonSpeech extends Speech{
+        whisper(text: string): this
+
+        /** Interpretations: https://developer.amazon.com/docs/custom-skills/speech-synthesis-markup-language-ssml-reference.html#say-as 
+         * 
+         * Interjections: https://developer.amazon.com/docs/custom-skills/speechcon-reference-interjections-english-australia.html
+        */
+        sayAs(options: {
+            interpret: string,
+            word: string,
+            format?: string
+        }): this
+    }
 }

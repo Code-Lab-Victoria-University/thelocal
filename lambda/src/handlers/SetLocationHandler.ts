@@ -1,7 +1,7 @@
 import { HandlerInput, RequestHandler } from "ask-sdk-core";
 import { Response } from "ask-sdk-model";
 import InputWrap, { CustomSlot } from "../lib/InputWrap"
-import {getLocations, LocationNode} from '../lib/request'
+import {getLocations, Node} from '../lib/request'
 import {Schema} from '../lib/Schema'
 
 export class SetLocationHandler implements RequestHandler {

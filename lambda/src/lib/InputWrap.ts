@@ -114,7 +114,7 @@ export default class InputWrap {
         return this.sessionAttrs[key] !== undefined
     }
 
-    async getPresistentArr<RetType>(key: string): Promise<RetType|undefined>{
+    async getPersistentAttr<RetType>(key: string): Promise<RetType|undefined>{
         return (await this.persistentAttrs)[key] as RetType
     }
 

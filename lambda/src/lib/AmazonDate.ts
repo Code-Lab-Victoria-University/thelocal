@@ -46,7 +46,8 @@ export default class AmazonDate extends DateRange {
 
     constructor(parse: string){
         super()
-        let elements = parse.split("-")
+        //take first space element (ignore time on full ISO)
+        let elements = parse.split(" ")[0].split("-")
         
         //error if year contains no-digit (not supporting decade format)
         if(elements[0].match(/\D/))

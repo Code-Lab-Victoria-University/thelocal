@@ -1,4 +1,5 @@
 import { DateRange } from "./AmazonDate";
+import AmazonSpeech from "ssml-builder/amazon_speech";
 
 export enum TimePeriod{
     NIGHT = "NI",

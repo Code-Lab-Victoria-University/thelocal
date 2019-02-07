@@ -27,8 +27,9 @@ export class EventOptionHandler implements RequestHandler {
 
                 speech.say(event.name)
                     .say("is at").say(event.location.name)
-                    .say("on").say(event.datetime_summary.replace("-", "to"))
-                    .sentence(event.description)
+                    // .say("on").say(event.datetime_summary.replace("-", "to"))
+                new AmazonDate(event.datetime_start).toSpeech(speech)
+                speech.sentence(event.description)
                 
                 return input.responseBuilder.speak(speech.ssml()).getResponse()
             } else
