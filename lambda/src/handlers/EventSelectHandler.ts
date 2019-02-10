@@ -5,20 +5,19 @@ import {Schema} from '../lib/Schema'
 import AmazonSpeech from 'ssml-builder/amazon_speech'
 import AmazonDate from "../lib/AmazonDate";
 
-import {lastEventsKey} from "./EventsHandler"
 
-export class EventOptionHandler implements RequestHandler {
+export class EventSelectHandler implements RequestHandler {
     canHandle(input: HandlerInput) {
         let wrap = new InputWrap(input)
-        return wrap.isIntent(Schema.OptionIntent) && wrap.hasSessionAttr(lastEventsKey)
+        return wrap.isIntent(Schema.SelectIntent) && wrap.sessionAttrs.lastEvents !== undefined
     }
     
     handle(input: HandlerInput) {
         let wrap = new InputWrap(input)
-        let numSlot = wrap.getSlot(Schema.NumberSlot)
+        let numSlot = wrap.slots[Schema.NumberSlot]
 
-        if(wrap.isIntent(Schema.OptionIntent) && wrap.hasSessionAttr(lastEventsKey) && numSlot){
-            let events = wrap.sessionAttrs[lastEventsKey]!
+        if(numSlot){
+            let events = wrap.sessionAttrs.lastEvents!
             let number = Number.parseInt(numSlot.value)
 
             if(number <= events.list.length){
@@ -37,6 +36,6 @@ export class EventOptionHandler implements RequestHandler {
                     .speak(`Option ${number} is not one of the provided ${events.list.length} events`)
                     .getResponse()
         } else 
-            throw new Error("EventOptionHandler error: "+ JSON.stringify(wrap))
+            throw new Error("EventSelectHandler error: "+ JSON.stringify(wrap))
     }
 }

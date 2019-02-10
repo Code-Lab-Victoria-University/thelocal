@@ -43,9 +43,11 @@ function mix(values: string[]): string[]{
 
     let app = new alexaApp()
 
-    let venueTypeName = "VenueType"
-    let locationTypeName = "LocationType"
-    let categoryTypeName = "CategoryType"
+    const venueTypeName = "VenueType"
+    const locationTypeName = "LocationType"
+    const categoryTypeName = "CategoryType"
+    const dateTypeName = "AMAZON.DATE"
+    const timeTypeName = "AMAZON.TIME"
 
     app.invocationName = "the local"
 
@@ -56,28 +58,21 @@ function mix(values: string[]): string[]{
             "What's", 
             "What is", 
             "What events are", 
-            "Is there",
-
-            "events" ,
-            "events that are", 
             "are there events",
-            "the events that are", 
-            "any events that are", 
-
-            "the events" ,
-            "any events" ,
-            "is there any events" ,
-            "is there any events that are", 
-
+        ],
+        "findMeWhats": [
             "anything", 
             "anything that is", 
             "anything thats",
-            "is there anything",
-            "is there anything that is",
-            "is there anything thats"
+            "the events" ,
+            "any events" ,
+            "the events that are", 
+            "any events that are", 
+            "events" ,
+            "events that are", 
         ],
         "happening": ["on", "happening", "playing"],
-        "search": ["Let me know", "Tell me", "Find", "Find me", "Search for", "Search", "Request", "List"],
+        "search": ["Tell me", "Find", "Find me", "Search for", "Search", "Request", "List", "Is there"],
         "eventsName": ["events", "shows", "concerts", "gigs", "productions"],
         "eventChoice": ["number", "option", "event", "choice"]
     }
@@ -91,9 +86,11 @@ function mix(values: string[]): string[]{
     let placeTypes = [`at {-|${Schema.VenueSlot}}`, `in {-|${Schema.LocationSlot}}`]
 
     let preTexts = [
-        "{|search }{what} {happening}",
-        `{|search }{What |Any |The |}{-|${Schema.CategorySlot}} {eventsName|} {happening|}`,
-        // `{|search} {-|${Schema.CategorySlot}} {eventsName|} {happening}`,
+        "{whats} {happening}",
+        "{search} {findMeWhats} {happening}",
+        // "{search {eventsName}",
+        `{search} {What |Any |The |}{-|${Schema.CategorySlot}} {eventsName|} {happening|}`,
+        `What {-|${Schema.CategorySlot}} {eventsName} are {happening}`
     ]
     eventsUtterances.push(...preTexts)
 
@@ -107,7 +104,7 @@ function mix(values: string[]): string[]{
     }
 
     for(let preText of preTexts){
-        eventsUtterances.push(...mixes.map(mix => preText +" "+ mix))
+        eventsUtterances.push(...mixes.map(mix => preText+" "+ mix))
     }
 
     // eventsUtterances.push(...mixes.map(mix => preTexts +" "+ mix).concat(mixes.map()))
@@ -116,27 +113,46 @@ function mix(values: string[]): string[]{
         slots: {
             [Schema.VenueSlot]: venueTypeName,
             [Schema.LocationSlot]: locationTypeName,
-            [Schema.DateSlot]: "AMAZON.DATE",
-            [Schema.TimeSlot]: "AMAZON.TIME",
+            [Schema.DateSlot]: dateTypeName,
+            [Schema.TimeSlot]: timeTypeName,
             [Schema.CategorySlot]: categoryTypeName
         },
         utterances: eventsUtterances
     })
 
-    // app.intent(Schema.SetLocationIntent, {
-    //     slots: { [Schema.LocationSlot]: "LocationType" },
-    //     utterances: [
-    //         "{I live|I am|I'm|I'm located} in {-|Location}",
-    //         "{|My }{homeName} {is in|is|is at} {-|Location}",
-    //         "Set{| my} {homeName} {to|as} {-|Location}"
-    //     ]
-    // })
+    let makeSetIntentUtterances = (names: string[]) => names.map(name => `Set ${name} to `)
+
+    let makeSetIntent = (setIntentName: string, slot: string, slotType: string, ...names: string[]) => {
+        app.intent(setIntentName, {
+            slots: {[slot]: slotType},
+            utterances: flatMap(names, name => [
+                `Set ${name} to {-|${slot}}`,
+                `Set the ${name} to {-|${slot}}`,
+                `${name} is {-|${slot}}`,
+                `The ${name} is {-|${slot}}`,
+                `Add ${name} {-|${slot}}`
+            ])
+        })
+    }
+
+    makeSetIntent(Schema.SetIntents.Category, Schema.CategorySlot, categoryTypeName, "Category")
+    makeSetIntent(Schema.SetIntents.Date, Schema.DateSlot, dateTypeName, "Date", "Day", "Week", "Month")
+    makeSetIntent(Schema.SetIntents.Time, Schema.TimeSlot, timeTypeName, "Time")
+    makeSetIntent(Schema.SetIntents.Venue, Schema.VenueSlot, venueTypeName, "Venue", "Bar", "")
+    makeSetIntent(Schema.SetIntents.Location, Schema.LocationSlot, locationTypeName, "Location", "Home", "City", "Town")
+
     let identityIntent = {slots: {}, utterances: []}
     app.intent("AMAZON.CancelIntent", identityIntent)
     app.intent("AMAZON.HelpIntent", identityIntent)
     app.intent("AMAZON.StopIntent", identityIntent)
 
-    app.intent(Schema.OptionIntent, {
+    app.intent(Schema.RESET, {
+        utterances: [
+            "Reset the database"
+        ]
+    })
+
+    app.intent(Schema.SelectIntent, {
         slots: { [Schema.NumberSlot]: "AMAZON.NUMBER" },
         utterances: [
             "{Tell me|Describe|Explain}{| about| more about}{| eventChoice} {-|Number}",
