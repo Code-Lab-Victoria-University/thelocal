@@ -30,6 +30,16 @@ export function rand<Val>(...input: Val[]): Val{
     return input[Math.floor(input.length*Math.random())]
 }
 
+export function randN<Val>(input: Val[], n: number): Val[]{
+    let goodI = [] as number[]
+    while(goodI.length < n){
+        let newI = Math.floor(input.length*Math.random())
+        if(!goodI.includes(newI))
+            goodI.push(newI)
+    }
+    return goodI.map(i => input[i])
+}
+
 export function isLambda(): boolean {
     return process.env.LAMBDA_TASK_ROOT !== undefined;
 }

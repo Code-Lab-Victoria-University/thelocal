@@ -1,4 +1,4 @@
-import {writeFile, read} from 'fs'
+import {writeFile, read, write} from 'fs'
 import {join} from 'path'
 import {promisify} from 'util'
 
@@ -192,6 +192,7 @@ function mix(values: string[]): string[]{
             synonyms: flatMap(node.name.split(", "), val => val.split(" & "))
         } as CustomSlot
     }))
+    await promisify(writeFile)(join("lambda", "data", "category-names.json"), JSON.stringify(categories.map(node => node.name)))
 
     await promisify(writeFile)(join("models", "en-AU.json"), app.schemas.askcli())
 })()

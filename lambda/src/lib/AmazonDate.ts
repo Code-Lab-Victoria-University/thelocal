@@ -137,7 +137,7 @@ export default class AmazonDate extends DateRange {
     toSpeech(speech?: AmazonSpeech): AmazonSpeech{
         speech = speech || new AmazonSpeech()
 
-        console.log("curdate: " + this.now().toString())
+        // console.log("curdate: " + this.now().toString())
 
         const start = this.start()
         const thisYear = this.now().getFullYear() == this.year

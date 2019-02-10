@@ -2,7 +2,7 @@
     "files.exclude": {
         "**/node_modules": true,
         "hooks": true,
-        "**/dist": true,
+        // "**/dist": true,
         "**/package-lock.json": true,
         "**/asktemp*.zip": true
     }
