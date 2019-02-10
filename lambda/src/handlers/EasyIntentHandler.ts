@@ -4,7 +4,7 @@ import { NodeStringDecoder } from "string_decoder";
 import InputWrap from '../lib/InputWrap'
 
 interface HandleResponse {
-    (handlerInput: InputWrap): string|Response
+    (handlerInput: InputWrap, input: HandlerInput): string|Response
 }
 
 export class EasyIntentHandler implements RequestHandler {
@@ -18,7 +18,7 @@ export class EasyIntentHandler implements RequestHandler {
         if(typeof this.handleSpeech === "string"){
             return handlerInput.responseBuilder.speak(this.handleSpeech).getResponse()
         } else {
-            let response = this.handleSpeech(new InputWrap(handlerInput))
+            let response = this.handleSpeech(new InputWrap(handlerInput), handlerInput)
             if(typeof response  === 'string')
                 return handlerInput.responseBuilder.speak(response).getResponse()
             else

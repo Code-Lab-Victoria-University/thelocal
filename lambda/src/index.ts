@@ -3,17 +3,19 @@ import { SkillBuilders } from "ask-sdk-core";
 import { LaunchRequestHandler } from "./handlers/LaunchRequestHandler";
 import { SessionEndedRequestHandler } from "./handlers/SessionEndedRequestHandler";
 import { CustomErrorHandler } from "./handlers/CustomErrorHandler";
-import {SetLocationHandler} from "./handlers/SetLocationHandler"
+// import {SetLocationHandler} from "./handlers/SetLocationHandler"
 
-import {EasyIntentHandler} from './handlers/IntentHandler'
+import {EasyIntentHandler} from './handlers/EasyIntentHandler'
 import {EventsHandler} from './handlers/EventsHandler'
 
 import { DynamoDbPersistenceAdapter } from 'ask-sdk-dynamodb-persistence-adapter';
 
 import {getEvents} from './lib/request'
 import InputWrap from "./lib/InputWrap";
-import { EventOptionHandler } from "./handlers/EventOptionHandler";
+import { EventSelectHandler } from "./handlers/EventSelectHandler";
 import { rand } from "./lib/Util";
+import { ChangeEventsSlotHandler } from "./handlers/ChangeEventsSlotHandler";
+import { Schema } from "./lib/Schema";
 
 const Persistence = new DynamoDbPersistenceAdapter({
     tableName: "thelocal"
@@ -47,9 +49,15 @@ exports.handler = skillBuilder
         new EasyIntentHandler(['AMAZON.CancelIntent', 'AMAZON.StopIntent'], 
             rand('See ya', 'Bye', "Goodbye")),
 
-        new SetLocationHandler(),
+        new EasyIntentHandler(Schema.RESET, (wrap, input) => {
+            input.attributesManager.setPersistentAttributes({})
+            return "Successful reset"
+        }),
+
+        // new SetLocationHandler(),
+        new ChangeEventsSlotHandler(),
         new EventsHandler(),
-        new EventOptionHandler(),
+        new EventSelectHandler(),
 
         new SessionEndedRequestHandler()
         )
