@@ -29,6 +29,7 @@ export class EventSelectHandler implements RequestHandler {
                     // .say("on").say(event.datetime_summary.replace("-", "to"))
                 new AmazonDate(event.datetime_start).toSpeech(speech)
                 speech.sentence(event.description)
+                speech.sentence("Goodbye")
                 
                 return input.responseBuilder.speak(speech.ssml()).getResponse()
             } else

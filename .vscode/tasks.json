@@ -13,6 +13,10 @@
         {
             "type": "npm",
             "script": "deploy-model",
+        },
+        {
+            "type": "npm",
+            "script": "build-deploy-model",
             "problemMatcher": [
                 "$tsc"
             ]
@@ -28,9 +32,11 @@
                 "$tsc"
             ]
         },
+
         {
             "type": "npm",
-            "script": "tsc",
+            "script": "tsc-watch",
+            "label": "Watch Lambda",
             "path": "lambda/",
             "problemMatcher": [
                 "$tsc"

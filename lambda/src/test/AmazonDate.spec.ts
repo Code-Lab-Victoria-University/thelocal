@@ -17,7 +17,7 @@ let yesterday = new Date()
 yesterday.setDate(now.getDate()-1)
 
 function dateToStr(date: Date): string{
-    return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`
+    return `${date.getFullYear()}-${padN(date.getMonth()+1, 2)}-${padN(date.getDate(), 2)}`
 }
 
 let datePairs = [
@@ -34,10 +34,10 @@ let datePairs = [
 describe("DatePrint", () => {
     for(let testPair of datePairs){
         let dateStr = testPair[0]
+        let expected = testPair[1]
         let dateObj = new AmazonDate(dateStr)
         let ssml = dateObj.toSpeech().ssml()
 
-        let expected = testPair[1]
         let expectedSsml = `<speak>${expected}</speak>`
 
         it(`${dateStr} should become ${expected}`, () => {

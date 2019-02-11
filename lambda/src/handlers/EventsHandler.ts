@@ -118,50 +118,60 @@ export class EventsHandler implements RequestHandler {
                 if(range)
                     range.toSpeech(speech)
 
-                const refineRecommendCountKey = "refineRecommendCount"
-                let refineRecommendCount = await input.getPersistentAttr(refineRecommendCountKey) as number || 0
+                speech.pauseByStrength("strong")
 
-//TODO: here
+                if(events.count === 0){
+                    speech.say("Please try again or change one of your filters")
+                } else {
+                    const refineRecommendCountKey = "refineRecommendCount"
+                    let refineRecommendCount = await input.getPersistentAttr(refineRecommendCountKey) as number || 0
+                    // let refineRecommendCount = 0
 
-                if(items*3 < events.count && refineRecommendCount < 3){
-                    speech.pauseByStrength("strong")
-                        .say("I recommend refining your search by specifying a")
-                        .say(
-                            categoryName ? "category" :
-                                !isVenue ? "venue" :
-                                !dateSlot ? "date" :
-                                !timeSlot ? "time" :
-                                "more specific date"
-                        )
-                    input.setPersistentAttr(refineRecommendCountKey, refineRecommendCount+1)
-                }
+                    if((items*3 < events.count) && refineRecommendCount < 5){
+                        let [name, suggestion] = !dateSlot ? ["date", "next week"] :
+                        !categoryName ? ["category", "folk music"] :
+                        !isVenue ? ["venue", "city gallery"] :
+                        !timeSlot ? ["time", "tonight"] :
+                        ["more specific date", "this weekend"]
+
+                        speech.say("I recommend refining your search filters by specifying a")
+                            .say(`${name}, for example, say set ${name} to ${suggestion}`)
+                            .pauseByStrength("strong")
+
+                        input.setPersistentAttr(refineRecommendCountKey, refineRecommendCount+1)
+                    }
+
+                    speech.say("I'll read you the first").say(Math.min(events.count, events.list.length).toString()).pauseByStrength("strong")
+
+                    speech.say("You can say your request at the end or interrupt me by saying Alexa")
+                    
+                    speech.pauseByStrength("x-strong")
                 
-                speech.pauseByStrength("x-strong")
-                
-                events.list.forEach((event, i) => {
-                    new AmazonDate(event.datetime_start).toSpeech(speech)
-                    speech.say("I have").say(event.name).pauseByStrength("strong")
-                    speech.say("for details say number").say((i+1).toString()).pauseByStrength("x-strong")
-                })
+                    events.list.forEach((event, i) => {
+                        new AmazonDate(event.datetime_start).toSpeech(speech)
+                        speech.say("I have").say(event.name).pauseByStrength("strong")
+                        speech.say("for details say number").say((i+1).toString()).pauseByStrength("x-strong")
+                    })
 
-                console.log("SPEECH: " + speech.ssml())
-    
-                let responseBuilder = input.response
-                    .speak(speech.ssml())
-                if(0 < events.count){
-                    responseBuilder.reprompt("You can list the next page, restate what you heard or choose one of the options to hear more")
                     input.sessionAttrs.lastEvents = events
                 }
-                return responseBuilder.getResponse()
+
+                console.log("SPEECH: " + speech.ssml())
+                
+                return input.response
+                    .speak(speech.ssml())
+                    .reprompt("You can refine a search filter or start from scratch")
+                    .getResponse()
             } else
                 return input.response
-                    .speak(`Sorry, I don't know anywhere called ${place.value}`)
-                    // .reprompt('Try again, speaking clearly and slowly')
+                    .speak(`Sorry, I don't know anywhere called ${place.value}, please ask me again slowly`)
+                    .reprompt("Please ask your question again slowly")
                     .getResponse()
         //no location provided
         } else
             return input.response
-                .speak(`Please state a location in your question. I will remember your most frequent location.`)
+                .speak(`Please ask me again with a valid location or venue. I will remember your most frequent location.`)
+                .reprompt("Please ask your question again slowly")
                 .getResponse()
     }
 }

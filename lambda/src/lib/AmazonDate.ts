@@ -1,6 +1,7 @@
 import getWeek from "iso-week"
 import {padN, mmDD, yyMMDD} from "./Util"
 import AmazonSpeech from 'ssml-builder/amazon_speech'
+import moment, { Moment } from 'moment'
 
 export enum Season {
     WINTER = "WI",
@@ -12,124 +13,89 @@ export enum Season {
 export abstract class DateRange {
     //remove the Z indication, meaning local time.
     startISO(): string {
-        return this.start().toISOString().slice(0, -1)
+        return this.start().toISOString().split('Z')[0]
     }
     endISO(): string {
-        return this.end().toISOString().slice(0, -1)
+        return this.end().toISOString().split('Z')[0]
     }
 
-    protected now(): Date {
-        return new Date(new Date().toLocaleString("eu-AU", {
-            timeZone: "Pacific/Auckland"
-        }))
-    }
+    // protected now(): Moment {
+    //     // return new Date()
+    //     return moment()
+    //     // return new Date(new Date().toLocaleString("eu-AU", {
+    //     //     timeZone: "Pacific/Auckland"
+    //     // }))
+    // }
 
-    protected abstract start(): Date
-    protected abstract end(): Date
+    protected abstract start(): Moment
+    protected abstract end(): Moment
     abstract toSpeech(speech?: AmazonSpeech): AmazonSpeech
 }
 
 //Should have just used moment.js
 
 export default class AmazonDate extends DateRange {
-    readonly year: number;
+    readonly date: Moment;
 
-    /** zero indexed month */
-    readonly month?: number;
-    /** 1 indexed day */
-    readonly day?: number;
+    // /** zero indexed month */
+    // readonly month?: number;
+    // /** 1 indexed day */
+    // readonly day?: number;
 
-    readonly week?: number;
-    readonly weekend?: boolean;
+    readonly isOnlyYear: boolean = false;
 
-    readonly season?: Season;
+    readonly isWeek: boolean = false;
+    readonly isWeekend: boolean = false;
+
+    readonly isDay: boolean = false;
+
+    // readonly season?: Season;
 
     constructor(parse: string){
         super()
+
         //take first space element (ignore time on full ISO)
-        let elements = parse.split(" ")[0].split("-")
+        let elements = parse.split(" ")[0].split("-").filter(el => el != "XX")
         
         //error if year contains no-digit (not supporting decade format)
         if(elements[0].match(/\D/))
             throw new Error("Year contained non-digit while parsing: "+ parse)
-        else
-            this.year = Number.parseInt(elements[0])
 
-        //no more elements
-        if(elements[1] === undefined)
-            return
-
-        // W51 week element format
-        if(elements[1].match(/^W\d+$/)){
-            this.week = Number.parseInt(elements[1].slice(1))
-            this.weekend = elements[2] == "WE"
-
-        //month element
-        } else if(elements[1].match(/^\d+$/)){
+        //only has year
+        if(elements[1] === undefined){
+            this.isOnlyYear = true
+            elements[1] = "01"
+            elements[2] = "01"
+        //has week/weekend
+        }else if(elements[1].match(/^W\d+$/)){
+            this.isWeek = true
+            this.isWeekend = elements[2] === "WE"
+            if(this.isWeekend)
+                elements[2] = "5"
+        //has month/date
+        } else if(elements[1].match(/^\d+$/)) {
             //zero indexed
-            this.month = Number.parseInt(elements[1])-1
-            if(elements[2] !== undefined && elements[2].match(/^\d+$/))
-                this.day = Number.parseInt(elements[2])
+            if(elements[2] && elements[2].match(/^\d+$/))
+                this.isDay = true
+            else
+                elements[2] = "01"
+        }
 
-        //season element
-        } else if(elements[1].match(/^\D+$/))
-            this.season = elements[1] as Season
+        this.date = moment(elements.join('-'))
     }
 
     /** Start in NZ timezone */
-    protected start(): Date {
-        if(this.week !== undefined){
-            //month is 0-indexed, day isn't.
-            let firstDay = new Date(this.year, 0, 1);
-            //first day of year => days to first monday from 1st: Sunday = +1, Monday = +0, Tuesday = -1
-            let firstMonday = 1-firstDay.getDay()
-            //TODO: consider friday part of the weekend?
-            let weekendMod = this.weekend ? 5 : 0
-            //first day needs a 1 in the day as it isn't 0-this.start()indexed
-            return new Date(this.year, 0, 1+firstMonday+(this.week-1)*7+weekendMod)
-            
-        } else if(this.month !== undefined){
-            //if no specific date and is current month, then start searching from now?
-            if(this.day !== undefined)
-                return new Date(this.year, this.month, this.day)
-            //if current month, take start as now TODO: am I sure?
-            else if(this.now().getMonth() == this.month)
-                return this.now()
-            //else just take month
-            else
-                return new Date(this.year, this.month)
-
-        //TODO: handle season
-        } else
-            return new Date(this.year)
+    protected start() {
+        return moment(this.date)
     }
 
     /** End in NZ timezone */
-    protected end(): Date {
-        if(this.week !== undefined){
-            //end of week/end
-            let monday = this.start()
-            monday.setDate(monday.getDate()+(this.weekend ? 2 : 7))
-            monday.setMilliseconds(-1)
-            return monday
-        } else if(this.month !== undefined){
-            if(this.day !== undefined){
-                //end of day
-                let startDay = new Date(this.year, this.month, this.day+1)
-                startDay.setMilliseconds(-1)
-                return startDay
-            }
-
-            //end of current month, even if start is part way through
-            let first = new Date(this.year, this.month+1)
-            first.setMilliseconds(-1)
-            return first
-        } else {
-            //end of year
-            let endYear = new Date(this.year+1, 0, 1)
-            endYear.setMilliseconds(-1)
-            return endYear
-        }
+    protected end() {
+        let clone = moment(this.date)
+        return this.isWeek ? clone.endOf('week') :
+            this.isOnlyYear ? clone.endOf('year') :
+            this.isDay ? clone.endOf('day') :
+            clone.endOf('month')
     }
 
     //There are three different print categories: week, month, year. Week should be in relation to the curWeek/date. month can be in relation to curWeek, curMonth, monthname or date. year should just be in relation to curYear/yearname.
@@ -139,16 +105,17 @@ export default class AmazonDate extends DateRange {
 
         // console.log("curdate: " + this.now().toString())
 
-        const start = this.start()
-        const thisYear = this.now().getFullYear() == this.year
+        // const start = this.start()
+        const thisYear = this.date.isSame(moment(), 'year')
         //relative to current year or absolute
-        let yearStr = thisYear ? "????" : this.year.toString()
+        const yearStr = thisYear ? "????" : this.date.year().toString()
 
-        let yearDiff = this.year - this.now().getFullYear()
-        //yearDiff*12 so that it works across the end of the year
-        let monthDiff = (start.getMonth())+yearDiff*12 - this.now().getMonth()
-        //TODO: make weekDiff work across year
-        const weekDiff = (getWeek(start)) - getWeek()
+        console.log(this.start().startOf('day'), moment().startOf('day'))
+
+        const dayDiff = this.start().startOf('day').diff(moment().startOf('day'), 'days')
+        const weekDiff = this.start().startOf('isoWeek').diff(moment().startOf('isoWeek'), 'weeks')
+        const monthDiff = this.start().startOf('month').diff(moment().startOf('month'), 'months')
+        const yearDiff = this.start().startOf('year').diff(moment().startOf('year'), 'years')
 
         //this value is undefined if the week isn't close enough to be one of the three
         let adjacentWeekText = undefined as string|undefined
@@ -159,9 +126,9 @@ export default class AmazonDate extends DateRange {
         else if(weekDiff == -1)
             adjacentWeekText = "last"
 
-        if(this.week !== undefined){
+        if(this.isWeek){
             //if week type, then follow that print
-            let weekOrWeekend = this.weekend ? "weekend" : "week"
+            const weekOrWeekend = this.isWeekend ? "weekend" : "week"
             
             //in relation to this week
             if(adjacentWeekText)
@@ -169,15 +136,25 @@ export default class AmazonDate extends DateRange {
             //other week
             else
                 speech.say("the").say(weekOrWeekend).say("of").sayAs({
-                    word: yearStr + mmDD(start),
+                    word: yearStr + this.date.format('MMDD'),
                     interpret: "date"
                 })
-        } else if(this.month !== undefined){
+        //specified only year
+        } else if (this.isOnlyYear) {
+            if(yearDiff == 1)
+                speech.say("next year")
+            else if(yearDiff == 0)
+                speech.say("this year")
+            else if(yearDiff == -1)
+                speech.say("last year")
+            else
+                speech.say(this.date.year().toString())
+        //basic date fallback
+        } else {
             //used both for date and month variants
-            let monthStr = padN(this.month+1, 2)
+            const monthStr = this.date.format('MM')
 
-            if(this.day !== undefined){
-                let dayDiff = this.day - this.now().getDate()
+            if(this.isDay) {
                 //in relation to today
                 if(dayDiff == 1)
                     speech.say("tomorrow")
@@ -189,14 +166,12 @@ export default class AmazonDate extends DateRange {
                 else if(adjacentWeekText)
                     speech
                         .say(adjacentWeekText)
-                        .say(new Intl.DateTimeFormat('en-AU', {
-                            weekday: "long"
-                        }).format(start))
+                        .say(this.date.format('dddd'))
                 //other date
                 else
                     speech.say("on").sayAs({
                         interpret: "date",
-                        word: yearStr+monthStr+padN(this.day, 2)
+                        word: yearStr+monthStr+this.date.format('DD')
                     })
             } else {
                 //in relation to curMonth
@@ -213,18 +188,6 @@ export default class AmazonDate extends DateRange {
                         interpret: "date"
                     })
             }
-        } else {
-
-            //relative to curYear
-            if(yearDiff == 1)
-                speech.say("next year")
-            else if(yearDiff == 0)
-                speech.say("this year")
-            else if(yearDiff == -1)
-                speech.say("last year")
-            //other years
-            else
-                speech.say(this.year.toString())
         }
 
         return speech

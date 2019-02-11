@@ -18,13 +18,13 @@
             "codeUri": "lambda",
             "functionName": "ask-custom-thelocal-default",
             "handler": "dist/index.handler",
-            "revisionId": "2dd60692-5631-4792-91ca-5f6b7513f38d",
+            "revisionId": "0301b2cf-e0f2-49b7-8738-462143631f0a",
             "runtime": "nodejs8.10"
           }
         ],
         "interactionModel": {
           "en-AU": {
-            "eTag": "24178244df9b136a263db3393970af76"
+            "eTag": "eb479c9b9347d17a8f8ccf3e42b1c4e1"
           }
         }
       }

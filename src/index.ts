@@ -148,7 +148,7 @@ function mix(values: string[]): string[]{
 
     app.intent(Schema.RESET, {
         utterances: [
-            "Reset the database"
+            "Reset database"
         ]
     })
 
@@ -195,7 +195,7 @@ function mix(values: string[]): string[]{
         return {
             id: node.url_slug,
             value: node.name,
-            synonyms: permutations(node.name).concat(node.summary)
+            synonyms: permutations(node.name)//.concat(node.summary)
         } as CustomSlot
     }))
 
@@ -208,7 +208,8 @@ function mix(values: string[]): string[]{
             synonyms: flatMap(node.name.split(", "), val => val.split(" & "))
         } as CustomSlot
     }))
-    await promisify(writeFile)(join("lambda", "data", "category-names.json"), JSON.stringify(categories.map(node => node.name)))
+    
+    await promisify(writeFile)(join("lambda", "src", "data", "category-names.json"), JSON.stringify(categories.map(node => node.name)))
 
     await promisify(writeFile)(join("models", "en-AU.json"), app.schemas.askcli())
 })()

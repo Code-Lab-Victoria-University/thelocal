@@ -47,7 +47,7 @@ exports.handler = skillBuilder
 
         new EasyIntentHandler("AMAZON.HelpIntent", 'You can say hello to me!'),
         new EasyIntentHandler(['AMAZON.CancelIntent', 'AMAZON.StopIntent'], 
-            rand('See ya', 'Bye', "Goodbye")),
+            rand('Bye', "Goodbye")),
 
         new EasyIntentHandler(Schema.RESET, (wrap, input) => {
             input.attributesManager.setPersistentAttributes({})

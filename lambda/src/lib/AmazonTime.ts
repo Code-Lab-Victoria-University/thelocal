@@ -1,5 +1,6 @@
 import { DateRange } from "./AmazonDate";
 import AmazonSpeech from "ssml-builder/amazon_speech";
+import moment = require("moment");
 
 export enum TimePeriod{
     NIGHT = "NI",
@@ -34,16 +35,11 @@ export default class AmazonTime extends DateRange {
     }
 
     protected start(){
-        let now = this.now()
-        now.setHours(this.hours)
-        now.setMinutes(this.minutes)
-        return now
+        return moment().hours(this.hours).minutes(this.minutes)
     }
 
     protected end(){
-        let start = this.start()
-        start.setHours(start.getHours()+6)
-        return start
+        return this.start().add(6, 'hours')
     }
 
     toSpeech(speech?: AmazonSpeech | undefined): AmazonSpeech {

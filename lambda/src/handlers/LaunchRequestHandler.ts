@@ -22,11 +22,11 @@ function categoriesString(n: number){
 }
 
 const tutorials = [
-    "I can find you local events.",
-    () => `You can search based off your location in New Zealand, a specific venue, a category such as ${categoriesString(3)}, a date or time`,
-    "You can request for help about a specific action or in general any time",
-    "You can interrupt me at any time and start speaking if you already know what you want",
-    "You can say your request straight after saying 'alexa start the local' and I will go straight to the results"
+    "I can find you local events based on your request. For example, Find me opera events in wellington next week",
+    // "You can interrupt me at any time using the Alexa wake word. For example, Alexa option 3",
+    () => `You can filter events based off your location in New Zealand, a specific venue, a category such as ${categoriesString(3)}, a date or time. For example, Tell me what's happening at city gallery next month`,
+    // "You can change your location, venue, category, date or time filter at any time by interrupting. For example, Set the location to auckland",
+    // "You can skip this introduction by stating your request straight after saying 'alexa start the local' and I will go straight to the results. For example, Alexa ask the local what's on"
 ]
 
 const runsKey = "LaunchRequestRuns"
@@ -38,7 +38,7 @@ export class LaunchRequestHandler implements RequestHandler {
 
     getExample(speech?: AmazonSpeech): AmazonSpeech{
         speech = speech || new AmazonSpeech()
-        return new AmazonSpeech()
+        return speech
             .say(rand("For example", "Try going", "Something like")).pauseByStrength('medium')
             .say(rand(...examples))
     }
@@ -49,7 +49,7 @@ export class LaunchRequestHandler implements RequestHandler {
         let runs = await input.getPersistentAttr<number>(runsKey) || 0
         await input.setPersistentAttr<number>(runsKey, runs+1)
 
-        let tutorialI = Math.floor(runs/2)
+        let tutorialI = runs
         let tutorialAppend = tutorialI < tutorials.length ? tutorials[tutorialI] : rand(...tutorials)
 
         if(typeof tutorialAppend === "function")
@@ -58,8 +58,7 @@ export class LaunchRequestHandler implements RequestHandler {
         let speech = new AmazonSpeech().say("Welcome to the local.")
             .say(tutorialAppend)
 
-        if(tutorialI === 0)
-            this.getExample(speech)
+        // this.getExample(speech)
         
         return handlerInput.responseBuilder
             .speak(speech.ssml())
