@@ -3,14 +3,12 @@ import { SkillBuilders } from "ask-sdk-core";
 import { LaunchRequestHandler } from "./handlers/LaunchRequestHandler";
 import { SessionEndedRequestHandler } from "./handlers/SessionEndedRequestHandler";
 import { CustomErrorHandler } from "./handlers/CustomErrorHandler";
-// import {SetLocationHandler} from "./handlers/SetLocationHandler"
 
 import {EasyIntentHandler} from './handlers/EasyIntentHandler'
 import {EventsHandler} from './handlers/EventsHandler'
 
 import { DynamoDbPersistenceAdapter } from 'ask-sdk-dynamodb-persistence-adapter';
 
-import {getEvents} from './lib/request'
 import InputWrap from "./lib/InputWrap";
 import { EventSelectHandler } from "./handlers/EventSelectHandler";
 import { rand } from "./lib/Util";
@@ -59,7 +57,15 @@ exports.handler = skillBuilder
         new EventsHandler(),
         new EventSelectHandler(),
 
-        new SessionEndedRequestHandler()
+        new SessionEndedRequestHandler(),
+
+        //handle all
+        {
+            canHandle: () => true,
+            handle: input => input.responseBuilder
+                .speak("I couldn't understand what you said. Please speak clearly.")
+                .getResponse()
+        }
         )
 
     .addErrorHandlers(new CustomErrorHandler)

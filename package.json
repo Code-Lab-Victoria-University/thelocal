@@ -8,8 +8,8 @@
     "debug-model": "node --inspect-brk=9229 dist/src/index",
     "deploy-model": "ask deploy -t model --force",
     "build-deploy-model": "npm run build-model && npm run deploy-model",
-    
-    "deploy-lambda": "rm -f lambda/asktemp* && ask deploy -t lambda --force"
+
+    "build-deploy-lambda": "cd lambda && tsc && cd .. && rm -f lambda/asktemp* && ask deploy -t lambda --force"
   },
   "repository": {
     "type": "git",
@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/alexa/skill-sample-nodejs-hello-world#readme",
   "dependencies": {
+    "@types/moment-timezone": "^0.5.10",
     "@types/request": "^2.48.1",
     "@types/request-promise-native": "^1.0.15",
     "alexa-app": "^4.2.3",

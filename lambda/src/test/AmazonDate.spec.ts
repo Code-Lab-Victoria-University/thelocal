@@ -3,6 +3,7 @@ import assert, { AssertionError } from 'assert'
 import AmazonDate from "../lib/AmazonDate";
 import {padN} from '../lib/Util'
 import AmazonSpeech from 'ssml-builder/amazon_speech'
+import AmazonTime from '../lib/AmazonTime';
 
 let now = new Date()
 let year = now.getFullYear()
@@ -44,6 +45,16 @@ describe("DatePrint", () => {
             assert.equal(ssml, expectedSsml, JSON.stringify(dateObj))
         })
     }
+})
+
+describe("DateTime", () => {
+    let dateObj = new AmazonDate(dateToStr(tomorrow))
+    let timeObj = new AmazonTime("NI")
+
+    dateObj.setTime(timeObj)
+    it(`should be tomorrow night`, () => {
+        assert.equal(dateObj.toSpeech().ssml(), "<speak>tomorrow night</speak>")
+    })
 })
 
 describe("Speech", () => {

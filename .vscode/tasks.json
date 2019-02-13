@@ -23,7 +23,7 @@
         },
         {
             "type": "npm",
-            "script": "deploy-lambda",
+            "script": "build-deploy-lambda",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -32,20 +32,14 @@
                 "$tsc"
             ]
         },
-
-        {
-            "type": "npm",
-            "script": "tsc-watch",
-            "label": "Watch Lambda",
-            "path": "lambda/",
-            "problemMatcher": [
-                "$tsc"
-            ]
-        },
         {
             "type": "npm",
             "script": "test",
             "path": "lambda/",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
             "problemMatcher": [
                 "$tsc"
             ]

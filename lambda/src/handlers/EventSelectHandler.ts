@@ -11,6 +11,16 @@ export class EventSelectHandler implements RequestHandler {
         let wrap = new InputWrap(input)
         return wrap.isIntent(Schema.SelectIntent) && wrap.sessionAttrs.lastEvents !== undefined
     }
+
+    static getSpeech(event: Event, speech?: AmazonSpeech) {
+        speech = speech || new AmazonSpeech()
+
+        speech.say(event.name)
+            .say("is at").say(event.location.name)
+            // .say("on").say(event.datetime_summary.replace("-", "to"))
+        new AmazonDate(event.datetime_start).toSpeech(speech, true)
+        return speech.sentence(event.description)
+    }
     
     handle(input: HandlerInput) {
         let wrap = new InputWrap(input)
@@ -22,13 +32,8 @@ export class EventSelectHandler implements RequestHandler {
 
             if(number <= events.list.length){
                 let event = events.list[number-1]
-                let speech = new AmazonSpeech()
-
-                speech.say(event.name)
-                    .say("is at").say(event.location.name)
-                    // .say("on").say(event.datetime_summary.replace("-", "to"))
-                new AmazonDate(event.datetime_start).toSpeech(speech)
-                speech.sentence(event.description)
+                
+                let speech = EventSelectHandler.getSpeech(event)
                 speech.sentence("Goodbye")
                 
                 return input.responseBuilder.speak(speech.ssml()).getResponse()

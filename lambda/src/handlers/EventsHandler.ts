@@ -3,9 +3,11 @@ import InputWrap, { CustomSlot } from "../lib/InputWrap"
 import {getEvents, EventRequestOrder, EventRequest, Response, Event} from '../lib/request'
 import {Schema} from '../lib/Schema'
 import AmazonSpeech from 'ssml-builder/amazon_speech'
-import AmazonDate, { DateRange } from "../lib/AmazonDate";
-import { Location } from "aws-sdk/clients/s3";
+import AmazonDate from "../lib/AmazonDate";
 import AmazonTime from "../lib/AmazonTime";
+import { EventSelectHandler } from "./EventSelectHandler";
+import DateRange from "../lib/DateRange";
+import moment from 'moment-timezone'
 
 //TODO: https://developer.amazon.com/docs/alexa-design/voice-experience.html
 
@@ -80,12 +82,17 @@ export class EventsHandler implements RequestHandler {
                 let range: DateRange|undefined = undefined
                 if(dateSlot)
                     range = new AmazonDate(dateSlot.value)
-                else if(timeSlot)
-                    range = new AmazonTime(timeSlot.value)
+
+                if(timeSlot){
+                    let time = new AmazonTime(timeSlot.value)
+                    if(range instanceof AmazonDate)
+                        range.setTime(time)
+                    else
+                        range = time
+                }
 
                 if(range)
                     console.log(JSON.stringify(range))
-
 
                 let category = input.slots[Schema.CategorySlot]
 
@@ -118,49 +125,65 @@ export class EventsHandler implements RequestHandler {
                 if(range)
                     range.toSpeech(speech)
 
-                speech.pauseByStrength("strong")
-
                 if(events.count === 0){
                     speech.say("Please try again or change one of your filters")
+                } else if(events.list.length == 1) {
+                    EventSelectHandler.getSpeech(events.list[0], speech)
                 } else {
+                    speech.pauseByStrength("strong").say("I'll read you the first").say(Math.min(events.count, events.list.length).toString())
+                        .pauseByStrength("strong")
+
                     const refineRecommendCountKey = "refineRecommendCount"
-                    let refineRecommendCount = await input.getPersistentAttr(refineRecommendCountKey) as number || 0
-                    // let refineRecommendCount = 0
+                    // let refineRecommendCount = await input.getPersistentAttr(refineRecommendCountKey) as number || 0
+                    let refineRecommendCount = 0
 
-                    if((items*3 < events.count) && refineRecommendCount < 5){
+                    if((items < events.count) && refineRecommendCount < 5){
                         let [name, suggestion] = !dateSlot ? ["date", "next week"] :
-                        !categoryName ? ["category", "folk music"] :
-                        !isVenue ? ["venue", "city gallery"] :
-                        !timeSlot ? ["time", "tonight"] :
-                        ["more specific date", "this weekend"]
+                            !categoryName ? ["category", "alternative music"] :
+                            !isVenue ? ["venue", "city gallery"] :
+                            !timeSlot ? ["time", "tonight"] :
+                            ["more specific date", "this weekend"]
 
-                        speech.say("I recommend refining your search filters by specifying a")
-                            .say(`${name}, for example, say set ${name} to ${suggestion}`)
+                        // let unadded = []
+                        // if(!categoryName) unadded.push('event type')
+                        // if(!isVenue) unadded.push('venue')
+                        // if(!dateSlot) unadded.push('date')
+                        // if(!timeSlot) unadded.push('time')
+
+                        speech.say("You could refine your search now by interrupting and adding a filter").pauseByStrength("medium")
+                            .say(`for example you can set the ${name} to ${suggestion} by saying, alexa set ${name} to ${suggestion}`)
                             .pauseByStrength("strong")
+
+                        // speech.say("You could refine your search now by interrupting and adding a filter")
+                        //     .say("such as").say(unadded.join(', '))
 
                         input.setPersistentAttr(refineRecommendCountKey, refineRecommendCount+1)
                     }
 
-                    speech.say("I'll read you the first").say(Math.min(events.count, events.list.length).toString()).pauseByStrength("strong")
-
-                    speech.say("You can say your request at the end or interrupt me by saying Alexa")
-                    
-                    speech.pauseByStrength("x-strong")
+                    speech.pause('1s')
                 
                     events.list.forEach((event, i) => {
-                        new AmazonDate(event.datetime_start).toSpeech(speech)
-                        speech.say("I have").say(event.name).pauseByStrength("strong")
-                        speech.say("for details say number").say((i+1).toString()).pauseByStrength("x-strong")
+                        let startDate = new AmazonDate(event.datetime_start, event.datetime_end)
+                        if(!isVenue)
+                            speech.say('At').say(event.location.name)
+                            
+                        speech.say("I have").say(event.name)
+                        startDate.toSpeech(speech, true)
+
+                        speech.pauseByStrength("medium").say("for details say number")
+                        .say((i+1).toString()).pauseByStrength("x-strong")
                     })
 
                     input.sessionAttrs.lastEvents = events
+
+                    speech.sentence('Tell me which event you want to know more about by saying Alexa followed by the number')
                 }
 
                 console.log("SPEECH: " + speech.ssml())
                 
                 return input.response
                     .speak(speech.ssml())
-                    .reprompt("You can refine a search filter or start from scratch")
+                    .reprompt(`You can ${1 < events.list.length ? `choose one of the ${events.list.length} events, ` : ""}refine a search filter or start from scratch`)
                     .getResponse()
             } else
                 return input.response

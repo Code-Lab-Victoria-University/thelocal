@@ -16,18 +16,38 @@ const examples = [
     "Tell the local to search for dj gigs tonight"
 ]
 
+let filterSuggestions = [
+    ["your location in New Zealand", "what's on in wellington next month"],
+    ["a specific venue", "is there anything happening at san fran tonight"],
+    ["a date", "find me events next thursday"],
+    ["a time", "Search for events tonight"],
+    ["a category", () => `find me ${rand(...categoryNames)} events this week`]
+]
+
 function categoriesString(n: number){
     let arr = randN(categoryNames, n)
     return arr.slice(0, -1).join(", ") + " or " + arr[arr.length-1]
 }
 
-const tutorials = [
-    "I can find you local events based on your request. For example, Find me opera events in wellington next week",
-    // "You can interrupt me at any time using the Alexa wake word. For example, Alexa option 3",
+const orderedTutorials = [
+    "I can find you New Zealand events based on your request. For example, Find me opera events in wellington next week",
     () => `You can filter events based off your location in New Zealand, a specific venue, a category such as ${categoriesString(3)}, a date or time. For example, Tell me what's happening at city gallery next month`,
+]
+
+const tutorials = [
+    "You can interrupt me while I'm talking by saying Alexa",
+    ...filterSuggestions.map(suggestion => {
+        let [name, example] = suggestion
+        if(typeof example === "function")
+            return () => `You could try filtering events based off ${name}. For example, ${(example as () => string)()}`
+        else
+            return `You could try filtering events based off ${name}. For example, ${example}`
+    })
+
     // "You can change your location, venue, category, date or time filter at any time by interrupting. For example, Set the location to auckland",
     // "You can skip this introduction by stating your request straight after saying 'alexa start the local' and I will go straight to the results. For example, Alexa ask the local what's on"
 ]
+
 
 const runsKey = "LaunchRequestRuns"
 
@@ -39,7 +59,7 @@ export class LaunchRequestHandler implements RequestHandler {
     getExample(speech?: AmazonSpeech): AmazonSpeech{
         speech = speech || new AmazonSpeech()
         return speech
-            .say(rand("For example", "Try going", "Something like")).pauseByStrength('medium')
+            .say(rand("For example", "Try going", "Something like")).pauseByStrength("medium")
             .say(rand(...examples))
     }
 
@@ -49,8 +69,9 @@ export class LaunchRequestHandler implements RequestHandler {
         let runs = await input.getPersistentAttr<number>(runsKey) || 0
         await input.setPersistentAttr<number>(runsKey, runs+1)
 
-        let tutorialI = runs
-        let tutorialAppend = tutorialI < tutorials.length ? tutorials[tutorialI] : rand(...tutorials)
+        let tutorialI = Math.floor(runs/2)
+        let tutorialAppend = tutorialI < orderedTutorials.length ? orderedTutorials[tutorialI] : rand(...tutorials)
+        // let tutorialAppend = tutorials[tutorialI]
 
         if(typeof tutorialAppend === "function")
             tutorialAppend = tutorialAppend()

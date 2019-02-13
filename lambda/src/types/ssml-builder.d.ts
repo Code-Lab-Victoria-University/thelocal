@@ -1,3 +1,7 @@
+// import { Pause } from "../lib/Util";
+
+declare type Pause = "medium" | "strong" | "x-strong"
+
 declare class Speech{
     say(text: string): this
     emphasis(type: string, text: string): this
@@ -12,7 +16,7 @@ declare class Speech{
     /**
      * @param strength https://developer.amazon.com/docs/custom-skills/speech-synthesis-markup-language-ssml-reference.html#break
      */
-    pauseByStrength(strength: string): this
+    pauseByStrength(strength: Pause): this
     /** true to remove the surrounding <speak> tags */
     ssml(noTagsSurround?: boolean): string
 }

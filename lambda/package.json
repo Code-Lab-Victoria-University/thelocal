@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "tsc-watch": " rm -Rf dist && tsc -w",
-    "debug": "mocha --inspect-brk=9229 dist/test/*.spec.js",
-    "test": "mocha dist/test/*.spec.js"
+    "debug": "tsc && mocha --inspect-brk=9229 dist/test/*.spec.js",
+    "test": "tsc && mocha dist/test/*.spec.js"
   },
   "author": "",
   "license": "ISC",
@@ -16,9 +16,8 @@
     "ask-sdk-core": "^2.0.0",
     "ask-sdk-dynamodb-persistence-adapter": "^2.3.0",
     "ask-sdk-model": "^1.0.0",
-    "iso-week": "^0.1.2",
     "mocha": "^5.2.0",
-    "moment": "^2.24.0",
+    "moment-timezone": "^0.5.23",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5",
     "ssml-builder": "^0.4.3"
