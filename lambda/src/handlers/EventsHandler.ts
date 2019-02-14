@@ -137,6 +137,8 @@ export class EventsHandler implements RequestHandler {
                     // let refineRecommendCount = await input.getPersistentAttr(refineRecommendCountKey) as number || 0
                     let refineRecommendCount = 0
 
+                    //TODO: can get category number by making multiple requests
+
                     if((items < events.count) && refineRecommendCount < 5){
                         let [name, suggestion] = !dateSlot ? ["date", "next week"] :
                             !categoryName ? ["category", "alternative music"] :
@@ -150,7 +152,7 @@ export class EventsHandler implements RequestHandler {
                         // if(!dateSlot) unadded.push('date')
                         // if(!timeSlot) unadded.push('time')
 
-                        speech.say("You could refine your search now by interrupting and adding a filter").pauseByStrength("medium")
+                        speech.say("You could refine your search now by interrupting and adjusting a filter").pauseByStrength("medium")
                             .say(`for example you can set the ${name} to ${suggestion} by saying, alexa set ${name} to ${suggestion}`)
                             .pauseByStrength("strong")
 
@@ -160,7 +162,7 @@ export class EventsHandler implements RequestHandler {
                         input.setPersistentAttr(refineRecommendCountKey, refineRecommendCount+1)
                     }
 
-                    speech.pause('1s')
+                    speech.pause('0.8s')
                 
                     events.list.forEach((event, i) => {
                         let startDate = new AmazonDate(event.datetime_start, event.datetime_end)
