@@ -39,6 +39,15 @@ function mix(values: string[]): string[]{
     }
 }
 
+/**
+ * 
+ * @param name .json suffix will be added
+ * @param saveObj object to be stringified
+ */
+async function saveData(name: string, saveObj: any) {
+    await promisify(writeFile)(join("lambda", "src", "data", name+".json"), JSON.stringify(saveObj))
+}
+
 (async () => {
 
     let app = new alexaApp()
@@ -172,7 +181,8 @@ function mix(values: string[]): string[]{
     console.log(`${locations.filter(loc => loc.count_current_events !== 0).length} happenin' locations`)
 
     app.customSlot(locationTypeName, locations.map(node => {return{id:node.url_slug, value:node.name}}))
-
+    
+    await saveData("location-names", locations.map(node => node.name))
 
     //generate venue custom slot
     // let venues = {} as {[key: string]: VenueNode}
@@ -188,6 +198,8 @@ function mix(values: string[]): string[]{
     let venues = await getVenues(undefined, 100)
     console.log(Object.keys(venues).length + " venues retrieved")
 
+
+    //TODO: verify filter needed
     venues = venues.filter(val => val.count_current_events !== 0)
     console.log(venues.length + " valid venues")
 
@@ -198,6 +210,8 @@ function mix(values: string[]): string[]{
             synonyms: permutations(node.name)//.concat(node.summary)
         } as CustomSlot
     }))
+    
+    await saveData("venue-names", venues.map(node => node.name))
 
     let categories = await getCategories()
     console.log(categories.length + " categories found")
@@ -209,7 +223,7 @@ function mix(values: string[]): string[]{
         } as CustomSlot
     }))
     
-    await promisify(writeFile)(join("lambda", "src", "data", "category-names.json"), JSON.stringify(categories.map(node => node.name)))
+    await saveData("category-names", categories.map(node => node.name))
 
     await promisify(writeFile)(join("models", "en-AU.json"), app.schemas.askcli())
 })()
