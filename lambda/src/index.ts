@@ -14,6 +14,7 @@ import { EventSelectHandler } from "./handlers/EventSelectHandler";
 import { rand } from "./lib/Util";
 import { ChangeEventsSlotHandler } from "./handlers/ChangeEventsSlotHandler";
 import { Schema } from "./lib/Schema";
+import { TutorialHandler } from "./handlers/TutorialHandler";
 
 const Persistence = new DynamoDbPersistenceAdapter({
     tableName: "thelocal"
@@ -22,8 +23,8 @@ const Persistence = new DynamoDbPersistenceAdapter({
 const skillBuilder = SkillBuilders.custom();
 
 exports.handler = skillBuilder
-    .addRequestInterceptors(input => {
-        let wrap = new InputWrap(input)
+    .addRequestInterceptors(async input => {
+        let wrap = await InputWrap.load(input)
         let output = ""
         if(wrap.intent){
             output += `INTENT: ${wrap.intent.name}\n`
@@ -41,6 +42,9 @@ exports.handler = skillBuilder
     })
 
     .addRequestHandlers(
+        //tutorial always at start (overrides launch request)
+        new TutorialHandler(),
+
         new LaunchRequestHandler(),
 
         new EasyIntentHandler("AMAZON.HelpIntent", 'You can say hello to me!'),
@@ -71,9 +75,9 @@ exports.handler = skillBuilder
     .addErrorHandlers(new CustomErrorHandler)
     .withPersistenceAdapter(Persistence)
 
-    .addResponseInterceptors((input, response) => {
+    .addResponseInterceptors(async (input, response) => {
         //save, etc
-        new InputWrap(input).endRequest()
+        (await InputWrap.load(input)).endRequest()
             
         if(response)
             console.log("OUTPUT: " + JSON.stringify(response.outputSpeech))

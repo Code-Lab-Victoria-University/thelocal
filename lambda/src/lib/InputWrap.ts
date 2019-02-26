@@ -2,6 +2,9 @@ import { HandlerInput, AttributesManager, ResponseBuilder } from "ask-sdk-core";
 import { Intent, Slot } from "ask-sdk-model";
 import {Schema} from './Schema'
 import { Event, Response } from "./request";
+import {OldLocations} from '../handlers/EventsHandler'
+import { Handler } from "aws-sdk/clients/lambda";
+import { TutorialStage } from "../handlers/TutorialHandler";
 
 export class CustomSlot {
     /** name of slot */
@@ -32,20 +35,30 @@ interface Slots {
     [key: string]: CustomSlot | undefined;
 }
 
+interface PersistentAttrs {
+    [key: string]: any;
+
+    prevLocations?: OldLocations
+    refineRecommendCount?: number
+    
+    LaunchRequestRuns?: number
+    totRequests?: number
+}
+
 export default class InputWrap {
 
     readonly sessionAttrs: {
-        [key: string]: any;
+        [key: string]: any
 
         // prevIntents?: Intent[],
-        lastEvents?: Response<Event>,
+        lastEvents?: Response<Event>
         // [lastSlotsKey]?: Slots,
         lastSlots?: Slots
+        prevTutorialState?: TutorialStage
     };
     
-    private readonly persistentAttrs: Promise<{
-        [key: string]: any;
-    }>;
+    // private readonly persistentPromise: Promise<PersistentAttrs>;
+    persistentAttrs: PersistentAttrs = {};
 
     readonly intent?: Intent;
     // readonly prevIntents: Intent[];
@@ -56,10 +69,10 @@ export default class InputWrap {
 
     readonly response: ResponseBuilder;
 
-    constructor(input: HandlerInput){
+    private constructor(input: HandlerInput){
         this.attrs = input.attributesManager;
         this.sessionAttrs = this.attrs.getSessionAttributes();
-        this.persistentAttrs = this.attrs.getPersistentAttributes()
+        // this.persistentPromise = this.attrs.getPersistentAttributes()
 
         let req = input.requestEnvelope.request
 
@@ -84,12 +97,18 @@ export default class InputWrap {
         }
     }
 
-    endRequest() {
+    async endRequest() {
         // if(this.intent)
         //     this.sessionAttrs.prevIntents = this.prevIntents.concat(this.intent)
         
         this.attrs.setSessionAttributes(this.sessionAttrs)
-        this.attrs.savePersistentAttributes()
+        // this.setPersistentAttr('request', )
+        
+        this.persistentAttrs.totRequests = (this.persistentAttrs.totRequests || 0) + 1
+
+        // (await this.persistentAttrs)
+        this.attrs.setPersistentAttributes(this.persistentAttrs)
+        await this.attrs.savePersistentAttributes()
     }
 
     // lastIntent(): Intent|undefined {
@@ -120,12 +139,22 @@ export default class InputWrap {
     //     return this.sessionAttrs[key] !== undefined
     // }
 
-    async getPersistentAttr<RetType>(key: string): Promise<RetType|undefined>{
-        return (await this.persistentAttrs)[key] as RetType
-    }
+    // async getPersistentAttrs(){
+    //     return await this.persistentAttrs
+    // }
 
-    async setPersistentAttr<InType>(key: string, val: InType){
-        (await this.persistentAttrs)[key] = val
-        this.attrs.setPersistentAttributes(await this.persistentAttrs)
+    // async getPersistentAttr<RetType>(key: string): Promise<RetType|undefined>{
+    //     return (await this.persistentAttrs)[key] as RetType
+    // }
+
+    // async setPersistentAttr<InType>(key: string, val: InType){
+    //     (await this.persistentAttrs)[key] = val
+    //     this.attrs.setPersistentAttributes(await this.persistentAttrs)
+    // }
+
+    static async load(input: HandlerInput) {
+        let wrap = new InputWrap(input)
+        wrap.persistentAttrs = await wrap.attrs.getPersistentAttributes()
+        return wrap
     }
 }

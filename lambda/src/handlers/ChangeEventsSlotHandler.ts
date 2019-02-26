@@ -7,13 +7,13 @@ import { EventsHandler } from "./EventsHandler";
 
 export class ChangeEventsSlotHandler implements RequestHandler {
 
-    canHandle(handlerInput: HandlerInput): boolean {
-        let input = new InputWrap(handlerInput)
+    async canHandle(handlerInput: HandlerInput) {
+        let input = await InputWrap.load(handlerInput)
         return input.isIntent(Object.values(Schema.SetIntents)) && input.sessionAttrs.lastSlots !== undefined
     }
     
-    handle(handlerInput: HandlerInput): Promise<Response> {
-        let input = new InputWrap(handlerInput)
+    async handle(handlerInput: HandlerInput) {
+        let input = await InputWrap.load(handlerInput)
         
         //overwrite lastSlots with new input.slots
         input.slots = Object.assign(input.sessionAttrs.lastSlots, input.slots)

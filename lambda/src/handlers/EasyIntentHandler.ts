@@ -10,15 +10,15 @@ interface HandleResponse {
 export class EasyIntentHandler implements RequestHandler {
     constructor(readonly intent: string|string[], readonly handleSpeech: HandleResponse|string){}
     
-    canHandle(handlerInput: HandlerInput): boolean {
-        return new InputWrap(handlerInput).isIntent(this.intent)
+    async canHandle(handlerInput: HandlerInput) {
+        return (await InputWrap.load(handlerInput)).isIntent(this.intent)
     }
     
-    handle(handlerInput: HandlerInput): Response {
+    async handle(handlerInput: HandlerInput) {
         if(typeof this.handleSpeech === "string"){
             return handlerInput.responseBuilder.speak(this.handleSpeech).getResponse()
         } else {
-            let response = this.handleSpeech(new InputWrap(handlerInput), handlerInput)
+            let response = this.handleSpeech(await InputWrap.load(handlerInput), handlerInput)
             if(typeof response  === 'string')
                 return handlerInput.responseBuilder.speak(response).getResponse()
             else

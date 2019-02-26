@@ -139,7 +139,8 @@ async function saveData(name: string, saveObj: any) {
                 `Set the ${name} to {-|${slot}}`,
                 `${name} is {-|${slot}}`,
                 `The ${name} is {-|${slot}}`,
-                `Add ${name} {-|${slot}}`
+                `Change ${name} to {-|${slot}}`,
+                `Change the ${name} to {-|${slot}}`
             ])
         })
     }

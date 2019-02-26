@@ -11,7 +11,7 @@ import moment from 'moment-timezone'
 
 //TODO: https://developer.amazon.com/docs/alexa-design/voice-experience.html
 
-interface OldLocations{
+export interface OldLocations{
     [slug: string]: LocationFrequency
 }
 
@@ -24,14 +24,14 @@ let prevLocationsKey = "prevLocations"
 let items = 4
 
 export class EventsHandler implements RequestHandler {
-    canHandle(input: HandlerInput) {
-        let wrap = new InputWrap(input);
+    async canHandle(input: HandlerInput) {
+        let wrap = await InputWrap.load(input);
 
         return wrap.isIntent(Object.values(Schema.SetIntents).concat(Schema.EventsIntent))
     }
 
     async handle(input: HandlerInput){
-        return this.handleWrap(new InputWrap(input))
+        return this.handleWrap(await InputWrap.load(input))
     }
     
     async handleWrap(input: InputWrap) {
@@ -42,7 +42,7 @@ export class EventsHandler implements RequestHandler {
 
         let place = isVenue ? venueSlot : input.slots[Schema.LocationSlot]
 
-        let prevLocations = await input.getPersistentAttr<OldLocations>(prevLocationsKey) || {}
+        let prevLocations = input.persistentAttrs.prevLocations || {}
 
         //save this request in case user wants to set parameters
         input.sessionAttrs.lastSlots = input.slots
@@ -73,7 +73,7 @@ export class EventsHandler implements RequestHandler {
                         place: place
                     }
                     prevLocations[slug].frequency += 1
-                    input.setPersistentAttr<OldLocations>(prevLocationsKey, prevLocations)
+                    input.persistentAttrs.prevLocations = prevLocations
                 }
 
                 //parse date
@@ -159,7 +159,8 @@ export class EventsHandler implements RequestHandler {
                         // speech.say("You could refine your search now by interrupting and adding a filter")
                         //     .say("such as").say(unadded.join(', '))
 
-                        input.setPersistentAttr(refineRecommendCountKey, refineRecommendCount+1)
+                        input.persistentAttrs.refineRecommendCount = refineRecommendCount+1
+                        // input.setPersistentAttr(refineRecommendCountKey, refineRecommendCount+1)
                     }
 
                     speech.pause('0.8s')
