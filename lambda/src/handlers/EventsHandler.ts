@@ -1,6 +1,6 @@
 import { HandlerInput, RequestHandler } from "ask-sdk-core";
 import InputWrap, { CustomSlot } from "../lib/InputWrap"
-import {getEvents, EventRequestOrder, EventRequest, Response, Event} from '../lib/request'
+import {getEvents, EventRequestOrder, EventRequest, Response, Event, getCategoryChildren, CategoryInfo, eventFindaRequest} from '../lib/request'
 import {Schema} from '../lib/Schema'
 import AmazonSpeech from 'ssml-builder/amazon_speech'
 import AmazonDate from "../lib/AmazonDate";
@@ -21,7 +21,7 @@ interface LocationFrequency {
 }
 let prevLocationsKey = "prevLocations"
 
-let items = 4
+export const items = 4
 
 export class EventsHandler implements RequestHandler {
     async canHandle(input: HandlerInput) {
@@ -42,38 +42,39 @@ export class EventsHandler implements RequestHandler {
 
         let place = isVenue ? venueSlot : input.slots[Schema.LocationSlot]
 
-        let prevLocations = input.persistentAttrs.prevLocations || {}
+        // let prevLocations = input.persistent.prevLocations || {}
 
         //save this request in case user wants to set parameters
-        input.sessionAttrs.lastSlots = input.slots
+        input.session.lastSlots = input.slots
 
         //if no place from venue or location, load from most recent location used
-        if((!place || !place.resId) && Object.keys(prevLocations).length){
-            //replace best place no best or if best is venue and new isn't or if both are equally venuey and new is higher frequency
-            let bestOldLocation = Object.values(prevLocations).reduce((prev, cur) => 
-                (!prev || prev.frequency < cur.frequency) ? cur : prev)
-
-            if(bestOldLocation){
-                place = bestOldLocation.place
-                isVenue = false
-            }
+        if((!place || !place.resId)){
+            let topLocation = input.getTopLocation()
+            if(topLocation)
+                place = topLocation
         }
+        // if((!place || !place.resId) && Object.keys(prevLocations).length){
+        //     //replace best place no best or if best is venue and new isn't or if both are equally venuey and new is higher frequency
+        //     let bestOldLocation = Object.values(prevLocations).reduce((prev, cur) => 
+        //         (!prev || prev.frequency < cur.frequency) ? cur : prev)
+
+        //     if(bestOldLocation){
+        //         place = bestOldLocation.place
+        //         isVenue = false
+        //     }
+        // }
         
         //if finally has a place, else tell the user to say a location and give hint
         if(place){
+            let slug = place.resId
+            let placeName = place.resValue
             //verify place is real, else tell user
-            if(place.resId && place.resValue){
-                let slug = place.resId
-                let placeName = place.resValue
+            if(slug && placeName){
 
                 //save the last used location in case the user doesn't use a location in future requests
+                //TODO: if venue, use venue's location
                 if(!isVenue){
-                    prevLocations[slug] = prevLocations[slug] || {
-                        frequency: 0,
-                        place: place
-                    }
-                    prevLocations[slug].frequency += 1
-                    input.persistentAttrs.prevLocations = prevLocations
+                    input.countLocation(place)
                 }
 
                 //parse date
@@ -130,36 +131,71 @@ export class EventsHandler implements RequestHandler {
                 } else if(events.list.length == 1) {
                     EventSelectHandler.getSpeech(events.list[0], speech)
                 } else {
-                    speech.pauseByStrength("strong").say("I'll read you the first").say(Math.min(events.count, events.list.length).toString())
-                        .pauseByStrength("strong")
+                    if(items < events.count)
+                        speech.pauseByStrength("strong").say("I'll read you the first").say(items.toString())
 
                     const refineRecommendCountKey = "refineRecommendCount"
                     // let refineRecommendCount = await input.getPersistentAttr(refineRecommendCountKey) as number || 0
                     let refineRecommendCount = 0
 
-                    //TODO: can get category number by making multiple requests
-
                     if((items < events.count) && refineRecommendCount < 5){
-                        let [name, suggestion] = !dateSlot ? ["date", "next week"] :
-                            !categoryName ? ["category", "alternative music"] :
-                            !isVenue ? ["venue", "city gallery"] :
-                            !timeSlot ? ["time", "tonight"] :
-                            ["more specific date", "this weekend"]
+                        speech.pauseByStrength("strong")
 
-                        // let unadded = []
-                        // if(!categoryName) unadded.push('event type')
-                        // if(!isVenue) unadded.push('venue')
-                        // if(!dateSlot) unadded.push('date')
-                        // if(!timeSlot) unadded.push('time')
+                        //get list of categories (either root list or)
+                        let catChildren = await getCategoryChildren(category && category.resId)
 
-                        speech.say("You could refine your search now by interrupting and adjusting a filter").pauseByStrength("medium")
-                            .say(`for example you can set the ${name} to ${suggestion} by saying, alexa set ${name} to ${suggestion}`)
-                            .pauseByStrength("strong")
+                        if(catChildren.length){
+                            let reqClone = Object.assign({fields: "event:(id)"}, req)
+                            reqClone.rows = 1
+                            reqClone.fields = "event:(id)"
 
-                        // speech.say("You could refine your search now by interrupting and adding a filter")
-                        //     .say("such as").say(unadded.join(', '))
+                            let eventsForCategory: {cat:CategoryInfo,count:number}[] = []
 
-                        input.persistentAttrs.refineRecommendCount = refineRecommendCount+1
+                            for (const cat of catChildren.sort((a,b) => b.count_current_events-a.count_current_events)) {
+                                if(10 < eventsForCategory.length)
+                                    break
+
+                                reqClone.category_slug = cat.url_slug
+
+                                let resp = await getEvents(reqClone)
+                                if(resp.count)
+                                    eventsForCategory.push({
+                                        cat: cat,
+                                        count: resp.count
+                                    })
+                            }
+
+                            //if less than 0, a first
+                            eventsForCategory = eventsForCategory.sort((a, b) => b.count-a.count)
+                            // eventsForCategory.splice(5)
+                            speech.say("The top categories you could use for this search are")
+                                .say(eventsForCategory.map(catInfo => catInfo.cat.name).join(', '))
+                                .pauseByStrength("strong")
+                                .say("You could apply that now by saying alexa followed by the category")
+                            // eventsForCategory.forEach(catInfo => {
+                            //     speech.say(`${catInfo.count} ${catInfo.cat.name}`)
+                            // })
+                        } else {
+                            let [name, suggestion] = !dateSlot ? ["date", "next week"] :
+                                !isVenue ? ["venue", "city gallery"] :
+                                !timeSlot ? ["time", "tonight"] :
+                                ["more specific date", "next tuesday"]
+    
+                            // let unadded = []
+                            // if(!categoryName) unadded.push('event type')
+                            // if(!isVenue) unadded.push('venue')
+                            // if(!dateSlot) unadded.push('date')
+                            // if(!timeSlot) unadded.push('time')
+    
+                            speech.say("You could refine your search now by interrupting and adjusting a filter").pauseByStrength("medium")
+                                .say(`for example you can set the ${name} to ${suggestion} by saying, alexa set ${name} to ${suggestion}`)
+                                .pauseByStrength("strong")
+    
+                            // speech.say("You could refine your search now by interrupting and adding a filter")
+                            //     .say("such as").say(unadded.join(', '))
+                        }
+
+                        input.persistent.refineRecommendCount = refineRecommendCount+1
                         // input.setPersistentAttr(refineRecommendCountKey, refineRecommendCount+1)
                     }
 
@@ -177,7 +213,7 @@ export class EventsHandler implements RequestHandler {
                         .say((i+1).toString()).pauseByStrength("x-strong")
                     })
 
-                    input.sessionAttrs.lastEvents = events
+                    input.session.lastEvents = events
 
                     speech.sentence('Tell me which event you want to know more about by saying Alexa followed by the number')
                 }

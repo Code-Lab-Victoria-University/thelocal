@@ -36,18 +36,19 @@ interface Slots {
 }
 
 interface PersistentAttrs {
-    [key: string]: any;
+    // [key: string]: any;
 
     prevLocations?: OldLocations
     refineRecommendCount?: number
     
+    finishedTutorial?: boolean
     LaunchRequestRuns?: number
     totRequests?: number
 }
 
 export default class InputWrap {
 
-    readonly sessionAttrs: {
+    readonly session: {
         [key: string]: any
 
         // prevIntents?: Intent[],
@@ -57,11 +58,9 @@ export default class InputWrap {
         prevTutorialState?: TutorialStage
     };
     
-    // private readonly persistentPromise: Promise<PersistentAttrs>;
-    persistentAttrs: PersistentAttrs = {};
+    persistent: PersistentAttrs = {}
 
     readonly intent?: Intent;
-    // readonly prevIntents: Intent[];
     /** Slots that have values */
     slots: Slots = {}
 
@@ -71,7 +70,7 @@ export default class InputWrap {
 
     private constructor(input: HandlerInput){
         this.attrs = input.attributesManager;
-        this.sessionAttrs = this.attrs.getSessionAttributes();
+        this.session = this.attrs.getSessionAttributes();
         // this.persistentPromise = this.attrs.getPersistentAttributes()
 
         let req = input.requestEnvelope.request
@@ -101,13 +100,13 @@ export default class InputWrap {
         // if(this.intent)
         //     this.sessionAttrs.prevIntents = this.prevIntents.concat(this.intent)
         
-        this.attrs.setSessionAttributes(this.sessionAttrs)
+        this.attrs.setSessionAttributes(this.session)
         // this.setPersistentAttr('request', )
         
-        this.persistentAttrs.totRequests = (this.persistentAttrs.totRequests || 0) + 1
+        this.persistent.totRequests = (this.persistent.totRequests || 0) + 1
 
         // (await this.persistentAttrs)
-        this.attrs.setPersistentAttributes(this.persistentAttrs)
+        this.attrs.setPersistentAttributes(this.persistent)
         await this.attrs.savePersistentAttributes()
     }
 
@@ -118,6 +117,45 @@ export default class InputWrap {
     // getSlot(slotName: string): CustomSlot|undefined {
     //     return this.slots[slotName]
     // }
+
+    resetTopLocation(){
+        this.persistent.prevLocations = {}
+    }
+
+    getTopLocation(){
+        let prevLocations = this.persistent.prevLocations
+
+        console.log(JSON.stringify(prevLocations))
+
+        //if no place from venue or location, load from most recent location used
+        if(prevLocations && Object.keys(prevLocations).length){
+            //replace best place no best or if best is venue and new isn't or if both are equally venuey and new is higher frequency
+            let bestOldLocation = Object.values(prevLocations).reduce((prev, cur) => 
+                (!prev || prev.frequency < cur.frequency) ? cur : prev)
+
+            if(bestOldLocation){
+                return bestOldLocation.place
+            }
+        }
+    }
+
+    countLocation(location: CustomSlot){
+        if(!this.persistent.prevLocations)
+            this.persistent.prevLocations = {}
+
+        let slug = location.resId
+        let placeName = location.resValue
+
+        if(slug && placeName){
+            this.persistent.prevLocations[slug] = this.persistent.prevLocations[slug] || {
+                frequency: 0,
+                place: location
+            }
+            this.persistent.prevLocations[slug].frequency += 1
+        } else
+            throw new Error("Provided location doesn't have a valid resId and resValue, got " + JSON.stringify(location))
+    }
+
 
     /**
      * Is the wrapper an intent
@@ -135,26 +173,9 @@ export default class InputWrap {
             return intentName.includes(this.intent.name)
     }
 
-    // hasSessionAttr(key: string): boolean {
-    //     return this.sessionAttrs[key] !== undefined
-    // }
-
-    // async getPersistentAttrs(){
-    //     return await this.persistentAttrs
-    // }
-
-    // async getPersistentAttr<RetType>(key: string): Promise<RetType|undefined>{
-    //     return (await this.persistentAttrs)[key] as RetType
-    // }
-
-    // async setPersistentAttr<InType>(key: string, val: InType){
-    //     (await this.persistentAttrs)[key] = val
-    //     this.attrs.setPersistentAttributes(await this.persistentAttrs)
-    // }
-
     static async load(input: HandlerInput) {
         let wrap = new InputWrap(input)
-        wrap.persistentAttrs = await wrap.attrs.getPersistentAttributes()
+        wrap.persistent = await wrap.attrs.getPersistentAttributes()
         return wrap
     }
 }

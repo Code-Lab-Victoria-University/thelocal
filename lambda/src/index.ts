@@ -42,6 +42,12 @@ exports.handler = skillBuilder
     })
 
     .addRequestHandlers(
+        //always allow reset
+        new EasyIntentHandler(Schema.RESET, (wrap, input) => {
+            input.attributesManager.setPersistentAttributes({})
+            return "Successful reset"
+        }),
+
         //tutorial always at start (overrides launch request)
         new TutorialHandler(),
 
@@ -50,11 +56,6 @@ exports.handler = skillBuilder
         new EasyIntentHandler("AMAZON.HelpIntent", 'You can say hello to me!'),
         new EasyIntentHandler(['AMAZON.CancelIntent', 'AMAZON.StopIntent'], 
             rand('Bye', "Goodbye")),
-
-        new EasyIntentHandler(Schema.RESET, (wrap, input) => {
-            input.attributesManager.setPersistentAttributes({})
-            return "Successful reset"
-        }),
 
         // new SetLocationHandler(),
         new ChangeEventsSlotHandler(),
@@ -72,7 +73,7 @@ exports.handler = skillBuilder
         }
         )
 
-    .addErrorHandlers(new CustomErrorHandler)
+    .addErrorHandlers(new CustomErrorHandler())
     .withPersistenceAdapter(Persistence)
 
     .addResponseInterceptors(async (input, response) => {

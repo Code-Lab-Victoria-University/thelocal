@@ -9,7 +9,7 @@ import AmazonDate from "../lib/AmazonDate";
 export class EventSelectHandler implements RequestHandler {
     async canHandle(input: HandlerInput) {
         let wrap = await InputWrap.load(input)
-        return wrap.isIntent(Schema.SelectIntent) && wrap.sessionAttrs.lastEvents !== undefined
+        return wrap.isIntent(Schema.SelectIntent) && wrap.session.lastEvents !== undefined
     }
 
     static getSpeech(event: Event, speech?: AmazonSpeech) {
@@ -27,7 +27,7 @@ export class EventSelectHandler implements RequestHandler {
         let numSlot = wrap.slots[Schema.NumberSlot]
 
         if(numSlot){
-            let events = wrap.sessionAttrs.lastEvents!
+            let events = wrap.session.lastEvents!
             let number = Number.parseInt(numSlot.value)
 
             if(number <= events.list.length){

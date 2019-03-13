@@ -166,9 +166,8 @@ export default class AmazonDate extends DateRange {
                         speech.say("yesterday")
                     //in relation to curWeek
                     else if(adjacentWeekText) {
-                        if(Math.abs(weekDiff) === 1)
-                            speech.say(adjacentWeekText)
-                        speech.say(this.startM.format('dddd'))
+                        speech.say(adjacentWeekText)
+                            .say(this.startM.format('dddd'))
                     }
                     
                     if(this.time)

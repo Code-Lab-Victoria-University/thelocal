@@ -8,12 +8,11 @@ export class CustomErrorHandler implements ErrorHandler {
 
     handle(handlerInput: HandlerInput, error: Error): Response {
         if(error){
-            console.log(`Error ${error.name} handled: ${error.message}`);
-            if(error.stack)
-                console.log(error.stack)
+            let text = `${error.name} caught: ${error.message}`
+            console.log(text + error.stack ? error.stack : "");
             
             return handlerInput.responseBuilder
-                .speak(`Error ${error.name} occured.`)
+                .speak(text)
                 .getResponse()
         } else
             return handlerInput.responseBuilder

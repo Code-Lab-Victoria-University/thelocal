@@ -151,10 +151,13 @@ async function saveData(name: string, saveObj: any) {
     makeSetIntent(Schema.SetIntents.Venue, Schema.VenueSlot, venueTypeName, "Venue", "Bar", "")
     makeSetIntent(Schema.SetIntents.Location, Schema.LocationSlot, locationTypeName, "Location", "Home", "City", "Town")
 
+    //builtin amazon intents
     let identityIntent = {slots: {}, utterances: []}
     app.intent("AMAZON.CancelIntent", identityIntent)
     app.intent("AMAZON.HelpIntent", identityIntent)
     app.intent("AMAZON.StopIntent", identityIntent)
+    app.intent("AMAZON.YesIntent", identityIntent)
+
 
     app.intent(Schema.RESET, {
         utterances: [
