@@ -55,7 +55,7 @@ export default class InputWrap {
         lastEvents?: Response<Event>
         // [lastSlotsKey]?: Slots,
         lastSlots?: Slots
-        prevTutorialState?: TutorialStage
+        prevTutorialStage?: TutorialStage
     };
     
     persistent: PersistentAttrs = {}
@@ -109,14 +109,6 @@ export default class InputWrap {
         this.attrs.setPersistentAttributes(this.persistent)
         await this.attrs.savePersistentAttributes()
     }
-
-    // lastIntent(): Intent|undefined {
-    //     return 0 < this.prevIntents.length ? this.prevIntents[this.prevIntents.length-1] : undefined
-    // }
-
-    // getSlot(slotName: string): CustomSlot|undefined {
-    //     return this.slots[slotName]
-    // }
 
     resetTopLocation(){
         this.persistent.prevLocations = {}

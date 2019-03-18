@@ -47,3 +47,12 @@ export function isLambda(): boolean {
 export function flatMap<Val>(arr: Val[], method: (val: Val) => Val[]): Val[] {
     return arr.reduce((arr, cur) => arr.concat(method(cur)), [] as Val[])
 }
+
+/**
+ * Join an array with commas, with a special separator at the end (and/or) eg
+ * 
+ * ([apples, oranges, pineapples, pears], "and") --> "apples, oranges, pineapples and pears"
+ */
+export function prettyJoin(arr: string[], lastSepChar: string){
+    return arr.slice(0, -1).join(", ") + ` ${lastSepChar} ` + arr[arr.length-1]
+}

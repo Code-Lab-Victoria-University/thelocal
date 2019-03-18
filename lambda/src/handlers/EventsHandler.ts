@@ -8,6 +8,7 @@ import AmazonTime from "../lib/AmazonTime";
 import { EventSelectHandler } from "./EventSelectHandler";
 import DateRange from "../lib/DateRange";
 import moment from 'moment-timezone'
+import { prettyJoin } from "../lib/Util";
 
 //TODO: https://developer.amazon.com/docs/alexa-design/voice-experience.html
 
@@ -111,7 +112,7 @@ export class EventsHandler implements RequestHandler {
                 //request events list
                 let events = await getEvents(req)
                     
-                let categoryName = category && category.resId ? category.value : ""
+                let categoryName = category && category.resValue ? category.resValue : ""
 
                 //compile response
                 let speech = new AmazonSpeech()
@@ -132,13 +133,12 @@ export class EventsHandler implements RequestHandler {
                     EventSelectHandler.getSpeech(events.list[0], speech)
                 } else {
                     if(items < events.count)
-                        speech.pauseByStrength("strong").say("I'll read you the first").say(items.toString())
 
-                    const refineRecommendCountKey = "refineRecommendCount"
-                    // let refineRecommendCount = await input.getPersistentAttr(refineRecommendCountKey) as number || 0
-                    let refineRecommendCount = 0
+                    // const refineRecommendCountKey = "refineRecommendCount"
+                    // // let refineRecommendCount = await input.getPersistentAttr(refineRecommendCountKey) as number || 0
+                    // let refineRecommendCount = 0
 
-                    if((items < events.count) && refineRecommendCount < 5){
+                    if((items < events.count)){
                         speech.pauseByStrength("strong")
 
                         //get list of categories (either root list or)
@@ -152,7 +152,7 @@ export class EventsHandler implements RequestHandler {
                             let eventsForCategory: {cat:CategoryInfo,count:number}[] = []
 
                             for (const cat of catChildren.sort((a,b) => b.count_current_events-a.count_current_events)) {
-                                if(10 < eventsForCategory.length)
+                                if(10 <= eventsForCategory.length)
                                     break
 
                                 reqClone.category_slug = cat.url_slug
@@ -167,9 +167,9 @@ export class EventsHandler implements RequestHandler {
 
                             //if less than 0, a first
                             eventsForCategory = eventsForCategory.sort((a, b) => b.count-a.count)
-                            // eventsForCategory.splice(5)
+                            eventsForCategory.splice(5)
                             speech.say("The top categories you could use for this search are")
-                                .say(eventsForCategory.map(catInfo => catInfo.cat.name).join(', '))
+                                .say(prettyJoin(eventsForCategory.map(catInfo => catInfo.cat.name), "or"))
                                 .pauseByStrength("strong")
                                 .say("You could apply that now by saying alexa followed by the category")
                             // eventsForCategory.forEach(catInfo => {
@@ -187,15 +187,14 @@ export class EventsHandler implements RequestHandler {
                             // if(!dateSlot) unadded.push('date')
                             // if(!timeSlot) unadded.push('time')
     
-                            speech.say("You could refine your search now by interrupting and adjusting a filter").pauseByStrength("medium")
-                                .say(`for example you can set the ${name} to ${suggestion} by saying, alexa set ${name} to ${suggestion}`)
+                            speech.say(`You could refine your search now by interrupting and
+                                setting the ${name}, for example, alexa set ${name} to ${suggestion}`)
                                 .pauseByStrength("strong")
-    
-                            // speech.say("You could refine your search now by interrupting and adding a filter")
-                            //     .say("such as").say(unadded.join(', '))
+
+                            speech.say("I'll read you the first").say(items.toString()).say("now")
                         }
 
-                        input.persistent.refineRecommendCount = refineRecommendCount+1
+                        // input.persistent.refineRecommendCount = refineRecommendCount+1
                         // input.setPersistentAttr(refineRecommendCountKey, refineRecommendCount+1)
                     }
 

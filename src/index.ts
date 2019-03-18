@@ -140,7 +140,8 @@ async function saveData(name: string, saveObj: any) {
                 `${name} is {-|${slot}}`,
                 `The ${name} is {-|${slot}}`,
                 `Change ${name} to {-|${slot}}`,
-                `Change the ${name} to {-|${slot}}`
+                `Change the ${name} to {-|${slot}}`,
+                `{-|${slot}}`
             ])
         })
     }
@@ -220,10 +221,19 @@ async function saveData(name: string, saveObj: any) {
     let categories = await getCategories()
     console.log(categories.length + " categories found")
     app.customSlot(categoryTypeName, categories.map(node => {
+        let synonyms = flatMap(node.name.split(", "), val => val.split(" & "))
+        let title = node.name
+
+        if(node.url_slug === "concerts-gig-guide"){
+            synonyms.push("music", "concert", "gigs", title)
+            title = "Music"
+        } else if(node.url_slug === "exhibitions"){
+            synonyms.push("art")
+        }
         return {
             id: node.url_slug,
-            value: node.name,
-            synonyms: flatMap(node.name.split(", "), val => val.split(" & "))
+            value: title,
+            synonyms: synonyms
         } as CustomSlot
     }))
     

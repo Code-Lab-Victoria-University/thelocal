@@ -26,21 +26,23 @@ export class TutorialHandler implements RequestHandler {
         let reqs = wrap.persistent.totRequests || 0
 
         //do tutorial if never gotten past it and if tutorial stage is in bounds or undefined
-        return !wrap.persistent.finishedTutorial && false
+        return !wrap.persistent.finishedTutorial
     }
     
     async handle(input: HandlerInput) {
         let wrap = await InputWrap.load(input)
 
-        let prevTutorialStage = wrap.session.prevTutorialState
+        let prevTutorialStage = wrap.session.prevTutorialStage
+        let curStage = prevTutorialStage !== undefined ? prevTutorialStage+1 : 0
         // wrap.sessionAttrs.prevTutorialState = prevTutorialStage !== undefined ? prevTutorialStage+1 : TutorialStage.Intro
 
         let speech = new AmazonSpeech()
         let reprompt: string|undefined;
         let builder = input.responseBuilder
 
-        //basic intro, get user to say start the local (unverified)
-        if(prevTutorialStage === undefined){
+        let nextStage = () => wrap.session.prevTutorialStage = curStage
+
+        if(curStage === TutorialStage.Intro){ //basic intro, get user to say start the local (unverified)
             speech.say(
                 `Hi, I'm alexa. Welcome to the local.
                 I'm going to teach you how to find local events in New Zealand in 4 steps.`)
@@ -52,10 +54,9 @@ export class TutorialHandler implements RequestHandler {
                 Say 'Alexa', wait for the tone, then say 'start the local'`
             ).pause("5s")
             reprompt = "Say 'Alexa', wait for the tone, then say 'start the local"
-            wrap.session.prevTutorialState = TutorialStage.Intro
+            nextStage()
 
-        //tell the user to request a location
-        } else if(prevTutorialStage === TutorialStage.Intro) {
+        } else if(curStage === TutorialStage.LocationReq) { //request a location
             speech.say("Great! Now you can wake me up and start this skill.")
             .pause(newStepPause)
             .say(
@@ -65,9 +66,9 @@ export class TutorialHandler implements RequestHandler {
                 Let's try that with your city or town now.`
             )
             reprompt = "Ask me to find events in your location just as you would ask a real person"
-            wrap.session.prevTutorialState = TutorialStage.LocationReq
+            nextStage()
 
-        } else if(prevTutorialStage === TutorialStage.LocationReq){
+        } else if(curStage === TutorialStage.MultiFilter){ //date and location in one request
             let slotLoc = wrap.slots[Schema.LocationSlot]
             let lastLoc = wrap.session.lastSlots && wrap.session.lastSlots[Schema.LocationSlot]
 
@@ -80,10 +81,8 @@ export class TutorialHandler implements RequestHandler {
                 reprompt = `Say Yes if ${slotLoc.resValue} is correct.
                 If I'm wrong, please ask for events in your location again, making sure to speak slowly and clearly.`
 
-                //initialise top location with single entry until user verifies
+                //save slots for default location
                 wrap.session.lastSlots = wrap.slots
-                // wrap.resetTopLocation()
-                // wrap.countLocation(slotLoc)
 
             //verified location, continuing tutorial
             } else if(wrap.isIntent(Schema.YesIntent) && lastLoc && lastLoc.resValue){
@@ -107,7 +106,7 @@ export class TutorialHandler implements RequestHandler {
                     Your turn, make a request with your location and a date now.`
                 )
                 reprompt = "Ask for events with your location and a date, for example, 'Is there anything on in Hamilton on Tuesday?'"
-                wrap.session.prevTutorialState = TutorialStage.MultiFilter
+                nextStage()
             
             //tell the user to do a location request and/or say yes
             } else {
@@ -117,14 +116,16 @@ export class TutorialHandler implements RequestHandler {
                 if(lastLoc && lastLoc.resValue)
                     speech.say(`If ${lastLoc.resValue} was correct, just say Yes.`)
             }
-        } else if(prevTutorialStage === TutorialStage.MultiFilter){
+
+        //get the user to use the categories interface
+        } else if(curStage === TutorialStage.Categories){ //set a category
             let locSlot = wrap.slots[Schema.LocationSlot]
             let dateSlot = wrap.slots[Schema.DateSlot]
 
             //heard a location and date correctly
             if(locSlot && locSlot.resValue && dateSlot){
                 let date = new AmazonDate(dateSlot.value)
-                speech.say(`Nice work. I heard a location of ${locSlot.resValue} and a date of`)
+                speech.say(`I heard a location of ${locSlot.resValue} and a date of`)
                 date.toSpeech(speech)
                 speech.pauseByStrength("strong")
                 
@@ -133,33 +134,34 @@ export class TutorialHandler implements RequestHandler {
                     .say(`I found ${exampleDateEventsCount} events in ${locSlot.resValue}`)
                 date.toSpeech(speech)
                 speech.say(`, I'll read you the first ${EventsHandler.items}.`)
-                    .say('You can now refine your search for events with a date and location.')
+                    .say('Nice work. You can now refine your search for events with a date and location.')
                     .pause(newStepPause)
                     .say(`Step 4.
                         I also understand different types of events.
                         This includes music genres, Sports, Art Exhibitions and many more.
                         If there are too many events to read out, 
                         I will tell you the top event categories you could choose from.
-                        For this example, let's say I have read out the following categories to choose from:
+                        For this example, you can select one of the following:
                         ${rootCategories}.
-                        We are going to skip that and choose a category now.
-                        Say alexa to interrupt me, then say one of the categories.`
+                        Say alexa to interrupt me, wait for the tone, then say one of the categories.`
                     )
                     .pause("5s")
                 reprompt = "Say one of the following: " + rootCategories
+                nextStage()
 
             //tell user to make a multifilter request
             } else{
                 reprompt = "Ask for events with your location and a date"
                 speech.say(reprompt + ", for example, 'Is there anything on in Hamilton on Tuesday?'")
             }
-        } else if(prevTutorialStage === TutorialStage.Categories) {
+
+        } else if(curStage === TutorialStage.Navigation) {
             let catSlot = wrap.slots[Schema.CategorySlot]
             if(catSlot && catSlot.resValue){
-                speech.say("I heard you say " + catSlot.resValue)
-                speech.say(`Congratulations. 
-                You now have all the basics needed to use the local. 
-                I'll leave you now, remember you can open me up by going Alexa start the local.`)
+                speech.say(`I heard you say ${catSlot.resValue}.`)
+                speech.say(`Easy. In the future, if you already know the category you want, you can include it in your question.
+                Congrats, you now have all the basics needed to use the local. 
+                I'll leave you now, remember you can open me up by going Alexa start the local. Goodbye`)
 
                 wrap.persistent.finishedTutorial = true
                 return builder.speak(speech.ssml()).getResponse()
@@ -168,11 +170,11 @@ export class TutorialHandler implements RequestHandler {
                 reprompt = "Say one of the following: " + rootCategories
             }
         } else
-            throw new Error("End of tutorial reached")
+            throw new Error("Invalid tutorial state")
 
         let ssml = speech.ssml().replace(/(\r\n|\n|\r)/gm, "");
         builder.speak(ssml)
-            .reprompt(reprompt)
+            .reprompt(new AmazonSpeech().say(reprompt).ssml())
 
         return builder.getResponse()
     }
