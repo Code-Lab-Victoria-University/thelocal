@@ -236,7 +236,7 @@ async function saveData(name: string, saveObj: any) {
             synonyms: synonyms
         } as CustomSlot
     }))
-    
+
     await saveData("category-names", categories.map(node => node.name))
 
     await promisify(writeFile)(join("models", "en-AU.json"), app.schemas.askcli())

@@ -165,6 +165,7 @@ export class EventsHandler implements RequestHandler {
                                     })
                             }
 
+                            //TODO: use nicer category names, derived from model generator
                             //if less than 0, a first
                             eventsForCategory = eventsForCategory.sort((a, b) => b.count-a.count)
                             eventsForCategory.splice(5)
