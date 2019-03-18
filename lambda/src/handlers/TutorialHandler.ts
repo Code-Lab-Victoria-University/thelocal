@@ -18,7 +18,7 @@ export enum TutorialStage {
 let exampleLocEventsCount = 100
 let exampleDateEventsCount = 10
 let newStepPause = "1s"
-let rootCategories = "Workshops, Conferences & Classes, Concerts & Gig Guide, Performing Arts, Festivals & Lifestyle, Sports & Outdoors, Exhibitions"
+let rootCategories = "Workshops, Conferences & Classes, Music, Performing Arts, Festivals & Lifestyle, Sports & Outdoors, Exhibitions"
 
 export class TutorialHandler implements RequestHandler {
     async canHandle(input: HandlerInput) {
