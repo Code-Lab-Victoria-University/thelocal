@@ -42,10 +42,10 @@ export class EventsHandler implements RequestHandler {
 
         let place = isVenue ? venueSlot : input.slots[Schema.LocationSlot]
 
-        let prevLocations = input.persistentAttrs.prevLocations || {}
+        let prevLocations = input.persistent.prevLocations || {}
 
         //save this request in case user wants to set parameters
-        input.sessionAttrs.lastSlots = input.slots
+        input.session.lastSlots = input.slots
 
         //if no place from venue or location, load from most recent location used
         if((!place || !place.resId) && Object.keys(prevLocations).length){
@@ -73,7 +73,7 @@ export class EventsHandler implements RequestHandler {
                         place: place
                     }
                     prevLocations[slug].frequency += 1
-                    input.persistentAttrs.prevLocations = prevLocations
+                    input.persistent.prevLocations = prevLocations
                 }
 
                 //parse date
@@ -159,7 +159,7 @@ export class EventsHandler implements RequestHandler {
                         // speech.say("You could refine your search now by interrupting and adding a filter")
                         //     .say("such as").say(unadded.join(', '))
 
-                        input.persistentAttrs.refineRecommendCount = refineRecommendCount+1
+                        input.persistent.refineRecommendCount = refineRecommendCount+1
                         // input.setPersistentAttr(refineRecommendCountKey, refineRecommendCount+1)
                     }
 
@@ -177,7 +177,7 @@ export class EventsHandler implements RequestHandler {
                         .say((i+1).toString()).pauseByStrength("x-strong")
                     })
 
-                    input.sessionAttrs.lastEvents = events
+                    input.session.lastEvents = events
 
                     speech.sentence('Tell me which event you want to know more about by saying Alexa followed by the number')
                 }

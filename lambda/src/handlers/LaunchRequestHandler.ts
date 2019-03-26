@@ -66,8 +66,8 @@ export class LaunchRequestHandler implements RequestHandler {
     async handle(handlerInput: HandlerInput): Promise<Response> {    
         let input = await InputWrap.load(handlerInput)
 
-        let runs = input.persistentAttrs.LaunchRequestRuns = input.persistentAttrs.LaunchRequestRuns || 0
-        input.persistentAttrs.LaunchRequestRuns = runs+1
+        let runs = input.persistent.LaunchRequestRuns = input.persistent.LaunchRequestRuns || 0
+        input.persistent.LaunchRequestRuns = runs+1
 
         let tutorialI = Math.floor(runs/2)
         let tutorialAppend = tutorialI < orderedTutorials.length ? orderedTutorials[tutorialI] : rand(...tutorials)

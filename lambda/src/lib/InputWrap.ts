@@ -47,7 +47,7 @@ interface PersistentAttrs {
 
 export default class InputWrap {
 
-    readonly sessionAttrs: {
+    readonly session: {
         [key: string]: any
 
         // prevIntents?: Intent[],
@@ -58,7 +58,7 @@ export default class InputWrap {
     };
     
     // private readonly persistentPromise: Promise<PersistentAttrs>;
-    persistentAttrs: PersistentAttrs = {};
+    persistent: PersistentAttrs = {};
 
     readonly intent?: Intent;
     // readonly prevIntents: Intent[];
@@ -71,7 +71,7 @@ export default class InputWrap {
 
     private constructor(input: HandlerInput){
         this.attrs = input.attributesManager;
-        this.sessionAttrs = this.attrs.getSessionAttributes();
+        this.session = this.attrs.getSessionAttributes();
         // this.persistentPromise = this.attrs.getPersistentAttributes()
 
         let req = input.requestEnvelope.request
@@ -101,13 +101,13 @@ export default class InputWrap {
         // if(this.intent)
         //     this.sessionAttrs.prevIntents = this.prevIntents.concat(this.intent)
         
-        this.attrs.setSessionAttributes(this.sessionAttrs)
+        this.attrs.setSessionAttributes(this.session)
         // this.setPersistentAttr('request', )
         
-        this.persistentAttrs.totRequests = (this.persistentAttrs.totRequests || 0) + 1
+        this.persistent.totRequests = (this.persistent.totRequests || 0) + 1
 
         // (await this.persistentAttrs)
-        this.attrs.setPersistentAttributes(this.persistentAttrs)
+        this.attrs.setPersistentAttributes(this.persistent)
         await this.attrs.savePersistentAttributes()
     }
 
@@ -154,7 +154,7 @@ export default class InputWrap {
 
     static async load(input: HandlerInput) {
         let wrap = new InputWrap(input)
-        wrap.persistentAttrs = await wrap.attrs.getPersistentAttributes()
+        wrap.persistent = await wrap.attrs.getPersistentAttributes()
         return wrap
     }
 }

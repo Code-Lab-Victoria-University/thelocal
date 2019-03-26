@@ -17,16 +17,17 @@ export enum TutorialStage {
 export class TutorialHandler implements RequestHandler {
     async canHandle(input: HandlerInput) {
         let wrap = await InputWrap.load(input)
-        let reqs = wrap.persistentAttrs.totRequests || 0
-        return (!wrap.persistentAttrs.LaunchRequestRuns)
+        let reqs = wrap.persistent.totRequests || 0
+        //return if LaunchRequest has never been run
+        return (!wrap.persistent.LaunchRequestRuns)
         // return wrap.isIntent(Schema.SelectIntent) && wrap.sessionAttrs.lastEvents !== undefined
     }
     
     async handle(input: HandlerInput) {
         let wrap = await InputWrap.load(input)
 
-        let prevTutorialStage = wrap.sessionAttrs.prevTutorialState
-        wrap.sessionAttrs.prevTutorialState = prevTutorialStage !== undefined ? prevTutorialStage+1 : TutorialStage.Intro
+        let prevTutorialStage = wrap.session.prevTutorialState
+        wrap.session.prevTutorialState = prevTutorialStage !== undefined ? prevTutorialStage+1 : TutorialStage.Intro
 
         if(prevTutorialStage === undefined){
             let speech = new AmazonSpeech()
