@@ -36,11 +36,12 @@ interface Slots {
 }
 
 interface PersistentAttrs {
-    [key: string]: any;
+    // [key: string]: any;
 
     prevLocations?: OldLocations
     refineRecommendCount?: number
     
+    finishedTutorial?: boolean
     LaunchRequestRuns?: number
     totRequests?: number
 }
@@ -54,14 +55,12 @@ export default class InputWrap {
         lastEvents?: Response<Event>
         // [lastSlotsKey]?: Slots,
         lastSlots?: Slots
-        prevTutorialState?: TutorialStage
+        prevTutorialStage?: TutorialStage
     };
     
-    // private readonly persistentPromise: Promise<PersistentAttrs>;
-    persistent: PersistentAttrs = {};
+    persistent: PersistentAttrs = {}
 
     readonly intent?: Intent;
-    // readonly prevIntents: Intent[];
     /** Slots that have values */
     slots: Slots = {}
 
@@ -111,13 +110,44 @@ export default class InputWrap {
         await this.attrs.savePersistentAttributes()
     }
 
-    // lastIntent(): Intent|undefined {
-    //     return 0 < this.prevIntents.length ? this.prevIntents[this.prevIntents.length-1] : undefined
-    // }
+    resetTopLocation(){
+        this.persistent.prevLocations = {}
+    }
 
-    // getSlot(slotName: string): CustomSlot|undefined {
-    //     return this.slots[slotName]
-    // }
+    getTopLocation(){
+        let prevLocations = this.persistent.prevLocations
+
+        console.log(JSON.stringify(prevLocations))
+
+        //if no place from venue or location, load from most recent location used
+        if(prevLocations && Object.keys(prevLocations).length){
+            //replace best place no best or if best is venue and new isn't or if both are equally venuey and new is higher frequency
+            let bestOldLocation = Object.values(prevLocations).reduce((prev, cur) => 
+                (!prev || prev.frequency < cur.frequency) ? cur : prev)
+
+            if(bestOldLocation){
+                return bestOldLocation.place
+            }
+        }
+    }
+
+    countLocation(location: CustomSlot){
+        if(!this.persistent.prevLocations)
+            this.persistent.prevLocations = {}
+
+        let slug = location.resId
+        let placeName = location.resValue
+
+        if(slug && placeName){
+            this.persistent.prevLocations[slug] = this.persistent.prevLocations[slug] || {
+                frequency: 0,
+                place: location
+            }
+            this.persistent.prevLocations[slug].frequency += 1
+        } else
+            throw new Error("Provided location doesn't have a valid resId and resValue, got " + JSON.stringify(location))
+    }
+
 
     /**
      * Is the wrapper an intent
@@ -134,23 +164,6 @@ export default class InputWrap {
         else
             return intentName.includes(this.intent.name)
     }
-
-    // hasSessionAttr(key: string): boolean {
-    //     return this.sessionAttrs[key] !== undefined
-    // }
-
-    // async getPersistentAttrs(){
-    //     return await this.persistentAttrs
-    // }
-
-    // async getPersistentAttr<RetType>(key: string): Promise<RetType|undefined>{
-    //     return (await this.persistentAttrs)[key] as RetType
-    // }
-
-    // async setPersistentAttr<InType>(key: string, val: InType){
-    //     (await this.persistentAttrs)[key] = val
-    //     this.attrs.setPersistentAttributes(await this.persistentAttrs)
-    // }
 
     static async load(input: HandlerInput) {
         let wrap = new InputWrap(input)

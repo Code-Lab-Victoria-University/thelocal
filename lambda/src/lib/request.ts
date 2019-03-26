@@ -133,7 +133,7 @@ export interface EventRequest {
     order?: EventRequestOrder,
     start_date?: string,
     end_date?: string,
-    category_slug?: string
+    category_slug?: string,
 }
 
 export async function getEvents(req?: EventRequest): Promise<Response<Event>>{
@@ -144,6 +144,23 @@ export async function getEvents(req?: EventRequest): Promise<Response<Event>>{
     }, req))
     
     return events
+}
+
+export interface CategoryInfo{
+    url_slug: string,
+    name: string,
+    children: {children: CategoryInfo[]},
+    count_current_events: number
+}
+
+export async function getCategoryChildren(category_slug?: string) {
+    let children = (await eventFindaRequest<CategoryInfo>('categories', {
+        levels: 2,
+        category_slug: category_slug,
+        fields: "category:(url_slug,name,children,count_current_events)"
+    })).list[0].children
+    
+    return children && children.children
 }
 
 export async function getCategories(): Promise<Node[]> {

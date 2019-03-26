@@ -1,6 +1,6 @@
 import { HandlerInput, RequestHandler } from "ask-sdk-core";
 import { Response } from "ask-sdk-model"
-import { rand, randN } from "../lib/Util";
+import { rand, randN, prettyJoin } from "../lib/Util";
 import InputWrap from "../lib/InputWrap";
 import AmazonSpeech from "ssml-builder/amazon_speech"
 import {readFile, readFileSync} from "fs"
@@ -25,8 +25,7 @@ let filterSuggestions = [
 ]
 
 function categoriesString(n: number){
-    let arr = randN(categoryNames, n)
-    return arr.slice(0, -1).join(", ") + " or " + arr[arr.length-1]
+    return prettyJoin(randN(categoryNames, n), "or")
 }
 
 const orderedTutorials = [

@@ -15,12 +15,20 @@ import { rand } from "./lib/Util";
 import { ChangeEventsSlotHandler } from "./handlers/ChangeEventsSlotHandler";
 import { Schema } from "./lib/Schema";
 import { TutorialHandler } from "./handlers/TutorialHandler";
+import { ui } from "ask-sdk-model";
 
 const Persistence = new DynamoDbPersistenceAdapter({
     tableName: "thelocal"
 })
 
 const skillBuilder = SkillBuilders.custom();
+
+function speechString(speech: ui.OutputSpeech) {
+    if(speech.type == "SSML")
+        return speech.ssml
+    else
+        return speech.text
+}
 
 exports.handler = skillBuilder
     .addRequestInterceptors(async input => {
@@ -35,13 +43,20 @@ exports.handler = skillBuilder
             //         output += JSON.stringify(slot)
             //     }
             // }
-        }
+        } else
+            output += "REQUEST_TYPE: " + input.requestEnvelope.request.type
 
         if(output)
             console.log(output)
     })
 
     .addRequestHandlers(
+        //always allow reset
+        new EasyIntentHandler(Schema.RESET, (wrap, input) => {
+            input.attributesManager.setPersistentAttributes({})
+            return "Successful reset"
+        }),
+
         //tutorial always at start (overrides launch request)
         new TutorialHandler(),
 
@@ -50,11 +65,6 @@ exports.handler = skillBuilder
         new EasyIntentHandler("AMAZON.HelpIntent", 'You can say hello to me!'),
         new EasyIntentHandler(['AMAZON.CancelIntent', 'AMAZON.StopIntent'], 
             rand('Bye', "Goodbye")),
-
-        new EasyIntentHandler(Schema.RESET, (wrap, input) => {
-            input.attributesManager.setPersistentAttributes({})
-            return "Successful reset"
-        }),
 
         // new SetLocationHandler(),
         new ChangeEventsSlotHandler(),
@@ -72,15 +82,18 @@ exports.handler = skillBuilder
         }
         )
 
-    .addErrorHandlers(new CustomErrorHandler)
+    .addErrorHandlers(new CustomErrorHandler())
     .withPersistenceAdapter(Persistence)
 
     .addResponseInterceptors(async (input, response) => {
         //save, etc
         (await InputWrap.load(input)).endRequest()
-            
-        if(response)
-            console.log("OUTPUT: " + JSON.stringify(response.outputSpeech))
+            3
+        if(response && response.outputSpeech){
+            console.log("OUTPUT: " + speechString(response.outputSpeech))
+            if(response.reprompt)
+                console.log("REPROMPT: " + speechString(response.reprompt.outputSpeech))
+        }
         else
             console.log("NO RESPONSE")
     })
