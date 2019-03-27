@@ -1,6 +1,6 @@
 import { HandlerInput, RequestHandler } from "ask-sdk-core";
 import InputWrap, { CustomSlot } from "../lib/InputWrap"
-import {getEvents, EventRequestOrder, EventRequest, Response, Event, getCategoryChildren, CategoryInfo, eventFindaRequest} from '../lib/request'
+import {getEvents, EventRequestOrder, EventRequest, Response, Event, getCategoryChildren, CategoryInfo, eventFindaRequest, maxParallelRequests} from '../lib/request'
 import {Schema} from '../lib/Schema'
 import AmazonSpeech from 'ssml-builder/amazon_speech'
 import AmazonDate from "../lib/AmazonDate";
@@ -158,12 +158,9 @@ export class EventsHandler implements RequestHandler {
 
                             let catCounts: {cat:CategoryInfo,count:number}[] = []
 
-                            let awaits = []
+                            let awaits: Promise<void>[] = []
 
-                            for (const cat of catChildren.sort((a,b) => b.count_current_events-a.count_current_events)) {
-                                if(20 <= awaits.length)
-                                    break
-
+                            for (const cat of catChildren) {
                                 reqClone.category = cat.id
 
                                 awaits.push(getEvents(reqClone).then(resp => {
@@ -173,9 +170,16 @@ export class EventsHandler implements RequestHandler {
                                             count: resp.count
                                         })
                                 }))
+
+                                //10 concurrent requests
+                                if(maxParallelRequests < awaits.length){
+                                    await Promise.all(awaits)
+                                    awaits = []
+                                } 
                             }
 
-                            await Promise.all(awaits)
+                            if(awaits.length)
+                                await Promise.all(awaits)
 
                             //TODO: use nicer category names, derived from model generator
                             //if less than 0, a first

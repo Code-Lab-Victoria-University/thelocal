@@ -1,7 +1,12 @@
 import * as request from 'request-promise-native'
 import { isLambda } from './Util';
 
-export async function eventFindaRequest<RetType>(endpoint: string, query?: any): Promise<Response<RetType>>{
+/**
+ * @returns undefined when errors, such as too many requests being made
+ * @param endpoint 
+ * @param query 
+ */
+export async function eventFindaRequest<RetType>(endpoint: string, query?: any){
     let url = `http://api.eventfinda.co.nz/v2/${endpoint}.json`
     let req =  request.get(url, {
         auth: {
@@ -10,42 +15,64 @@ export async function eventFindaRequest<RetType>(endpoint: string, query?: any):
         },
         qs: query
     })
-    let ret = {} as Response<RetType>
-    
-    let respBody = await req
-    let res = JSON.parse(respBody)
-    if(isLambda()){
-        console.log("COMPLETED REQUEST " + endpoint + ": " + Object.keys(query).map(key => `(${key}:${query[key]})`).join(" ")
-        + "\nRESPONSE:\n" + respBody)
-    }
-    return {
-        count: res["@attributes"].count,
-        list: res[endpoint]
+    try{
+        let respBody = await req
+        let res = JSON.parse(respBody)
+        if(isLambda()){
+            console.log("COMPLETED REQUEST " + endpoint + ": " + Object.keys(query).map(key => `(${key}:${query[key]})`).join(" ")
+            + "\nRESPONSE:\n" + respBody)
+        }
+        return {
+            count: res["@attributes"].count,
+            list: res[endpoint]
+        } as Response<RetType>
+
+    //return empty on error
+    } catch (e) {
+        console.error("FAILED REQUEST " + endpoint + ": " + Object.keys(query).map(key => `(${key}:${query[key]})`).join(" "))
+        return undefined
     }
 }
 
+export const maxParallelRequests = 10;
 const rows = 20;
 export async function eventFindaRequestMultiple<RetType>(endpoint: string, pages: number, query?: any): Promise<Response<RetType>>{
     query = query || {}
     query.rows = query.rows || rows
-    query.offset = 0
 
-    let returns = (await eventFindaRequest<RetType>(endpoint, query))
+    let returns: (Response<RetType>|undefined)[] = []
+    let awaits: Promise<Response<RetType>|undefined>[] = []
 
-    let page = 1;
-    let isMore = true
-    while(isMore && (!pages || page < pages)){
-        query.offset = page*query.rows
-        let cur = (await eventFindaRequest<RetType>(endpoint, query))
+    let page = 0;
 
-        if(0 < cur.list.length){
-            returns.list.push(...cur.list)
-        } else
-            isMore = false;
-
+    while((!pages || page < pages)){
+        awaits.push(eventFindaRequest<RetType>(endpoint, Object.assign({offset: page*query.rows}, query)))
         page++
+
+        if(maxParallelRequests < awaits.length){
+            let curRets = await Promise.all(awaits)
+            returns.push(...curRets)
+            awaits = []
+
+            if(curRets.some(ret => ret !== undefined && ret.count === 0))
+                break
+            else
+                await new Promise(resolve => setTimeout(resolve, 100))
+        }
     }
+
+    if(awaits.length)
+        returns.push(...await Promise.all(awaits))
+        
     return returns
+        .map(cur => cur !== undefined ? cur : {count: 0, list: []})
+        .reduce((cur, prev) => {
+            if(cur && 0 < cur.list.length){
+                prev.list.push(...cur.list)
+                prev.count += cur.count
+            }
+            return prev;
+    })
 }
 
 export interface Response<ListType>{
@@ -87,7 +114,7 @@ export async function getLocations(levels: number) {
         fields: "location:(id,name,summary,url_slug,count_current_events,children)",
         levels: levels,
         venue: false
-    })).list[0]) as LocationNode[]
+    }))!.list[0]) as LocationNode[]
 }
 
 
@@ -140,13 +167,11 @@ export interface EventRequest {
 }
 
 export async function getEvents(req?: EventRequest) {
-    let events = await eventFindaRequest<Event>('events', Object.assign({
+    return (await eventFindaRequest<Event>('events', Object.assign({
         order: EventRequestOrder.popularity,
         fields: "event:(id,name,url_slug,description,datetime_end,datetime_start,datetime_summary,location),"+venueFields,
         rows: 10
-    }, req))
-    
-    return events
+    }, req)))!
 }
 
 export interface CategoryInfo{
@@ -161,7 +186,7 @@ export async function getCategoryChildren(category_id?: number) {
         levels: 2,
         category: category_id,
         fields: "category:(id,name,children,count_current_events)"
-    })).list[0].children
+    }))!.list[0].children
     
     return children && children.children
 }
@@ -170,7 +195,7 @@ export async function getCategoryTree(){
     return (await eventFindaRequest<CategoryInfo>('categories', {
         levels: 3,
         rows: 1
-    })).list[0]
+    }))!.list[0]
 }
 
 // export async function getEvent(req?: EventRequest): Promise<Response<Event>>{

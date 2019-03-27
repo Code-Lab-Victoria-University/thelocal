@@ -72,17 +72,17 @@ async function saveData(name: string, saveObj: any) {
         ],
         "findMeWhats": [
             "anything", 
-            "anything that is", 
-            "anything thats",
+            // "anything that is", 
+            // "anything thats",
             "the events" ,
             "any events" ,
-            "the events that are", 
-            "any events that are", 
+            // "the events that are", 
+            // "any events that are", 
             "events" ,
-            "events that are", 
+            // "events that are", 
         ],
         "happening": ["on", "happening", "playing"],
-        "search": ["Tell me", "Find", "Find me", "Search for", "Search", "Request", "List", "Is there"],
+        "search": ["Tell me", "Find", "Find me", "Search for", "Request", "List", "Is there"],
         "eventsName": ["events", "shows", "concerts", "gigs", "productions"],
         "eventChoice": ["number", "option", "event", "choice"]
     }
@@ -129,8 +129,6 @@ async function saveData(name: string, saveObj: any) {
         },
         utterances: eventsUtterances
     })
-
-    let makeSetIntentUtterances = (names: string[]) => names.map(name => `Set ${name} to `)
 
     let makeSetIntent = (setIntentName: string, slot: string, slotType: string, ...names: string[]) => {
         app.intent(setIntentName, {
@@ -179,7 +177,7 @@ async function saveData(name: string, saveObj: any) {
             "show me my",
             "list my",
             "display my"
-        ].flatMap(utterance => bookmarksListName.map(prefix => prefix + " " + utterance))
+        ].flatMap(utterance => bookmarksListName.map(suffix => utterance + " " + suffix))
         .concat(bookmarksListName)
     })
 
@@ -223,9 +221,8 @@ async function saveData(name: string, saveObj: any) {
     //     topVenues.forEach(val => venues[val.id] = val)
     //     console.log(location.name + ": " + topVenues.length)
     // }
-    let venues = await getVenues(undefined, 100)
+    let venues = await getVenues(undefined, 500)
     console.log(Object.keys(venues).length + " venues retrieved")
-
 
     //TODO: verify filter needed
     venues = venues.filter(val => val.count_current_events !== 0)
@@ -239,7 +236,7 @@ async function saveData(name: string, saveObj: any) {
         } as CustomSlot
     }))
     
-    await saveData("venue-names", venues.map(node => node.name))
+    // await saveData("venue-names", venues.map(node => node.name))
 
     let rootCat = await getCategoryTree()
 
@@ -258,9 +255,10 @@ async function saveData(name: string, saveObj: any) {
         if(mainCat.id === 6){
             mainCatSynonyms.push("music", "concert", "gigs", mainCatTitle)
             mainCatTitle = "music and concerts"
-        //exhibitions
-        } else if(mainCat.id === 1){
-            mainCatSynonyms.push("art")
+        //art exhibitions
+        } else if(mainCat.id === 11){
+            mainCatSynonyms.push("art", mainCat.name)
+            mainCatTitle = "art and exhibitions"
         }
 
         categorySlots.push({
