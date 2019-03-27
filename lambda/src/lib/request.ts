@@ -12,9 +12,12 @@ export async function eventFindaRequest<RetType>(endpoint: string, query?: any):
     })
     let ret = {} as Response<RetType>
     
-    let res = JSON.parse(await req)
-    if(isLambda())
-        console.log("COMPLETED REQUEST " + endpoint + ": " + Object.keys(query).map(key => `(${key}:${query[key]})`).join(" "))
+    let respBody = await req
+    let res = JSON.parse(respBody)
+    if(isLambda()){
+        console.log("COMPLETED REQUEST " + endpoint + ": " + Object.keys(query).map(key => `(${key}:${query[key]})`).join(" ")
+        + "\nRESPONSE:\n" + respBody)
+    }
     return {
         count: res["@attributes"].count,
         list: res[endpoint]
@@ -58,7 +61,7 @@ export interface Node {
     count_current_events: number,
 }
 
-function flattenNode(node: Node, list?: Node[]): Node[] {
+function flattenNode(node: Node, list?: Node[]) {
     if(!list)
         //exclude top node
         list = []
@@ -79,7 +82,7 @@ function flattenNode(node: Node, list?: Node[]): Node[] {
     return list
 }
 
-export async function getLocations(levels: number): Promise<LocationNode[]>{
+export async function getLocations(levels: number) {
     return flattenNode((await eventFindaRequest<LocationNode>('locations', {
         fields: "location:(id,name,summary,url_slug,count_current_events,children)",
         levels: levels,
@@ -102,7 +105,7 @@ export interface VenueNode extends LocationNode{
 
 let venueFields = "location:(id,name,summary,url_slug,count_current_events,description)"
 
-export async function getVenues(url_slug?: string, pages?: number): Promise<VenueNode[]>{
+export async function getVenues(url_slug?: string, pages?: number) {
     let venues = await eventFindaRequestMultiple<VenueNode>('locations', pages||2, {
         venue: true,
         order: "popularity",
@@ -133,10 +136,10 @@ export interface EventRequest {
     order?: EventRequestOrder,
     start_date?: string,
     end_date?: string,
-    category_slug?: string,
+    category?: number,
 }
 
-export async function getEvents(req?: EventRequest): Promise<Response<Event>>{
+export async function getEvents(req?: EventRequest) {
     let events = await eventFindaRequest<Event>('events', Object.assign({
         order: EventRequestOrder.popularity,
         fields: "event:(id,name,url_slug,description,datetime_end,datetime_start,datetime_summary,location),"+venueFields,
@@ -147,26 +150,27 @@ export async function getEvents(req?: EventRequest): Promise<Response<Event>>{
 }
 
 export interface CategoryInfo{
-    url_slug: string,
+    id: number,
     name: string,
     children: {children: CategoryInfo[]},
     count_current_events: number
 }
 
-export async function getCategoryChildren(category_slug?: string) {
+export async function getCategoryChildren(category_id?: number) {
     let children = (await eventFindaRequest<CategoryInfo>('categories', {
         levels: 2,
-        category_slug: category_slug,
-        fields: "category:(url_slug,name,children,count_current_events)"
+        category: category_id,
+        fields: "category:(id,name,children,count_current_events)"
     })).list[0].children
     
     return children && children.children
 }
 
-export async function getCategories(): Promise<Node[]> {
-    return flattenNode((await eventFindaRequestMultiple<Node>('categories', 4, {
-        levels: 3
-    })).list[0])
+export async function getCategoryTree(){
+    return (await eventFindaRequest<CategoryInfo>('categories', {
+        levels: 3,
+        rows: 1
+    })).list[0]
 }
 
 // export async function getEvent(req?: EventRequest): Promise<Response<Event>>{

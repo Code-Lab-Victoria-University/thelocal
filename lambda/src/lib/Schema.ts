@@ -22,6 +22,8 @@ export class Schema {
     
     static readonly NumberSlot = "Number"
 
+    static readonly BookmarkEventIntent = "BookmarkEventIntent"
+    static readonly ListBookmarksIntent = "ListBookmarksIntent"
 
     static readonly YesIntent = "AMAZON.YesIntent"
     static readonly NoIntent = "AMAZON.NoIntent"

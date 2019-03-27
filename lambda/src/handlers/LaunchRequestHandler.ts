@@ -5,7 +5,7 @@ import InputWrap from "../lib/InputWrap";
 import AmazonSpeech from "ssml-builder/amazon_speech"
 import {readFile, readFileSync} from "fs"
 import {join} from "path"
-import categoryNames from "../data/category-names.json"
+import categories from "../data/category-names.json"
 
 const examples = [
     "Find me opera concerts in wellington next week",
@@ -21,11 +21,11 @@ let filterSuggestions = [
     ["a specific venue", "is there anything happening at san fran tonight"],
     ["a date", "find me events next thursday"],
     ["a time", "Search for events tonight"],
-    ["a category", () => `find me ${rand(...categoryNames)} events this week`]
+    ["a category", () => `find me ${rand(...categories)} events this week`]
 ]
 
 function categoriesString(n: number){
-    return prettyJoin(randN(categoryNames, n), "or")
+    return prettyJoin(randN(categories.map(cat => cat.title), n), "or")
 }
 
 const orderedTutorials = [

@@ -3,9 +3,10 @@ import {join} from 'path'
 import {promisify} from 'util'
 
 import { app as alexaApp, CustomSlot } from 'alexa-app'
-import {getLocations, getVenues, VenueNode, getCategories} from '../lambda/src/lib/request'
-import {baseEqual, flatMap} from '../lambda/src/lib/Util'
+import {getLocations, getVenues, VenueNode, getCategoryTree} from '../lambda/src/lib/request'
+import '../lambda/src/lib/ArrayExt'
 import {Schema} from '../lambda/src/lib/Schema'
+import { prettyJoin } from '../lambda/src/lib/Util';
 
 /**
  * returns all ordered, touching sentense permuatations of length at least 2 excluding original. eg "a1 a2 a3" = ["a1 a2", "a2 a3"]
@@ -134,7 +135,7 @@ async function saveData(name: string, saveObj: any) {
     let makeSetIntent = (setIntentName: string, slot: string, slotType: string, ...names: string[]) => {
         app.intent(setIntentName, {
             slots: {[slot]: slotType},
-            utterances: flatMap(names, name => [
+            utterances: names.flatMap(name => [
                 `Set ${name} to {-|${slot}}`,
                 `Set the ${name} to {-|${slot}}`,
                 `${name} is {-|${slot}}`,
@@ -159,6 +160,28 @@ async function saveData(name: string, saveObj: any) {
     app.intent("AMAZON.StopIntent", identityIntent)
     app.intent("AMAZON.YesIntent", identityIntent)
 
+    let bookmarkNames = ["save", "bookmark", "keep"]
+    app.intent(Schema.BookmarkEventIntent, {
+        utterances: [
+            "this event",
+            "this for later",
+            "this",
+            "event",
+            "for later"
+        ].flatMap(utterance => bookmarkNames.map(prefix => prefix + " " + utterance))
+        .concat(bookmarkNames)
+    })
+
+    let bookmarksListName = ["bookmarks", "bookmarked events", "saved events"]
+    app.intent(Schema.ListBookmarksIntent, {
+        utterances: [
+            "what are my",
+            "show me my",
+            "list my",
+            "display my"
+        ].flatMap(utterance => bookmarksListName.map(prefix => prefix + " " + utterance))
+        .concat(bookmarksListName)
+    })
 
     app.intent(Schema.RESET, {
         utterances: [
@@ -218,26 +241,51 @@ async function saveData(name: string, saveObj: any) {
     
     await saveData("venue-names", venues.map(node => node.name))
 
-    let categories = await getCategories()
-    console.log(categories.length + " categories found")
-    app.customSlot(categoryTypeName, categories.map(node => {
-        let synonyms = flatMap(node.name.split(", "), val => val.split(" & "))
-        let title = node.name
+    let rootCat = await getCategoryTree()
 
-        if(node.url_slug === "concerts-gig-guide"){
-            synonyms.push("music", "concert", "gigs", title)
-            title = "Music"
-        } else if(node.url_slug === "exhibitions"){
-            synonyms.push("art")
+    let categorySlots: CustomSlot[] = []
+
+    //expands multiple words out of comma, ampersand separation
+    let catNameToSynonyms = (name: string) => name.split(", ").flatMap(val => val.split(" & "))
+
+    //gotta use category id instead of slug due to damn lawn bowls using a space in the slug...
+    //I was tempted to remove lawn bowls but I gotta think about the target audience haha
+    rootCat.children!.children.forEach(mainCat => {
+        let mainCatSynonyms = catNameToSynonyms(mainCat.name)
+        let mainCatTitle = prettyJoin(mainCatSynonyms, "and")
+
+        //concerts and gig guide
+        if(mainCat.id === 6){
+            mainCatSynonyms.push("music", "concert", "gigs", mainCatTitle)
+            mainCatTitle = "music and concerts"
+        //exhibitions
+        } else if(mainCat.id === 1){
+            mainCatSynonyms.push("art")
         }
-        return {
-            id: node.url_slug,
-            value: title,
-            synonyms: synonyms
-        } as CustomSlot
-    }))
 
-    await saveData("category-names", categories.map(node => node.name))
+        categorySlots.push({
+            id: mainCat.id.toString(),
+            value: mainCatTitle,
+            synonyms: mainCatSynonyms
+        })
+
+        categorySlots.push(...mainCat.children!.children.map(subCat => {
+            let subCatSynonyms = catNameToSynonyms(subCat.name)
+            return {
+                id: subCat.id.toString(),
+                value: prettyJoin(subCatSynonyms, "and"),
+
+                //append main category name (jazz category has jazz music as a synonym)
+                synonyms: subCatSynonyms.flatMap(
+                    synonym => mainCatSynonyms.map(mainCatSynonym => synonym + " " + mainCatSynonym))
+            }
+        }))
+    })
+
+    console.log(categorySlots.length + " categories found")
+    app.customSlot(categoryTypeName, categorySlots)
+
+    await saveData("category-names", categorySlots.map(slot => {return {title: slot.value, id: slot.id}}))
 
     await promisify(writeFile)(join("models", "en-AU.json"), app.schemas.askcli())
 })()

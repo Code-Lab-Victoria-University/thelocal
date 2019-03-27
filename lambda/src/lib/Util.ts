@@ -44,15 +44,13 @@ export function isLambda(): boolean {
     return process.env.LAMBDA_TASK_ROOT !== undefined;
 }
 
-export function flatMap<Val>(arr: Val[], method: (val: Val) => Val[]): Val[] {
-    return arr.reduce((arr, cur) => arr.concat(method(cur)), [] as Val[])
-}
-
 /**
  * Join an array with commas, with a special separator at the end (and/or) eg
  * 
  * ([apples, oranges, pineapples, pears], "and") --> "apples, oranges, pineapples and pears"
  */
 export function prettyJoin(arr: string[], lastSepChar: string){
+    if(arr.length < 2)
+        return arr[0]
     return arr.slice(0, -1).join(", ") + ` ${lastSepChar} ` + arr[arr.length-1]
 }

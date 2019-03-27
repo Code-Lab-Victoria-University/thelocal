@@ -117,8 +117,6 @@ export default class InputWrap {
     getTopLocation(){
         let prevLocations = this.persistent.prevLocations
 
-        console.log(JSON.stringify(prevLocations))
-
         //if no place from venue or location, load from most recent location used
         if(prevLocations && Object.keys(prevLocations).length){
             //replace best place no best or if best is venue and new isn't or if both are equally venuey and new is higher frequency
@@ -147,7 +145,6 @@ export default class InputWrap {
         } else
             throw new Error("Provided location doesn't have a valid resId and resValue, got " + JSON.stringify(location))
     }
-
 
     /**
      * Is the wrapper an intent

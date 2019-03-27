@@ -9,6 +9,7 @@ import { EventSelectHandler } from "./EventSelectHandler";
 import DateRange from "../lib/DateRange";
 import moment from 'moment-timezone'
 import { prettyJoin } from "../lib/Util";
+import categories from '../data/category-names.json'
 
 //TODO: https://developer.amazon.com/docs/alexa-design/voice-experience.html
 
@@ -23,6 +24,18 @@ interface LocationFrequency {
 let prevLocationsKey = "prevLocations"
 
 export const items = 4
+
+/**
+ * @returns empty string when invalid id
+ * @param id 
+ */
+function getCategoryName(id?: number) {
+    if(id === undefined)
+        return ""
+
+    let cat = categories.find(cat => cat.id === id.toString())
+    return cat ? cat.title : ""
+}
 
 export class EventsHandler implements RequestHandler {
     async canHandle(input: HandlerInput) {
@@ -93,10 +106,8 @@ export class EventsHandler implements RequestHandler {
                         range = time
                 }
 
-                if(range)
-                    console.log(JSON.stringify(range))
-
                 let category = input.slots[Schema.CategorySlot]
+                let categoryId = category && category.resId ? Number.parseInt(category.resId) : undefined
 
                 //start request object for api request
                 let req = {
@@ -106,13 +117,13 @@ export class EventsHandler implements RequestHandler {
                     end_date: range && range.endISO(),
                     //sort by date if venue or any more specific info was given
                     order: (isVenue || range || category) ? EventRequestOrder.date : EventRequestOrder.popularity,
-                    category_slug: category && category.resId
+                    category: categoryId
                 } as EventRequest
 
                 //request events list
                 let events = await getEvents(req)
                     
-                let categoryName = category && category.resValue ? category.resValue : ""
+                let categoryName = getCategoryName(categoryId)
 
                 //compile response
                 let speech = new AmazonSpeech()
@@ -128,49 +139,50 @@ export class EventsHandler implements RequestHandler {
                     range.toSpeech(speech)
 
                 if(events.count === 0){
+                    speech.pauseByStrength("strong")
                     speech.say("Please try again or change one of your filters")
                 } else if(events.list.length == 1) {
+                    speech.pauseByStrength("strong")
                     EventSelectHandler.getSpeech(events.list[0], speech)
                 } else {
-                    if(items < events.count)
-
-                    // const refineRecommendCountKey = "refineRecommendCount"
-                    // // let refineRecommendCount = await input.getPersistentAttr(refineRecommendCountKey) as number || 0
-                    // let refineRecommendCount = 0
-
                     if((items < events.count)){
                         speech.pauseByStrength("strong")
 
                         //get list of categories (either root list or)
-                        let catChildren = await getCategoryChildren(category && category.resId)
+                        let catChildren = await getCategoryChildren(categoryId)
 
                         if(catChildren.length){
-                            let reqClone = Object.assign({fields: "event:(id)"}, req)
+                            let reqClone = Object.assign({fields: "event:()"}, req)
                             reqClone.rows = 1
                             reqClone.fields = "event:(id)"
 
-                            let eventsForCategory: {cat:CategoryInfo,count:number}[] = []
+                            let catCounts: {cat:CategoryInfo,count:number}[] = []
+
+                            let awaits = []
 
                             for (const cat of catChildren.sort((a,b) => b.count_current_events-a.count_current_events)) {
-                                if(10 <= eventsForCategory.length)
+                                if(20 <= awaits.length)
                                     break
 
-                                reqClone.category_slug = cat.url_slug
+                                reqClone.category = cat.id
 
-                                let resp = await getEvents(reqClone)
-                                if(resp.count)
-                                    eventsForCategory.push({
-                                        cat: cat,
-                                        count: resp.count
-                                    })
+                                awaits.push(getEvents(reqClone).then(resp => {
+                                    if(resp.count)
+                                        catCounts.push({
+                                            cat: cat,
+                                            count: resp.count
+                                        })
+                                }))
                             }
+
+                            await Promise.all(awaits)
 
                             //TODO: use nicer category names, derived from model generator
                             //if less than 0, a first
-                            eventsForCategory = eventsForCategory.sort((a, b) => b.count-a.count)
-                            eventsForCategory.splice(5)
-                            speech.say("The top categories you could use for this search are")
-                                .say(prettyJoin(eventsForCategory.map(catInfo => catInfo.cat.name), "or"))
+                            catCounts = catCounts.sort((a, b) => b.count-a.count)
+                            catCounts.splice(6)
+                            speech.say("The top categories available to make this search more specific, ordered by popularity, are")
+                                .say(prettyJoin(catCounts.map(catInfo => getCategoryName(catInfo.cat.id)), "or"))
                                 .pauseByStrength("strong")
                                 .say("You could apply that now by saying alexa followed by the category")
                             // eventsForCategory.forEach(catInfo => {
@@ -188,7 +200,7 @@ export class EventsHandler implements RequestHandler {
                             // if(!dateSlot) unadded.push('date')
                             // if(!timeSlot) unadded.push('time')
     
-                            speech.say(`You could refine your search now by interrupting and
+                            speech.say(`You could make this search more specific by interrupting and
                                 setting the ${name}, for example, alexa set ${name} to ${suggestion}`)
                                 .pauseByStrength("strong")
 
@@ -217,8 +229,6 @@ export class EventsHandler implements RequestHandler {
 
                     speech.sentence('Tell me which event you want to know more about by saying Alexa followed by the number')
                 }
-
-                console.log("SPEECH: " + speech.ssml())
                 
                 return input.response
                     .speak(speech.ssml())
