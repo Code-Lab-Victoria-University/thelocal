@@ -16,6 +16,8 @@ import { ChangeEventsSlotHandler } from "./handlers/ChangeEventsSlotHandler";
 import { Schema } from "./lib/Schema";
 import { TutorialHandler } from "./handlers/TutorialHandler";
 import { ui } from "ask-sdk-model";
+import { BookmarkEventHandler } from "./handlers/BookmarkEventHandler";
+import { ListBookmarksHandler } from "./handlers/ListBookmarksHandler";
 
 const Persistence = new DynamoDbPersistenceAdapter({
     tableName: "thelocal"
@@ -66,10 +68,15 @@ exports.handler = skillBuilder
         new EasyIntentHandler(['AMAZON.CancelIntent', 'AMAZON.StopIntent'], 
             rand('Bye', "Goodbye")),
 
-        // new SetLocationHandler(),
+        //will override EventsHandler if SetIntent and no prev req
         new ChangeEventsSlotHandler(),
+
+        //these can be at end
+        new ListBookmarksHandler(),
+        new BookmarkEventHandler(),
         new EventsHandler(),
         new EventSelectHandler(),
+
 
         new SessionEndedRequestHandler(),
 

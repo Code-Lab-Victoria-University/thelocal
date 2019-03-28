@@ -41,6 +41,7 @@ export class EventsHandler implements RequestHandler {
     async canHandle(input: HandlerInput) {
         let wrap = await InputWrap.load(input);
 
+        //handle SetIntents if no previous request exists
         return wrap.isIntent(Object.values(Schema.SetIntents).concat(Schema.EventsIntent))
     }
 
@@ -57,9 +58,6 @@ export class EventsHandler implements RequestHandler {
         let place = isVenue ? venueSlot : input.slots[Schema.LocationSlot]
 
         // let prevLocations = input.persistent.prevLocations || {}
-
-        //save this request in case user wants to set parameters
-        input.session.lastSlots = input.slots
 
         //if no place from venue or location, load from most recent location used
         if((!place || !place.resId)){
@@ -185,8 +183,11 @@ export class EventsHandler implements RequestHandler {
                             //if less than 0, a first
                             catCounts = catCounts.sort((a, b) => b.count-a.count)
                             catCounts.splice(6)
+
+                            let catInfos = catCounts.map(catInfo => catInfo.count.toString() + " in " + getCategoryName(catInfo.cat.id))
+
                             speech.say("The top categories available to make this search more specific, ordered by popularity, are")
-                                .say(prettyJoin(catCounts.map(catInfo => getCategoryName(catInfo.cat.id)), "or"))
+                                .say(prettyJoin(catInfos, "or"))
                                 .pauseByStrength("strong")
                                 .say("You could apply that now by saying alexa followed by the category")
                             // eventsForCategory.forEach(catInfo => {

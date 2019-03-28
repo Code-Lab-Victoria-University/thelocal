@@ -81,9 +81,6 @@ export class TutorialHandler implements RequestHandler {
                 reprompt = `Say Yes if ${slotLoc.resValue} is correct.
                 If I'm wrong, please ask for events in your location again, making sure to speak slowly and clearly.`
 
-                //save slots for default location
-                wrap.session.lastSlots = wrap.slots
-
             //verified location, continuing tutorial
             } else if(wrap.isIntent(Schema.YesIntent) && lastLoc && lastLoc.resValue){
                 wrap.resetTopLocation()
@@ -156,6 +153,7 @@ export class TutorialHandler implements RequestHandler {
             }
 
         } else if(curStage === TutorialStage.Navigation) {
+            //TODO: teach user how to exit here
             let catSlot = wrap.slots[Schema.CategorySlot]
             if(catSlot && catSlot.resValue){
                 speech.say(`I heard you say ${catSlot.resValue}.`)

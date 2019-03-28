@@ -4,8 +4,8 @@
   "description": "<img src=\"https://m.media-amazon.com/images/G/01/mobile-apps/dex/alexa/alexa-skills-kit/tutorials/quiz-game/header._TTH_.png\" />",
   "main": "index.js",
   "scripts": {
-    "build-model": "rm -Rf dist && tsc && node dist/src/index",
-    "debug-model": "node --inspect-brk=9229 dist/src/index",
+    "build-model": "rm -Rf dist && tsc && node dist/generateModel",
+    "debug-model": "node --inspect-brk=9229 dist/generateModel",
     "deploy-model": "ask deploy -t model --force",
     "build-deploy-model": "npm run build-model && npm run deploy-model",
     "build-deploy-lambda": "cd lambda && tsc && cd .. && rm -f lambda/asktemp* && ask deploy -t lambda --force"

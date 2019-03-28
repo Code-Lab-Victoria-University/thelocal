@@ -3,10 +3,10 @@ import {join} from 'path'
 import {promisify} from 'util'
 
 import { app as alexaApp, CustomSlot } from 'alexa-app'
-import {getLocations, getVenues, VenueNode, getCategoryTree} from '../lambda/src/lib/request'
-import '../lambda/src/lib/ArrayExt'
-import {Schema} from '../lambda/src/lib/Schema'
-import { prettyJoin } from '../lambda/src/lib/Util';
+import {getLocations, getVenues, VenueNode, getCategoryTree} from './lambda/src/lib/request'
+import './lambda/src/lib/ArrayExt'
+import {Schema} from './lambda/src/lib/Schema'
+import { prettyJoin } from './lambda/src/lib/Util';
 
 /**
  * returns all ordered, touching sentense permuatations of length at least 2 excluding original. eg "a1 a2 a3" = ["a1 a2", "a2 a3"]
@@ -191,7 +191,8 @@ async function saveData(name: string, saveObj: any) {
         slots: { [Schema.NumberSlot]: "AMAZON.NUMBER" },
         utterances: [
             "{Tell me|Describe|Explain}{| about| more about}{| eventChoice} {-|Number}",
-            "{eventChoice} {-|Number}"
+            "{eventChoice} {-|Number}",
+            "{-|Number}"
         ]
     })
 

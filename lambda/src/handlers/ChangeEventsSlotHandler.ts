@@ -9,6 +9,8 @@ export class ChangeEventsSlotHandler implements RequestHandler {
 
     async canHandle(handlerInput: HandlerInput) {
         let input = await InputWrap.load(handlerInput)
+
+        //if no last slots, then let the EventsHandler handle it
         return input.isIntent(Object.values(Schema.SetIntents)) && input.session.lastSlots !== undefined
     }
     

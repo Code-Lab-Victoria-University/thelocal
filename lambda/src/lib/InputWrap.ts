@@ -31,7 +31,7 @@ export class CustomSlot {
     }
 }
 
-interface Slots {
+export interface Slots {
     [key: string]: CustomSlot | undefined;
 }
 
@@ -44,6 +44,8 @@ interface PersistentAttrs {
     finishedTutorial?: boolean
     LaunchRequestRuns?: number
     totRequests?: number
+
+    bookmarks?: Event[]
 }
 
 export default class InputWrap {
@@ -54,6 +56,9 @@ export default class InputWrap {
         // prevIntents?: Intent[],
         lastEvents?: Response<Event>
         // [lastSlotsKey]?: Slots,
+        /**
+         * is updated at the end of every request to store the previous slots
+         */
         lastSlots?: Slots
         prevTutorialStage?: TutorialStage
     };
@@ -99,7 +104,7 @@ export default class InputWrap {
     async endRequest() {
         // if(this.intent)
         //     this.sessionAttrs.prevIntents = this.prevIntents.concat(this.intent)
-        
+        this.session.lastSlots = this.slots
         this.attrs.setSessionAttributes(this.session)
         // this.setPersistentAttr('request', )
         

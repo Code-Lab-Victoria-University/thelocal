@@ -145,6 +145,8 @@ export async function getVenues(url_slug?: string, pages?: number) {
 
 export interface Event {
     location: VenueNode,
+    id: number,
+    url_slug: string,
     name: string,
     description: string,
     datetime_end: string,
