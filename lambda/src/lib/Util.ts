@@ -54,3 +54,7 @@ export function prettyJoin(arr: string[], lastSepChar: string){
         return arr[0]
     return arr.slice(0, -1).join(", ") + `, ${lastSepChar} ` + arr[arr.length-1]
 }
+
+export function hasElements<T>(arr?: T[]){
+    return arr !== undefined && 0 < arr.length
+}

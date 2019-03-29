@@ -4,13 +4,24 @@ import {getEvents, EventRequestOrder, EventRequest, Response, Event} from '../li
 import {Schema} from '../lib/Schema'
 import AmazonSpeech from 'ssml-builder/amazon_speech'
 import AmazonDate from "../lib/AmazonDate";
+import { hasElements, prettyJoin } from "../lib/Util";
 
-let eventActionsText = "You can save this event, go back to the results, select a different number"
+let actions = ["go back to the results", "select a different number"]
+let bookmarkActions = ["save this event"]
 
 export class EventSelectHandler implements RequestHandler {
     async canHandle(input: HandlerInput) {
         let wrap = await InputWrap.load(input)
-        return wrap.isIntent(Schema.SelectIntent) && wrap.session.lastEvents !== undefined
+        return wrap.isIntent(Schema.SelectIntent) && 
+            EventSelectHandler.bookmarkMoreRecent(wrap) ? hasElements(wrap.persistent.bookmarks) : wrap.session.lastEvents !== undefined
+    }
+
+    //TODO: use list of lastRequests, and most recent one will be which path we go down in bookmark vs request list
+
+    static bookmarkMoreRecent(wrap: InputWrap){
+        return wrap.session.prevRequests !== undefined &&
+            wrap.session.prevRequests.indexOf(Schema.EventsIntent) < 
+            wrap.session.prevRequests.indexOf(Schema.ListBookmarksIntent)
     }
 
     static getSpeech(event: Event, speech?: AmazonSpeech) {
@@ -23,14 +34,20 @@ export class EventSelectHandler implements RequestHandler {
         return speech.sentence(event.description)
     }
 
-    static getEvent(events?: Response<Event>, slots?: Slots): Event|undefined {
+    static getEvent(eventsOrResponse?: Event[]|Response<Event>, slots?: Slots): Event|undefined {
+        let events;
+
+        if(eventsOrResponse instanceof Array)
+            events = eventsOrResponse
+        else if(eventsOrResponse)
+            events = eventsOrResponse.list
+
         if(events && slots){
             let numSlot = slots[Schema.NumberSlot]
             if(numSlot){
                 let number = Number.parseInt(numSlot.value)
-    
-                if(number <= events.list.length)
-                    return events.list[number-1]
+                if(number <= events.length)
+                    return events[number-1]
             }
         }
 
@@ -40,17 +57,21 @@ export class EventSelectHandler implements RequestHandler {
     async handle(input: HandlerInput) {
         let wrap = await InputWrap.load(input)
         
-        let event = EventSelectHandler.getEvent(wrap.session.lastEvents, wrap.slots)
+        let isBookmarks = EventSelectHandler.bookmarkMoreRecent(wrap)
+        let events = isBookmarks ? wrap.persistent.bookmarks : wrap.session.lastEvents
+        let event = EventSelectHandler.getEvent(events, wrap.slots)
 
         if(event){
+            let curActions = isBookmarks ? bookmarkActions.concat(...actions): actions
+            let actionsText = prettyJoin(curActions, "or")
             let speech = EventSelectHandler.getSpeech(event)
             speech.pauseByStrength("x-strong")
-            speech.say(eventActionsText)
+            speech.say(actionsText)
             // speech.sentence("Goodbye")
             
             return input.responseBuilder
                 .speak(speech.ssml())
-                .reprompt(eventActionsText)
+                .reprompt(actionsText)
                 .getResponse()
         } else {
             let reprompt = "please say another number or go back to the results."

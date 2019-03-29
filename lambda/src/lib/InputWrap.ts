@@ -53,13 +53,16 @@ export default class InputWrap {
     readonly session: {
         [key: string]: any
 
-        // prevIntents?: Intent[],
         lastEvents?: Response<Event>
-        // [lastSlotsKey]?: Slots,
-        /**
-         * is updated at the end of every request to store the previous slots
-         */
+
+        /** stores the slots from the last request */
         lastSlots?: Slots
+
+        /** list of the request type or intent name of all requests for this session.
+         * most recent requests are at end of array
+         */
+        prevRequests?: string[]
+
         prevTutorialStage?: TutorialStage
     };
     
@@ -70,10 +73,12 @@ export default class InputWrap {
     slots: Slots = {}
 
     private readonly attrs: AttributesManager;
+    private readonly input: HandlerInput;
 
     readonly response: ResponseBuilder;
 
     private constructor(input: HandlerInput){
+        this.input = input
         this.attrs = input.attributesManager;
         this.session = this.attrs.getSessionAttributes();
         // this.persistentPromise = this.attrs.getPersistentAttributes()
@@ -105,6 +110,10 @@ export default class InputWrap {
         // if(this.intent)
         //     this.sessionAttrs.prevIntents = this.prevIntents.concat(this.intent)
         this.session.lastSlots = this.slots
+
+        if(this.session.prevRequests === undefined) this.session.prevRequests = []
+        this.session.prevRequests.push(this.intent ? this.intent.name : this.input.requestEnvelope.request.type)
+        
         this.attrs.setSessionAttributes(this.session)
         // this.setPersistentAttr('request', )
         
