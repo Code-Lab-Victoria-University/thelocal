@@ -13,6 +13,7 @@ export class ListBookmarksHandler implements RequestHandler {
         
         let bookmarks = input.persistent.bookmarks
 
+        //TODO: read it out if just one
         if(bookmarks && bookmarks.length != 0){
             let bookmarksText = prettyJoin(bookmarks.map((event, i) => `for ${event.name} say option ${i+1}`), "and")
 

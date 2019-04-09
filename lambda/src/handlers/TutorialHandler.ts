@@ -5,6 +5,7 @@ import {Schema} from '../lib/Schema'
 import AmazonSpeech from 'ssml-builder/amazon_speech'
 import AmazonDate from "../lib/AmazonDate";
 import * as EventsHandler from './EventsHandler'
+import categories from '../data/category-names.json'
 
 // let tutorialStages = 0 | 1 | 2
 export enum TutorialStage {
@@ -18,6 +19,8 @@ export enum TutorialStage {
 let exampleLocEventsCount = 100
 let exampleDateEventsCount = 10
 let newStepPause = "1s"
+
+//TODO: use actual categories file, proper gaps
 let rootCategories = "Workshops, Conferences & Classes, Music, Performing Arts, Festivals & Lifestyle, Sports & Outdoors, Exhibitions"
 
 export class TutorialHandler implements RequestHandler {

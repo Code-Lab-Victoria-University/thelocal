@@ -7,7 +7,7 @@ import AmazonDate from "../lib/AmazonDate";
 import { hasElements, prettyJoin } from "../lib/Util";
 
 let actions = ["go back to the results", "select a different number"]
-let bookmarkActions = ["save this event"]
+let bookmarkActions = ["save this event to your bookmarks"]
 
 export class EventSelectHandler implements RequestHandler {
     async canHandle(input: HandlerInput) {
@@ -62,8 +62,8 @@ export class EventSelectHandler implements RequestHandler {
         let event = EventSelectHandler.getEvent(events, wrap.slots)
 
         if(event){
-            let curActions = isBookmarks ? bookmarkActions.concat(...actions): actions
-            let actionsText = prettyJoin(curActions, "or")
+            let curActions = isBookmarks ? actions : bookmarkActions.concat(...actions)
+            let actionsText = "You can " + prettyJoin(curActions, "or")
             let speech = EventSelectHandler.getSpeech(event)
             speech.pauseByStrength("x-strong")
             speech.say(actionsText)

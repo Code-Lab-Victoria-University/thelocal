@@ -21,8 +21,8 @@ interface LocationFrequency {
     frequency: number,
     place: CustomSlot
 }
-let prevLocationsKey = "prevLocations"
 
+//TODO: only trigger recommendation on multiple pages (3)
 export const items = 4
 
 /**
@@ -184,6 +184,7 @@ export class EventsHandler implements RequestHandler {
                             catCounts = catCounts.sort((a, b) => b.count-a.count)
                             catCounts.splice(6)
 
+                            //TODO: look for extraneous gap inside cat name
                             let catInfos = catCounts.map(catInfo => catInfo.count.toString() + " in " + getCategoryName(catInfo.cat.id))
 
                             speech.say("The top categories available to make this search more specific, ordered by popularity, are")
