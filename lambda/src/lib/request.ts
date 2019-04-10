@@ -6,7 +6,7 @@ import { isLambda } from './Util';
  * @param endpoint 
  * @param query 
  */
-export async function eventFindaRequest<RetType>(endpoint: string, query?: any){
+export async function eventFindaRequest<RetType>(endpoint: string, query?: any): Promise<Response<RetType>|undefined>{
     let url = `http://api.eventfinda.co.nz/v2/${endpoint}.json`
     let req =  request.get(url, {
         auth: {
@@ -34,7 +34,7 @@ export async function eventFindaRequest<RetType>(endpoint: string, query?: any){
     }
 }
 
-export const maxParallelRequests = 10;
+export const maxParallelRequests = 7;
 const rows = 20;
 export async function eventFindaRequestMultiple<RetType>(endpoint: string, pages: number, query?: any): Promise<Response<RetType>>{
     query = query || {}
@@ -54,6 +54,7 @@ export async function eventFindaRequestMultiple<RetType>(endpoint: string, pages
             returns.push(...curRets)
             awaits = []
 
+            //break if found end of list
             if(curRets.some(ret => ret !== undefined && ret.count === 0))
                 break
             else
@@ -127,15 +128,16 @@ export interface VenueNode extends LocationNode{
     point: {
         lat: number,
         lng: number
-    }
+    },
+    booking_phone?: string
 }
 
-let venueFields = "location:(id,name,summary,url_slug,count_current_events,description)"
+let venueFields = "location:(id,name,summary,url_slug,count_current_events,description,booking_phone)"
 
-export async function getVenues(url_slug?: string, pages?: number) {
+export async function getVenues(url_slug?: string, pages?: number, order?: string) {
     let venues = await eventFindaRequestMultiple<VenueNode>('locations', pages||2, {
         venue: true,
-        order: "popularity",
+        order: order,
         fields: venueFields,
         location_slug: url_slug
     })

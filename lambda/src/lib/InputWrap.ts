@@ -53,6 +53,7 @@ export default class InputWrap {
     readonly session: {
         [key: string]: any
 
+        selectedEvent?: Event
         lastEvents?: Response<Event>
 
         /** stores the slots from the last request */

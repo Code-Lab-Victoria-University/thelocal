@@ -17,6 +17,10 @@ export class Schema {
         Time: "SetTimeIntent"
     }
 
+    static readonly DetailIntents = {
+        Phone: "PhoneDetailIntent"
+    }
+
     static readonly SelectIntent = "SelectIntent"
     static readonly RESET = "RESET"
     

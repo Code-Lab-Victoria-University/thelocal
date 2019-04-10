@@ -3,7 +3,7 @@ import {join} from 'path'
 import {promisify} from 'util'
 
 import { app as alexaApp, CustomSlot } from 'alexa-app'
-import {getLocations, getVenues, VenueNode, getCategoryTree} from './lambda/src/lib/request'
+import {getLocations, getVenues, VenueNode, getCategoryTree, eventFindaRequest, LocationNode} from './lambda/src/lib/request'
 import './lambda/src/lib/ArrayExt'
 import {Schema} from './lambda/src/lib/Schema'
 import { prettyJoin } from './lambda/src/lib/Util';
@@ -152,11 +152,17 @@ async function saveData(name: string, saveObj: any) {
     makeSetIntent(Schema.SetIntents.Location, Schema.LocationSlot, locationTypeName, "Location", "Home", "City", "Town")
 
     //builtin amazon intents
-    let identityIntent = {slots: {}, utterances: []}
+    let identityIntent = {utterances: []}
     app.intent("AMAZON.CancelIntent", identityIntent)
     app.intent("AMAZON.HelpIntent", identityIntent)
     app.intent("AMAZON.StopIntent", identityIntent)
     app.intent("AMAZON.YesIntent", identityIntent)
+
+    app.intent("AMAZON.PreviousIntent", {
+        utterances: [
+            "go back to {my|the} {results|bookmarks|list of results|search}"
+        ]
+    })
 
     let bookmarkNames = ["save", "bookmark", "keep"]
     app.intent(Schema.BookmarkEventIntent, {
@@ -187,6 +193,14 @@ async function saveData(name: string, saveObj: any) {
         ]
     })
 
+    function makeDetailIntent(intent: string, ...nouns: string[]){
+        app.intent(intent, {
+            utterances: nouns.map(noun => `{what is the|tell me the|read out the|} ${noun}`)
+        })
+    }
+
+    makeDetailIntent(Schema.DetailIntents.Phone, "phone", "number", "phone number", "telephone", "telephone number", "contact")
+
     app.intent(Schema.SelectIntent, {
         slots: { [Schema.NumberSlot]: "AMAZON.NUMBER" },
         utterances: [
@@ -212,22 +226,42 @@ async function saveData(name: string, saveObj: any) {
     await saveData("location-names", locations.map(node => node.name))
 
     //generate venue custom slot
-    // let venues = {} as {[key: string]: VenueNode}
+    let venues: VenueNode[] = []
     // let topLocations = (await getLocations(2)).filter(loc => loc.count_current_events != 0)
     // console.log(topLocations.length + " locations being used to find venues")
 
+    
+    let regions = (await eventFindaRequest<LocationNode>('locations', {
+        fields: "location:(id,name,summary,url_slug,count_current_events,children)",
+        levels: 2,
+        rows: 1,
+        venue: false,
+        url_slug: "new-zealand"
+    }))!.list[0].children!.children
+    console.log(`${regions.length} region locations`)
 
-    // for(let location of topLocations) {
-    //     let topVenues = await getVenues(location.url_slug, 8)
-    //     topVenues.forEach(val => venues[val.id] = val)
-    //     console.log(location.name + ": " + topVenues.length)
-    // }
-    let venues = await getVenues(undefined, 500)
-    console.log(Object.keys(venues).length + " venues retrieved")
+    for(let location of regions) {
+        let newVenues = (await getVenues(location.url_slug, 20))
+        newVenues.push(...await getVenues(location.url_slug, 20, "popularity"))
+        console.log(`${newVenues.length} venues in ${location.name}`)
+        newVenues = newVenues.filter(venue => venue.count_current_events !== 0)
+        newVenues = newVenues.filter((venue, i) => newVenues.findIndex(earlierVenue => earlierVenue.id === venue.id) === i)
+        console.log(`${newVenues.length} valid venues in ${location.name}`)
 
-    //TODO: verify filter needed
-    venues = venues.filter(val => val.count_current_events !== 0)
-    console.log(venues.length + " valid venues")
+        venues.push(...newVenues)
+    }
+
+    console.log(`\n${venues.length} total venues found`)
+
+    // let venues = await getVenues(undefined, 500)
+    // console.log(Object.keys(venues).length + " venues retrieved")
+
+    //remove all venues with 0 events for brevity
+    // venues = venues.filter(val => val.count_current_events !== 0)
+    // console.log(venues.length + " venues with events")
+    // //only keep first appearance of venueId
+    // venues = venues.filter((venue, i) => venues.findIndex(earlierVenue => earlierVenue.id === venue.id) === i)
+    // console.log(venues.length + " unique venues (final)")
 
     app.customSlot(venueTypeName, venues.map(node => {
         return {

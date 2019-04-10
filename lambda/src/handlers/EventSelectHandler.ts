@@ -1,73 +1,43 @@
 import { HandlerInput, RequestHandler } from "ask-sdk-core";
 import InputWrap, { CustomSlot, Slots } from "../lib/InputWrap"
-import {getEvents, EventRequestOrder, EventRequest, Response, Event} from '../lib/request'
 import {Schema} from '../lib/Schema'
-import AmazonSpeech from 'ssml-builder/amazon_speech'
-import AmazonDate from "../lib/AmazonDate";
 import { hasElements, prettyJoin } from "../lib/Util";
+import * as EventUtil from '../lib/EventUtil'
 
-let actions = ["go back to the results", "select a different number"]
-let bookmarkActions = ["save this event to your bookmarks"]
+//TODO: make go back to results work for bookmarks?
+const actions = ["go back to the results", "select a different number"]
 
 export class EventSelectHandler implements RequestHandler {
     async canHandle(input: HandlerInput) {
         let wrap = await InputWrap.load(input)
+        
+        //handle both bookmark select and EventsHandler select
         return wrap.isIntent(Schema.SelectIntent) && 
-            EventSelectHandler.bookmarkMoreRecent(wrap) ? hasElements(wrap.persistent.bookmarks) : wrap.session.lastEvents !== undefined
-    }
-
-    //TODO: use list of lastRequests, and most recent one will be which path we go down in bookmark vs request list
-
-    static bookmarkMoreRecent(wrap: InputWrap){
-        return wrap.session.prevRequests !== undefined &&
-            wrap.session.prevRequests.indexOf(Schema.EventsIntent) < 
-            wrap.session.prevRequests.indexOf(Schema.ListBookmarksIntent)
-    }
-
-    static getSpeech(event: Event, speech?: AmazonSpeech) {
-        speech = speech || new AmazonSpeech()
-
-        speech.say(event.name)
-            .say("is at").say(event.location.name)
-            // .say("on").say(event.datetime_summary.replace("-", "to"))
-        new AmazonDate(event.datetime_start).toSpeech(speech, true)
-        return speech.sentence(event.description)
-    }
-
-    static getEvent(eventsOrResponse?: Event[]|Response<Event>, slots?: Slots): Event|undefined {
-        let events;
-
-        if(eventsOrResponse instanceof Array)
-            events = eventsOrResponse
-        else if(eventsOrResponse)
-            events = eventsOrResponse.list
-
-        if(events && slots){
-            let numSlot = slots[Schema.NumberSlot]
-            if(numSlot){
-                let number = Number.parseInt(numSlot.value)
-                if(number <= events.length)
-                    return events[number-1]
-            }
-        }
-
-        return undefined
+            EventUtil.bookmarkMoreRecent(wrap) ? hasElements(wrap.persistent.bookmarks) : wrap.session.lastEvents !== undefined
     }
     
     async handle(input: HandlerInput) {
         let wrap = await InputWrap.load(input)
         
-        let isBookmarks = EventSelectHandler.bookmarkMoreRecent(wrap)
+        let isBookmarks = EventUtil.bookmarkMoreRecent(wrap)
         let events = isBookmarks ? wrap.persistent.bookmarks : wrap.session.lastEvents
-        let event = EventSelectHandler.getEvent(events, wrap.slots)
+        let event = EventUtil.getEvent(events, wrap.slots)
 
         if(event){
-            let curActions = isBookmarks ? actions : bookmarkActions.concat(...actions)
+            let curActions = actions.slice()
+
+            if(event.location.booking_phone)
+                curActions.push("request the booking phone number")
+            if(!isBookmarks)
+                curActions.unshift("save this event to your bookmarks")
+
             let actionsText = "You can " + prettyJoin(curActions, "or")
-            let speech = EventSelectHandler.getSpeech(event)
+            let speech = EventUtil.getSpeech(event)
             speech.pauseByStrength("x-strong")
             speech.say(actionsText)
             // speech.sentence("Goodbye")
+
+            wrap.session.selectedEvent = event
             
             return input.responseBuilder
                 .speak(speech.ssml())
