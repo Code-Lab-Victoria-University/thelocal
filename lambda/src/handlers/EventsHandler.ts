@@ -10,6 +10,7 @@ import DateRange from "../lib/DateRange";
 import moment from 'moment-timezone'
 import { prettyJoin } from "../lib/Util";
 import categories from '../data/category-names.json'
+import * as EventUtil from '../lib/EventUtil'
 
 //TODO: https://developer.amazon.com/docs/alexa-design/voice-experience.html
 
@@ -23,7 +24,7 @@ interface LocationFrequency {
 }
 
 //TODO: only trigger recommendation on multiple pages (3)
-export const items = 4
+export const items = 4*3
 
 /**
  * @returns empty string when invalid id
@@ -41,8 +42,12 @@ export class EventsHandler implements RequestHandler {
     async canHandle(input: HandlerInput) {
         let wrap = await InputWrap.load(input);
 
+        let backToEvents = EventSelectHandler.isPrevIntent(wrap) && !EventUtil.bookmarkMoreRecent(wrap)
+        console.log("EVENTSHANDLERWRAP: " + JSON.stringify(wrap))
+        console.log("BACKTOEVENTS: " + backToEvents)
+
         //handle SetIntents if no previous request exists
-        return wrap.isIntent(Object.values(Schema.SetIntents).concat(Schema.EventsIntent))
+        return wrap.isIntent(Object.values(Schema.SetIntents).concat(Schema.EventsIntent)) || backToEvents
     }
 
     async handle(input: HandlerInput){
@@ -141,7 +146,7 @@ export class EventsHandler implements RequestHandler {
                     speech.say("Please try again or change one of your filters")
                 } else if(events.list.length == 1) {
                     speech.pauseByStrength("strong")
-                    EventSelectHandler.getSpeech(events.list[0], speech)
+                    EventUtil.getSpeech(events.list[0], speech)
                 } else {
                     if((items < events.count)){
                         speech.pauseByStrength("strong")

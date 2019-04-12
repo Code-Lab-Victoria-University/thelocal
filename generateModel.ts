@@ -164,6 +164,7 @@ async function saveData(name: string, saveObj: any) {
         ]
     })
 
+    //TODO: should be more genreal than list bookmarks
     let bookmarkNames = ["save", "bookmark", "keep"]
     app.intent(Schema.BookmarkEventIntent, {
         utterances: [
@@ -200,6 +201,7 @@ async function saveData(name: string, saveObj: any) {
     }
 
     makeDetailIntent(Schema.DetailIntents.Phone, "phone", "number", "phone number", "telephone", "telephone number", "contact")
+    makeDetailIntent(Schema.DetailIntents.Description, "description", "long description", "all the description", "full description")
 
     app.intent(Schema.SelectIntent, {
         slots: { [Schema.NumberSlot]: "AMAZON.NUMBER" },

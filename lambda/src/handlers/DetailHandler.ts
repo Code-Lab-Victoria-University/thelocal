@@ -9,15 +9,20 @@ export class DetailHandler implements RequestHandler {
 
         return wrap.isIntent(Object.values(Schema.DetailIntents)) && wrap.session.selectedEvent !== undefined
     }
+
+    static isPrevIntent(wrap: InputWrap){
+        return wrap.isIntent(Schema.AMAZON.PreviousIntent) &&
+            wrap.session.prevRequests !== undefined && Object.values(Schema.DetailIntents).includes(wrap.session.prevRequests[wrap.session.prevRequests.length-1])
+    }
     
     async handle(input: HandlerInput) {
         let wrap = await InputWrap.load(input)
         
         //can assume true due to handler
         let event = wrap.session.selectedEvent!
+        let reprompt = "From here you could go back to the event info, ask for different details or exit"
 
         if(wrap.isIntent(Schema.DetailIntents.Phone) && event.location.booking_phone){
-            let reprompt = "From here you could go back to the event info, ask for different details or exit"
             let speech = new AmazonSpeech()
                 .say("The phone number is")
                 .sayAs({
@@ -29,7 +34,16 @@ export class DetailHandler implements RequestHandler {
             return input.responseBuilder.speak(speech.ssml())
                 .reprompt(reprompt)
                 .getResponse()
-        } else
+        } else if(wrap.isIntent(Schema.DetailIntents.Description)){
+            let speech = new AmazonSpeech()
+                .say(event.description)
+                .sentence(reprompt)
+
+            return input.responseBuilder.speak(speech.ssml())
+                .reprompt(reprompt)
+                .getResponse()
+        }
+        else
             throw new Error("Unhandled Detail Request")
     }
 }

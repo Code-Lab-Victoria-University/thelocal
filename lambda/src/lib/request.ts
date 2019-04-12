@@ -57,6 +57,7 @@ export async function eventFindaRequestMultiple<RetType>(endpoint: string, pages
             //break if found end of list
             if(curRets.some(ret => ret !== undefined && ret.count === 0))
                 break
+            //lil timeout between bulk requests
             else
                 await new Promise(resolve => setTimeout(resolve, 100))
         }
@@ -154,6 +155,7 @@ export interface Event {
     datetime_end: string,
     datetime_start: string,
     datetime_summary: string
+    booking_phone?: string
 }
 
 export enum EventRequestOrder {
@@ -173,7 +175,7 @@ export interface EventRequest {
 export async function getEvents(req?: EventRequest) {
     return (await eventFindaRequest<Event>('events', Object.assign({
         order: EventRequestOrder.popularity,
-        fields: "event:(id,name,url_slug,description,datetime_end,datetime_start,datetime_summary,location),"+venueFields,
+        fields: "event:(id,name,url_slug,description,datetime_end,datetime_start,datetime_summary,location,booking_phone),"+venueFields,
         rows: 10
     }, req)))!
 }

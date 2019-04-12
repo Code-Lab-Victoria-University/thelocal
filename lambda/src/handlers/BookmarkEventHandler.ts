@@ -5,6 +5,7 @@ import InputWrap from '../lib/InputWrap'
 import { Schema } from "../lib/Schema";
 import { EventSelectHandler } from "./EventSelectHandler";
 import AmazonSpeech from "ssml-builder/amazon_speech";
+import * as EventUtil from '../lib/EventUtil'
 
 export class BookmarkEventHandler implements RequestHandler {    
     async canHandle(handlerInput: HandlerInput) {
@@ -14,7 +15,7 @@ export class BookmarkEventHandler implements RequestHandler {
     async handle(handlerInput: HandlerInput) {
         let input = await InputWrap.load(handlerInput)
 
-        let event = EventSelectHandler.getEvent(input.session.lastEvents, input.session.lastSlots)
+        let event = EventUtil.getEvent(input.session.lastEvents, input.session.lastSlots)
 
         let speech = new AmazonSpeech()
         let reprompt = "Some things you could do now include listing your existing bookmarks and making a new search"
@@ -25,6 +26,7 @@ export class BookmarkEventHandler implements RequestHandler {
 
             input.persistent.bookmarks.push(event)
 
+            //TODO: auto delete
             speech.say("Saving")
                 .say(event.name)
                 .say("to your bookmarked events.")

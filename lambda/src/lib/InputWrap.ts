@@ -177,9 +177,15 @@ export default class InputWrap {
             return intentName.includes(this.intent.name)
     }
 
+    static instance: InputWrap;
     static async load(input: HandlerInput) {
-        let wrap = new InputWrap(input)
-        wrap.persistent = await wrap.attrs.getPersistentAttributes()
-        return wrap
+        //use instance in SaS model
+        if(InputWrap.instance !== undefined)
+            return InputWrap.instance
+        else {
+            let wrap = new InputWrap(input)
+            wrap.persistent = await wrap.attrs.getPersistentAttributes()
+            return wrap
+        }
     }
 }

@@ -23,6 +23,8 @@ let newStepPause = "1s"
 //TODO: use actual categories file, proper gaps
 let rootCategories = "Workshops, Conferences & Classes, Music, Performing Arts, Festivals & Lifestyle, Sports & Outdoors, Exhibitions"
 
+//TODO: allow user to start tutorial
+
 export class TutorialHandler implements RequestHandler {
     async canHandle(input: HandlerInput) {
         let wrap = await InputWrap.load(input)

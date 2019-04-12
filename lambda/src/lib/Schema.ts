@@ -18,7 +18,12 @@ export class Schema {
     }
 
     static readonly DetailIntents = {
-        Phone: "PhoneDetailIntent"
+        Phone: "PhoneDetailIntent",
+        Description: "DescriptionDetailIntent"
+    }
+
+    static readonly AMAZON = {
+        PreviousIntent: "AMAZON.PreviousIntent"
     }
 
     static readonly SelectIntent = "SelectIntent"

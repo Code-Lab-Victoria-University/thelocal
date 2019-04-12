@@ -18,6 +18,7 @@ import { TutorialHandler } from "./handlers/TutorialHandler";
 import { ui } from "ask-sdk-model";
 import { BookmarkEventHandler } from "./handlers/BookmarkEventHandler";
 import { ListBookmarksHandler } from "./handlers/ListBookmarksHandler";
+import { DetailHandler } from "./handlers/DetailHandler";
 
 const Persistence = new DynamoDbPersistenceAdapter({
     tableName: "thelocal"
@@ -59,6 +60,8 @@ exports.handler = skillBuilder
             return "Successful reset"
         }),
 
+        //TODO: use EXIT if blind foundation lets you EXIT to exit the skill as well
+
         //tutorial always at start (overrides launch request)
         new TutorialHandler(),
 
@@ -68,15 +71,18 @@ exports.handler = skillBuilder
         new EasyIntentHandler(['AMAZON.CancelIntent', 'AMAZON.StopIntent'], 
             rand('Bye', "Goodbye")),
 
-        //will override EventsHandler if SetIntent and no prev req
-        new ChangeEventsSlotHandler(),
+        //most specific first
+        new DetailHandler(),
+        new BookmarkEventHandler(),
 
         //these can be at end
         new ListBookmarksHandler(),
-        new BookmarkEventHandler(),
-        new EventsHandler(),
         new EventSelectHandler(),
 
+        //will override EventsHandler if SetIntent and no prev req
+        new ChangeEventsSlotHandler(),
+        //most general last
+        new EventsHandler(),
 
         new SessionEndedRequestHandler(),
 
