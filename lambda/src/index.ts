@@ -67,11 +67,14 @@ exports.handler = skillBuilder
 
         new LaunchRequestHandler(),
 
-        new EasyIntentHandler("AMAZON.HelpIntent", 'You can say hello to me!'),
-        new EasyIntentHandler(['AMAZON.CancelIntent', 'AMAZON.StopIntent'], 
-            rand('Bye', "Goodbye")),
+        //could make this dependant on where you are in the skill
+        new EasyIntentHandler(Schema.AMAZON.HelpIntent, 
+            "I will respond to your questions to find events near you. Say start the tutorial to listen to the tutorial again."),
 
-        //most specific first
+        new EasyIntentHandler([Schema.AMAZON.CancelIntent, Schema.AMAZON.StopIntent], 
+            rand('Bye', "Goodbye", "Thanks for chatting", "See you next time", "Seeya")),
+
+        //most specific handlers first
         new DetailHandler(),
         new BookmarkEventHandler(),
 
@@ -99,9 +102,9 @@ exports.handler = skillBuilder
     .withPersistenceAdapter(Persistence)
 
     .addResponseInterceptors(async (input, response) => {
-        //save, etc
+        //save metadata for consequtive requests
         (await InputWrap.load(input)).endRequest()
-            3
+            
         if(response && response.outputSpeech){
             console.log("OUTPUT: " + speechString(response.outputSpeech))
             if(response.reprompt)

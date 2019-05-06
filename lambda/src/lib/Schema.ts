@@ -23,7 +23,11 @@ export class Schema {
     }
 
     static readonly AMAZON = {
-        PreviousIntent: "AMAZON.PreviousIntent"
+        PreviousIntent: "AMAZON.PreviousIntent",
+        YesIntent: "AMAZON.YesIntent",
+        StopIntent: "AMAZON.StopIntent",
+        HelpIntent: "AMAZON.HelpIntent",
+        CancelIntent: "AMAZON.CancelIntent"
     }
 
     static readonly SelectIntent = "SelectIntent"
@@ -31,10 +35,9 @@ export class Schema {
     
     static readonly NumberSlot = "Number"
 
+    static readonly TutorialIntent = "TutorialIntent"
+
     static readonly BookmarkEventIntent = "BookmarkEventIntent"
     static readonly ListBookmarksIntent = "ListBookmarksIntent"
-
-    static readonly YesIntent = "AMAZON.YesIntent"
-    static readonly NoIntent = "AMAZON.NoIntent"
     private constructor(){}
 }

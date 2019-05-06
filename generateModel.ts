@@ -153,12 +153,18 @@ async function saveData(name: string, saveObj: any) {
 
     //builtin amazon intents
     let identityIntent = {utterances: []}
-    app.intent("AMAZON.CancelIntent", identityIntent)
-    app.intent("AMAZON.HelpIntent", identityIntent)
-    app.intent("AMAZON.StopIntent", identityIntent)
-    app.intent("AMAZON.YesIntent", identityIntent)
+    app.intent(Schema.AMAZON.HelpIntent, identityIntent)
+    app.intent(Schema.AMAZON.StopIntent, identityIntent)
+    app.intent(Schema.AMAZON.CancelIntent, identityIntent)
+    app.intent(Schema.AMAZON.YesIntent, identityIntent)
 
-    app.intent("AMAZON.PreviousIntent", {
+    app.intent(Schema.TutorialIntent, {
+        utterances: [
+            "{|start the |open the |redo the }{|basic |intro }tutorial"
+        ]
+    })
+
+    app.intent(Schema.AMAZON.PreviousIntent, {
         utterances: [
             "go back to {my|the} {results|bookmarks|list of results|search}"
         ]

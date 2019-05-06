@@ -1,19 +1,21 @@
 import { HandlerInput, RequestHandler } from "ask-sdk-core";
 import InputWrap, { CustomSlot } from "../lib/InputWrap"
-import {getEvents, EventRequestOrder, EventRequest, Response, Event} from '../lib/request'
 import {Schema} from '../lib/Schema'
 import AmazonSpeech from 'ssml-builder/amazon_speech'
 import AmazonDate from "../lib/AmazonDate";
 import * as EventsHandler from './EventsHandler'
-import categories from '../data/category-names.json'
 
 // let tutorialStages = 0 | 1 | 2
+/**
+ * In the code formatting, these denote when the user is first requested this information, not when this stage is passed.
+ */
 export enum TutorialStage {
     Intro,
     LocationReq,
     MultiFilter,
     Categories,
-    Navigation
+    Exit,
+    Final
 }
 
 let exampleLocEventsCount = 100
@@ -25,13 +27,17 @@ let rootCategories = "Workshops, Conferences & Classes, Music, Performing Arts, 
 
 //TODO: allow user to start tutorial
 
+function wait5s(text: string): string{
+    return new AmazonSpeech().say(text).pause('5s').ssml()
+}
+
 export class TutorialHandler implements RequestHandler {
     async canHandle(input: HandlerInput) {
         let wrap = await InputWrap.load(input)
         let reqs = wrap.persistent.totRequests || 0
 
-        //do tutorial if never gotten past it and if tutorial stage is in bounds or undefined
-        return !wrap.persistent.finishedTutorial
+        //do tutorial if never finished or requested or currently in tutorial (was requested)
+        return !wrap.persistent.finishedTutorial || wrap.isIntent(Schema.TutorialIntent) || wrap.session.prevTutorialStage !== undefined
     }
     
     async handle(input: HandlerInput) {
@@ -50,7 +56,7 @@ export class TutorialHandler implements RequestHandler {
         if(curStage === TutorialStage.Intro){ //basic intro, get user to say start the local (unverified)
             speech.say(
                 `Hi, I'm alexa. Welcome to the local.
-                I'm going to teach you how to find local events in New Zealand in 4 steps.`)
+                In this tutorial I'm going to teach you how to find local events in New Zealand in 4 steps.`)
             .pause(newStepPause).say(
                 `Step 1. You can say 'Alexa' at any time to get my attention.
                 When speaking to me, make sure to speak slowly and clearly in a quiet environment.
@@ -58,7 +64,7 @@ export class TutorialHandler implements RequestHandler {
                 After I'm listening, say your command. Let's try the command that starts the local.
                 Say 'Alexa', wait for the tone, then say 'start the local'`
             ).pause("5s")
-            reprompt = "Say 'Alexa', wait for the tone, then say 'start the local"
+            reprompt = wait5s("Say 'Alexa', wait for the tone, then say 'start the local")
             nextStage()
 
         } else if(curStage === TutorialStage.LocationReq) { //request a location
@@ -87,7 +93,7 @@ export class TutorialHandler implements RequestHandler {
                 If I'm wrong, please ask for events in your location again, making sure to speak slowly and clearly.`
 
             //verified location, continuing tutorial
-            } else if(wrap.isIntent(Schema.YesIntent) && lastLoc && lastLoc.resValue){
+            } else if(wrap.isIntent(Schema.AMAZON.YesIntent) && lastLoc && lastLoc.resValue){
                 wrap.resetTopLocation()
                 wrap.countLocation(lastLoc)
 
@@ -157,20 +163,43 @@ export class TutorialHandler implements RequestHandler {
                 speech.say(reprompt + ", for example, 'Is there anything on in Hamilton on Tuesday?'")
             }
 
-        } else if(curStage === TutorialStage.Navigation) {
-            //TODO: teach user how to exit here
+        //teach the user to exit uses AMAZON.StopIntent as per https://developer.amazon.com/docs/custom-skills/standard-built-in-intents.html#about-canceling-and-stopping
+        } else if(curStage === TutorialStage.Exit) {
+            
             let catSlot = wrap.slots[Schema.CategorySlot]
             if(catSlot && catSlot.resValue){
-                speech.say(`I heard you say ${catSlot.resValue}.`)
-                speech.say(`Easy. In the future, if you already know the category you want, you can include it in your question.
-                Congrats, you now have all the basics needed to use the local. 
-                I'll leave you now, remember you can open me up by going Alexa start the local. Goodbye`)
+                speech.say(`I heard you say ${catSlot.resValue}.
+                    Easy. In the future, if you already know the category you want, you can include it in your question
+                    by saying something like 'Find me music events next weekend'.
 
-                wrap.persistent.finishedTutorial = true
-                return builder.speak(speech.ssml()).getResponse()
+                    Onto the final step, Stopping the skill.
+                    I will keep asking you questions unless you stay silent or tell me to stop.
+                    This will exit out of the skill and stop our conversation.
+                    As with other requests, you can interrupt me at any time by saying my name, then tell me to stop,
+                    for example by saying 'Alexa Stop'.
+                    Try saying 'Alexa Stop' now.`)
+                .pause('5s')
+
+                reprompt = wait5s("Say 'Alexa stop'")
+
+                nextStage()
             } else {
                 speech.say("Say one of the following categories: " + rootCategories)
                 reprompt = "Say one of the following: " + rootCategories
+            }
+        } else if(curStage === TutorialStage.Final){
+            if(wrap.isIntent([Schema.AMAZON.StopIntent, Schema.AMAZON.CancelIntent])){
+                speech.say(`Congrats, you now have all the basics needed to use the local. 
+                    You can open up this tutorial at any time in the future by saying start the tutorial while the local is open.
+                    I'll leave you now, remember you can open me up by saying 'Alexa start the local'. Goodbye`)
+    
+                wrap.persistent.finishedTutorial = true
+                wrap.session.prevTutorialStage = undefined
+
+                return builder.speak(speech.ssml()).getResponse()
+            } else{
+                reprompt = "Say 'Alexa Stop'"
+                speech.say(reprompt)
             }
         } else
             throw new Error("Invalid tutorial state")

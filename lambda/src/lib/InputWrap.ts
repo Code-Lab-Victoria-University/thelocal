@@ -107,6 +107,10 @@ export default class InputWrap {
         }
     }
 
+    /**
+     * Save request information for this request, to handle continued requests.
+     * ONLY CALL THIS AT END OF REQUEST ONCE
+     */
     async endRequest() {
         // if(this.intent)
         //     this.sessionAttrs.prevIntents = this.prevIntents.concat(this.intent)
@@ -178,6 +182,9 @@ export default class InputWrap {
     }
 
     static instance: InputWrap;
+    /**
+     * load or return instance of InputWrap for this request 
+     */
     static async load(input: HandlerInput) {
         //use instance in SaS model
         if(InputWrap.instance !== undefined)
