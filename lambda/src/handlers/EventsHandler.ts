@@ -7,7 +7,6 @@ import AmazonDate from "../lib/AmazonDate";
 import AmazonTime from "../lib/AmazonTime";
 import { EventSelectHandler } from "./EventSelectHandler";
 import DateRange from "../lib/DateRange";
-import moment from 'moment-timezone'
 import { prettyJoin } from "../lib/Util";
 import categories from '../data/category-names.json'
 import * as EventUtil from '../lib/EventUtil'
@@ -24,7 +23,7 @@ interface LocationFrequency {
 }
 
 //TODO: only trigger recommendation on multiple pages (3)
-export const items = 4*3
+export const items = 4
 
 /**
  * @returns empty string when invalid id
@@ -146,9 +145,10 @@ export class EventsHandler implements RequestHandler {
                     speech.say("Please try again or change one of your filters")
                 } else if(events.list.length == 1) {
                     speech.pauseByStrength("strong")
-                    EventUtil.getSpeech(events.list[0], speech)
+                    EventSelectHandler.getEventDetails(events.list[0], speech)
                 } else {
-                    if((items < events.count)){
+                    //recommend filters
+                    if((items*3 < events.count)){
                         speech.pauseByStrength("strong")
 
                         //get list of categories (either root list or)
@@ -192,7 +192,7 @@ export class EventsHandler implements RequestHandler {
                             //TODO: look for extraneous gap inside cat name
                             let catInfos = catCounts.map(catInfo => catInfo.count.toString() + " in " + getCategoryName(catInfo.cat.id))
 
-                            speech.say("The top categories available to make this search more specific, ordered by popularity, are")
+                            speech.say("The top categories available to make this search more specific are")
                                 .say(prettyJoin(catInfos, "or"))
                                 .pauseByStrength("strong")
                                 .say("You could apply that now by saying alexa followed by the category")

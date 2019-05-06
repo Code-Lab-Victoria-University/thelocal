@@ -6,6 +6,8 @@ import * as EventUtil from '../lib/EventUtil'
 import { DetailHandler } from "./DetailHandler";
 import { Event } from "../lib/request";
 import { Response } from "ask-sdk-model";
+import AmazonSpeech from "ssml-builder/amazon_speech";
+import AmazonDate from "../lib/AmazonDate";
 
 //TODO: make go back to results work for bookmarks?
 const actions = ["request the full description", "go back to the results"]
@@ -16,7 +18,7 @@ export class EventSelectHandler implements RequestHandler {
 
         //handle both bookmark select and EventsHandler select
         return (wrap.isIntent(Schema.SelectIntent) && 
-            EventUtil.bookmarkMoreRecent(wrap) ? hasElements(wrap.persistent.bookmarks) : wrap.session.lastEvents !== undefined) ||
+            (EventUtil.bookmarkMoreRecent(wrap) ? hasElements(wrap.persistent.bookmarks) : wrap.session.lastEvents !== undefined)) ||
                 DetailHandler.isPrevIntent(wrap)
     }
 
@@ -33,7 +35,25 @@ export class EventSelectHandler implements RequestHandler {
             (prevSession === Schema.SelectIntent || (prevSession === Schema.AMAZON.PreviousIntent && wrap.session.prevRequests.includes(Schema.SelectIntent)))
     }
 
-    static async getEventResponse(event: Event, wrap: InputWrap): Promise<Response> {
+    static getEventDetails(event: Event, speech?: AmazonSpeech) {
+        speech = speech || new AmazonSpeech()
+    
+        speech.say(event.name)
+            .say("is at").say(event.location.name)
+            // .say("on").say(event.datetime_summary.replace("-", "to"))
+        new AmazonDate(event.datetime_start, event.datetime_end).toSpeech(speech, true)
+    
+        let shortenedDesc = event.description.split(".").reduce((prev, cur) => {
+            let newLength = prev.length+cur.length
+            if(150 < newLength)
+                return prev
+            else
+                return prev+cur
+        })
+        return speech.sentence(shortenedDesc)
+    }
+
+    static getInteractiveResponse(event: Event, wrap: InputWrap): Response {
         let alreadyBookmarked = wrap.persistent.bookmarks !== undefined && 
             wrap.persistent.bookmarks.some(bookmark => bookmark.id === event.id)
 
@@ -46,7 +66,7 @@ export class EventSelectHandler implements RequestHandler {
             curActions.unshift("save this event to your bookmarks")
 
         let actionsText = "You can " + prettyJoin(curActions, "or")
-        let speech = EventUtil.getSpeech(event)
+        let speech = EventSelectHandler.getEventDetails(event)
         speech.pauseByStrength("x-strong")
         speech.say(actionsText)
         // speech.sentence("Goodbye")
@@ -68,7 +88,7 @@ export class EventSelectHandler implements RequestHandler {
                         wrap.slots)
 
         if(event){
-            return EventSelectHandler.getEventResponse(event, wrap)
+            return EventSelectHandler.getInteractiveResponse(event, wrap)
         } else {
             let reprompt = "please say another number or go back to the results."
             return input.responseBuilder

@@ -69,7 +69,7 @@ exports.handler = skillBuilder
 
         //could make this dependant on where you are in the skill
         new EasyIntentHandler(Schema.AMAZON.HelpIntent, 
-            "I will respond to your questions to find events near you. Say start the tutorial to listen to the tutorial again."),
+            "I will respond to your questions to help find events happening near you. Say start the tutorial to listen to the tutorial again."),
 
         new EasyIntentHandler([Schema.AMAZON.CancelIntent, Schema.AMAZON.StopIntent], 
             rand('Bye', "Goodbye", "Thanks for chatting", "See you next time", "Seeya")),
@@ -78,13 +78,13 @@ exports.handler = skillBuilder
         new DetailHandler(),
         new BookmarkEventHandler(),
 
-        //these can be at end
+        //choosing a specific event
         new ListBookmarksHandler(),
         new EventSelectHandler(),
 
         //will override EventsHandler if SetIntent and no prev req
         new ChangeEventsSlotHandler(),
-        //most general last
+        //main entry last
         new EventsHandler(),
 
         new SessionEndedRequestHandler(),

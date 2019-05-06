@@ -20,24 +20,6 @@ export function bookmarkMoreRecent(wrap: InputWrap){
         wrap.session.prevRequests.indexOf(Schema.ListBookmarksIntent)
 }
 
-export function getSpeech(event: Event, speech?: AmazonSpeech) {
-    speech = speech || new AmazonSpeech()
-
-    speech.say(event.name)
-        .say("is at").say(event.location.name)
-        // .say("on").say(event.datetime_summary.replace("-", "to"))
-    new AmazonDate(event.datetime_start).toSpeech(speech, true)
-
-    let shortenedDesc = event.description.split(".").reduce((prev, cur) => {
-        let newLength = prev.length+cur.length
-        if(150 < newLength)
-            return prev
-        else
-            return prev+cur
-    })
-    return speech.sentence(shortenedDesc)
-}
-
 export function getEvent(eventsOrResponse?: Event[]|Response<Event>, slots?: Slots): Event|undefined {
     let events;
 
