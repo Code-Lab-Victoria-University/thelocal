@@ -249,8 +249,8 @@ async function saveData(name: string, saveObj: any) {
     console.log(`${regions.length} region locations`)
 
     for(let location of regions) {
-        let newVenues = (await getVenues(location.url_slug, 20))
-        newVenues.push(...await getVenues(location.url_slug, 20, "popularity"))
+        let newVenues = (await getVenues(location.url_slug, 25))
+        newVenues.push(...await getVenues(location.url_slug, 25, "popularity"))
         console.log(`${newVenues.length} venues in ${location.name}`)
         newVenues = newVenues.filter(venue => venue.count_current_events !== 0)
         newVenues = newVenues.filter((venue, i) => newVenues.findIndex(earlierVenue => earlierVenue.id === venue.id) === i)
@@ -292,7 +292,7 @@ async function saveData(name: string, saveObj: any) {
     //I was tempted to remove lawn bowls but I gotta think about the target audience haha
     rootCat.children!.children.forEach(mainCat => {
         let mainCatSynonyms = catNameToSynonyms(mainCat.name)
-        let mainCatTitle = prettyJoin(mainCatSynonyms, "and")
+        let mainCatTitle = mainCatSynonyms.join(' and ')
 
         //concerts and gig guide
         if(mainCat.id === 6){
@@ -314,7 +314,7 @@ async function saveData(name: string, saveObj: any) {
             let subCatSynonyms = catNameToSynonyms(subCat.name)
             return {
                 id: subCat.id.toString(),
-                value: prettyJoin(subCatSynonyms, "and"),
+                value: subCatSynonyms.join(' and '),
 
                 //append main category name (jazz category has jazz music as a synonym)
                 synonyms: subCatSynonyms.flatMap(
