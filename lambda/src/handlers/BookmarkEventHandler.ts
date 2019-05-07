@@ -6,19 +6,16 @@ import { Schema } from "../lib/Schema";
 import { EventSelectHandler } from "./EventSelectHandler";
 import AmazonSpeech from "ssml-builder/amazon_speech";
 import * as EventUtil from '../lib/EventUtil'
+import { AutoNavigationHandler } from "./NavigationHandler";
 
-export class BookmarkEventHandler implements RequestHandler {    
-    async canHandle(handlerInput: HandlerInput) {
-        return (await InputWrap.load(handlerInput)).isIntent(Schema.BookmarkEventIntent)
-    }
+export class BookmarkEventHandler extends AutoNavigationHandler {
+    intent = Schema.BookmarkEventIntent
     
-    async handle(handlerInput: HandlerInput) {
-        let input = await InputWrap.load(handlerInput)
-
+    async handleWrap(input: InputWrap) {
         let event = EventUtil.getEvent(input.session.lastEvents, input.session.lastSlots)
 
         let speech = new AmazonSpeech()
-        let reprompt = "Some things you could do now include listing your existing bookmarks and making a new search"
+        let reprompt = "You can go back to the event info or make a new search"
 
         if(event){
             if(!input.persistent.bookmarks)
@@ -31,7 +28,7 @@ export class BookmarkEventHandler implements RequestHandler {
                 .say(event.name)
                 .say("to your bookmarked events.")
                 .pauseByStrength("x-strong")
-                .say("View these at any time by asking me for your bookmarks")
+                .say("View these at any time by asking me for your bookmarks. You can go back to the event info or make a new search")
         } else {
             speech
                 .say("You tried to bookmark an event. You must find an event to save before you do this.")

@@ -2,25 +2,19 @@ import { HandlerInput, RequestHandler } from "ask-sdk-core";
 import InputWrap, { CustomSlot, Slots } from "../lib/InputWrap"
 import {Schema} from '../lib/Schema'
 import AmazonSpeech from "ssml-builder/amazon_speech";
+import { AutoNavigationHandler } from "./NavigationHandler";
 
-export class DetailHandler implements RequestHandler {
-    async canHandle(input: HandlerInput) {
-        let wrap = await InputWrap.load(input)
+export class DetailHandler extends AutoNavigationHandler {
+    intent = Object.values(Schema.DetailIntents)
 
-        return wrap.isIntent(Object.values(Schema.DetailIntents)) && wrap.session.selectedEvent !== undefined
-    }
-
-    static isPrevIntent(wrap: InputWrap){
-        return wrap.isIntent(Schema.AMAZON.PreviousIntent) &&
-            wrap.session.prevRequests !== undefined && Object.values(Schema.DetailIntents).includes(wrap.session.prevRequests[wrap.session.prevRequests.length-1])
+    canWrap(input: InputWrap) {
+        return input.session.selectedEvent !== undefined
     }
     
-    async handle(input: HandlerInput) {
-        let wrap = await InputWrap.load(input)
-        
+    async handleWrap(wrap: InputWrap) {
         //can assume true due to handler
         let event = wrap.session.selectedEvent!
-        let reprompt = "From here you could go back to the event info, ask for different details or exit"
+        let reprompt = "You can go back to the event info or make a new search"
 
         if(wrap.isIntent(Schema.DetailIntents.Phone) && event.location.booking_phone){
             let speech = new AmazonSpeech()
@@ -31,7 +25,7 @@ export class DetailHandler implements RequestHandler {
                 })
                 .sentence(reprompt)
 
-            return input.responseBuilder.speak(speech.ssml())
+            return wrap.response.speak(speech.ssml())
                 .reprompt(reprompt)
                 .getResponse()
         } else if(wrap.isIntent(Schema.DetailIntents.Description)){
@@ -39,7 +33,7 @@ export class DetailHandler implements RequestHandler {
                 .say(event.description)
                 .sentence(reprompt)
 
-            return input.responseBuilder.speak(speech.ssml())
+            return wrap.response.speak(speech.ssml())
                 .reprompt(reprompt)
                 .getResponse()
         }

@@ -30,6 +30,9 @@ export class Schema {
         CancelIntent: "AMAZON.CancelIntent"
     }
 
+    static readonly PreviousPageIntent = "PreviousPageIntent"
+    static readonly NextPageIntent = "NextPageIntent"
+
     static readonly SelectIntent = "SelectIntent"
     static readonly RESET = "RESET"
     

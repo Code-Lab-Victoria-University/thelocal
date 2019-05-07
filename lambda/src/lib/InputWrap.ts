@@ -5,6 +5,8 @@ import { Event, Response } from "./request";
 import {OldLocations} from '../handlers/EventsHandler'
 import { Handler } from "aws-sdk/clients/lambda";
 import { TutorialStage } from "../handlers/TutorialHandler";
+import * as EventUtil from "./EventUtil"
+import { includesOrEqual } from "./Util";
 
 export class CustomSlot {
     /** name of slot */
@@ -105,6 +107,10 @@ export default class InputWrap {
                 }
             }
         }
+
+        this.resolvedPreviousIntent = this.resolvePreviousIntent()
+        if(this.resolvedPreviousIntent)
+            console.log("PREVIOUSRESOLVED: " + this.resolvedPreviousIntent)
     }
 
     /**
@@ -170,29 +176,52 @@ export default class InputWrap {
      * @param intentName optionally query intent name
      */
     isIntent(intentName?: string|string[]): boolean{
-        if(this.intent === undefined)
-            return false
-        //intent exists. If gave intentName, only true if equals intent.name
-        else if(intentName === undefined)
-            return true
-        else if(typeof intentName === "string")
-            return intentName === this.intent.name
-        else
-            return intentName.includes(this.intent.name)
+        return this.intent !== undefined && includesOrEqual(this.intent.name, intentName)
     }
 
-    static instance: InputWrap;
+    readonly resolvedPreviousIntent?: string;
+    /**
+     * resolves what the intentname of a string of PreviousIntents would be
+     * @returns IntentName
+     */
+    private resolvePreviousIntent() {
+        if(this.resolvedPreviousIntent)
+            return this.resolvedPreviousIntent
+            
+        if(!this.session.prevRequests || !this.intent || this.intent.name !== Schema.AMAZON.PreviousIntent)
+            return
+
+        let prevCount = 1;
+        for (let i = this.session.prevRequests.length-1; 0 <= i; i--) {
+            const elm = this.session.prevRequests[i];
+
+            if(elm === Schema.AMAZON.PreviousIntent){
+                prevCount++
+            } else {
+                //one previous and started on event details
+                if(prevCount === 1 && Object.values(Schema.DetailIntents).concat(Schema.BookmarkEventIntent).includes(elm))
+                    return Schema.SelectIntent
+                //more than one previous or started higher up
+                else
+                    return EventUtil.bookmarkMoreRecent(this) ? Schema.ListBookmarksIntent : Schema.EventsIntent
+            }
+        }
+    }
+
+    private static instance: InputWrap;
     /**
      * load or return instance of InputWrap for this request 
      */
     static async load(input: HandlerInput) {
         //use instance in SaS model
-        if(InputWrap.instance !== undefined)
+        if(InputWrap.instance !== undefined && getReqId(InputWrap.instance.input) === getReqId(input))
             return InputWrap.instance
         else {
-            let wrap = new InputWrap(input)
-            wrap.persistent = await wrap.attrs.getPersistentAttributes()
-            return wrap
+            InputWrap.instance = new InputWrap(input)
+            InputWrap.instance.persistent = await InputWrap.instance.attrs.getPersistentAttributes()
+            return InputWrap.instance
         }
     }
 }
+
+let getReqId = (i: HandlerInput) => i.requestEnvelope.request.requestId

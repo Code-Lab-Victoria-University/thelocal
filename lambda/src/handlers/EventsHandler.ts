@@ -10,6 +10,7 @@ import DateRange from "../lib/DateRange";
 import { prettyJoin } from "../lib/Util";
 import categories from '../data/category-names.json'
 import * as EventUtil from '../lib/EventUtil'
+import { AutoNavigationHandler } from "./NavigationHandler";
 
 //TODO: https://developer.amazon.com/docs/alexa-design/voice-experience.html
 
@@ -37,23 +38,14 @@ function getCategoryName(id?: number) {
     return cat ? cat.title : ""
 }
 
-export class EventsHandler implements RequestHandler {
-    async canHandle(input: HandlerInput) {
-        let wrap = await InputWrap.load(input);
+export class EventsHandler extends AutoNavigationHandler {
+    intent = Object.values(Schema.SetIntents).concat(Schema.EventsIntent)
 
-        let backToEvents = EventSelectHandler.isPrevIntent(wrap) && !EventUtil.bookmarkMoreRecent(wrap)
-        console.log("EVENTSHANDLERWRAP: " + JSON.stringify(wrap))
-        console.log("BACKTOEVENTS: " + backToEvents)
-
-        //handle SetIntents if no previous request exists
-        return wrap.isIntent(Object.values(Schema.SetIntents).concat(Schema.EventsIntent)) || backToEvents
-    }
-
-    async handle(input: HandlerInput){
-        return this.handleWrap(await InputWrap.load(input))
-    }
-    
-    async handleWrap(input: InputWrap) {
+    async handleWrap(input: InputWrap){
+        //any request that isn't a strict EventsIntent should overwrite slots with lastSlots
+        if(!input.isIntent(Schema.EventsIntent) && input.session.lastSlots !== undefined)
+            input.slots = Object.assign(input.session.lastSlots, input.slots)
+        
         //check for venue (more specific) first
         let venueSlot = input.slots[Schema.VenueSlot]
         //venue must have resolution id (location slug)
@@ -61,24 +53,12 @@ export class EventsHandler implements RequestHandler {
 
         let place = isVenue ? venueSlot : input.slots[Schema.LocationSlot]
 
-        // let prevLocations = input.persistent.prevLocations || {}
-
         //if no place from venue or location, load from most recent location used
         if((!place || !place.resId)){
             let topLocation = input.getTopLocation()
             if(topLocation)
                 place = topLocation
         }
-        // if((!place || !place.resId) && Object.keys(prevLocations).length){
-        //     //replace best place no best or if best is venue and new isn't or if both are equally venuey and new is higher frequency
-        //     let bestOldLocation = Object.values(prevLocations).reduce((prev, cur) => 
-        //         (!prev || prev.frequency < cur.frequency) ? cur : prev)
-
-        //     if(bestOldLocation){
-        //         place = bestOldLocation.place
-        //         isVenue = false
-        //     }
-        // }
         
         //if finally has a place, else tell the user to say a location and give hint
         if(place){

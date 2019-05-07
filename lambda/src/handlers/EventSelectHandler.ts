@@ -8,31 +8,19 @@ import { Event } from "../lib/request";
 import { Response } from "ask-sdk-model";
 import AmazonSpeech from "ssml-builder/amazon_speech";
 import AmazonDate from "../lib/AmazonDate";
+import { AutoNavigationHandler } from "./NavigationHandler";
 
 //TODO: make go back to results work for bookmarks?
-const actions = ["request the full description", "go back to the results"]
+const actions = ["request the full description", "go back to the list of events"]
 
-export class EventSelectHandler implements RequestHandler {
-    async canHandle(input: HandlerInput) {
-        let wrap = await InputWrap.load(input)
+export class EventSelectHandler extends AutoNavigationHandler {
+    intent = Schema.SelectIntent
 
+    canWrap(wrap: InputWrap) {
         //handle both bookmark select and EventsHandler select
-        return (wrap.isIntent(Schema.SelectIntent) && 
-            (EventUtil.bookmarkMoreRecent(wrap) ? hasElements(wrap.persistent.bookmarks) : wrap.session.lastEvents !== undefined)) ||
-                DetailHandler.isPrevIntent(wrap)
-    }
-
-
-    //TODO: add tslint to warn on non-boolean if statements to stop this happening. This was returning a promise and returning truthy
-    static isPrevIntent(wrap: InputWrap){
-        if(wrap.session.prevRequests === undefined)
-            return false
-
-        let prevSession = wrap.session.prevRequests[wrap.session.prevRequests.length-1]
-
-        return wrap.isIntent(Schema.AMAZON.PreviousIntent) &&
-            wrap.session.prevRequests !== undefined && 
-            (prevSession === Schema.SelectIntent || (prevSession === Schema.AMAZON.PreviousIntent && wrap.session.prevRequests.includes(Schema.SelectIntent)))
+        return (EventUtil.bookmarkMoreRecent(wrap) ? 
+            hasElements(wrap.persistent.bookmarks) : wrap.session.lastEvents !== undefined) ||
+            wrap.session.selectedEvent !== undefined
     }
 
     static getEventDetails(event: Event, speech?: AmazonSpeech) {
@@ -79,19 +67,16 @@ export class EventSelectHandler implements RequestHandler {
             .getResponse()
     }
     
-    async handle(input: HandlerInput) {
-        let wrap = await InputWrap.load(input)
-        
-        let event = DetailHandler.isPrevIntent(wrap) ? wrap.session.selectedEvent :
-                    EventUtil.getEvent(
-                        EventUtil.bookmarkMoreRecent(wrap) ? wrap.persistent.bookmarks : wrap.session.lastEvents, 
-                        wrap.slots)
+    async handleWrap(wrap: InputWrap) {
+        //getEvent will be false if incorrect slots. Else use selectedEvent.
+        let event = EventUtil.getEvent(EventUtil.bookmarkMoreRecent(wrap) ? wrap.persistent.bookmarks : wrap.session.lastEvents, 
+                        wrap.slots) || wrap.session.selectedEvent
 
         if(event){
             return EventSelectHandler.getInteractiveResponse(event, wrap)
         } else {
-            let reprompt = "please say another number or go back to the results."
-            return input.responseBuilder
+            let reprompt = "Please say another number or go back to the results."
+            return wrap.response
                 .speak(`I couldn't find that event, ${reprompt}`)
                 .reprompt(reprompt)
                 .getResponse()

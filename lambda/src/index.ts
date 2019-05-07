@@ -12,7 +12,6 @@ import { DynamoDbPersistenceAdapter } from 'ask-sdk-dynamodb-persistence-adapter
 import InputWrap from "./lib/InputWrap";
 import { EventSelectHandler } from "./handlers/EventSelectHandler";
 import { rand } from "./lib/Util";
-import { ChangeEventsSlotHandler } from "./handlers/ChangeEventsSlotHandler";
 import { Schema } from "./lib/Schema";
 import { TutorialHandler } from "./handlers/TutorialHandler";
 import { ui } from "ask-sdk-model";
@@ -74,17 +73,18 @@ exports.handler = skillBuilder
         new EasyIntentHandler([Schema.AMAZON.CancelIntent, Schema.AMAZON.StopIntent], 
             rand('Bye', "Goodbye", "Thanks for chatting", "See you next time", "Seeya")),
 
+        //I don't think the order here matters now that NavigationHandler is implemented
+
         //most specific handlers first
         new DetailHandler(),
         new BookmarkEventHandler(),
 
         //choosing a specific event
-        new ListBookmarksHandler(),
         new EventSelectHandler(),
 
-        //will override EventsHandler if SetIntent and no prev req
-        new ChangeEventsSlotHandler(),
-        //main entry last
+        new ListBookmarksHandler(),
+        
+        //most general entry last
         new EventsHandler(),
 
         new SessionEndedRequestHandler(),
@@ -93,7 +93,7 @@ exports.handler = skillBuilder
         {
             canHandle: () => true,
             handle: input => input.responseBuilder
-                .speak("I couldn't understand what you said. Please speak clearly.")
+                .speak("I couldn't figure out what to do with your request. Please contact the developer.")
                 .getResponse()
         }
         )

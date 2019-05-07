@@ -166,7 +166,26 @@ async function saveData(name: string, saveObj: any) {
 
     app.intent(Schema.AMAZON.PreviousIntent, {
         utterances: [
-            "go back to {my|the} {results|bookmarks|list of results|search}"
+            "go back to {my|the} {results|bookmarks|list of results|search}",
+            "{results|bookmarks|list of results}"
+        ]
+    })
+
+    app.intent(Schema.PreviousPageIntent, {
+        utterances: [
+            "go back",
+            "go back a page",
+            "go to the previous page",
+            "previous page"
+        ]
+    })
+
+    app.intent(Schema.PreviousPageIntent, {
+        utterances: [
+            "go forwards",
+            "go forwards a page",
+            "go to the next page",
+            "next page"
         ]
     })
 

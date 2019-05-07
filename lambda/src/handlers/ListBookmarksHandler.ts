@@ -4,18 +4,12 @@ import { Schema } from "../lib/Schema";
 import { prettyJoin } from "../lib/Util";
 import { EventSelectHandler } from "./EventSelectHandler";
 import * as EventUtil from '../lib/EventUtil'
+import { AutoNavigationHandler } from "./NavigationHandler";
 
-export class ListBookmarksHandler implements RequestHandler {
-    async canHandle(handlerInput: HandlerInput) {
-        let wrap = await InputWrap.load(handlerInput)
-        let backToBookmark = EventSelectHandler.isPrevIntent(wrap) && EventUtil.bookmarkMoreRecent(wrap)
-
-        return wrap.isIntent(Schema.ListBookmarksIntent) || backToBookmark
-    }
+export class ListBookmarksHandler extends AutoNavigationHandler {
+    intent = Schema.ListBookmarksIntent
     
-    async handle(handlerInput: HandlerInput) {
-        let input = await InputWrap.load(handlerInput)
-        
+    async handleWrap(input: InputWrap) {
         let bookmarks = input.persistent.bookmarks
 
         //TODO: read it out if just one

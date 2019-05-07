@@ -28,9 +28,16 @@ function categoriesString(n: number){
     return prettyJoin(randN(categories.map(cat => cat.title), n), "or")
 }
 
+//TODO: make intro phrases short and sweet and decrease over time
+
 const orderedTutorials = [
     "I can find you New Zealand events based on your request. For example, Find me opera events in wellington next week",
-    () => `You can filter events based off your location in New Zealand, a specific venue, a category such as ${categoriesString(3)}, a date or time. For example, Tell me what's happening at city gallery next month`,
+    "Ask for information about New Zealand events. Remember that you can restart the tutorial any time just by asking.",
+    "I will answer your queries about events in New Zealand. Did you know you can interrupt me while I'm talking by saying Alexa",
+    // () => `You can filter events based off your location in New Zealand, a specific venue, a category such as ${categoriesString(3)}, a date or time. For example, Tell me what's happening at city gallery next month`,
+    // "You can change your location, venue, category, date or time filter at any time by interrupting. For example, Set the location to auckland",
+    // "You can skip this introduction by stating your request straight after saying 'alexa start the local' and I will go straight to the results. For example, Alexa ask the local what's on"
+
 ]
 
 const tutorials = [
@@ -43,12 +50,7 @@ const tutorials = [
             return `You could try filtering events based off ${name}. For example, ${example}`
     })
 
-    // "You can change your location, venue, category, date or time filter at any time by interrupting. For example, Set the location to auckland",
-    // "You can skip this introduction by stating your request straight after saying 'alexa start the local' and I will go straight to the results. For example, Alexa ask the local what's on"
-]
-
-
-const runsKey = "LaunchRequestRuns"
+    ]
 
 export class LaunchRequestHandler implements RequestHandler {
     canHandle(handlerInput: HandlerInput): boolean {

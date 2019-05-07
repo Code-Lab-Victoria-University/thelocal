@@ -58,3 +58,7 @@ export function prettyJoin(arr: string[], lastSepChar: string){
 export function hasElements<T>(arr?: T[]){
     return arr !== undefined && 0 < arr.length
 }
+
+export function includesOrEqual<T>(elm: T, itemOrArr?: T|T[]): boolean{
+    return Array.isArray(itemOrArr) ? itemOrArr.includes(elm) : elm === itemOrArr
+}
