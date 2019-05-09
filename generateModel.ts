@@ -176,16 +176,19 @@ async function saveData(name: string, saveObj: any) {
             "go back",
             "go back a page",
             "go to the previous page",
-            "previous page"
+            "previous page",
+            "previous"
         ]
     })
 
-    app.intent(Schema.PreviousPageIntent, {
+    app.intent(Schema.NextPageIntent, {
         utterances: [
             "go forwards",
             "go forwards a page",
             "go to the next page",
-            "next page"
+            "next page",
+            "next",
+            "forwards"
         ]
     })
 

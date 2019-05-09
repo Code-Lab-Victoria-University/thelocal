@@ -12,7 +12,7 @@ export class BookmarkEventHandler extends AutoNavigationHandler {
     intent = Schema.BookmarkEventIntent
     
     async handleWrap(input: InputWrap) {
-        let event = EventUtil.getEvent(input.session.lastEvents, input.session.lastSlots)
+        let event = input.session.selectedEvent
 
         let speech = new AmazonSpeech()
         let reprompt = "You can go back to the event info or make a new search"

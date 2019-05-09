@@ -19,7 +19,7 @@ export class EventSelectHandler extends AutoNavigationHandler {
     canWrap(wrap: InputWrap) {
         //handle both bookmark select and EventsHandler select
         return (EventUtil.bookmarkMoreRecent(wrap) ? 
-            hasElements(wrap.persistent.bookmarks) : wrap.session.lastEvents !== undefined) ||
+            hasElements(wrap.persistent.bookmarks) : wrap.session.lastEventsRequest !== undefined) ||
             wrap.session.selectedEvent !== undefined
     }
 
@@ -69,7 +69,7 @@ export class EventSelectHandler extends AutoNavigationHandler {
     
     async handleWrap(wrap: InputWrap) {
         //getEvent will be false if incorrect slots. Else use selectedEvent.
-        let event = EventUtil.getEvent(EventUtil.bookmarkMoreRecent(wrap) ? wrap.persistent.bookmarks : wrap.session.lastEvents, 
+        let event = EventUtil.getEvent(EventUtil.bookmarkMoreRecent(wrap) ? wrap.persistent.bookmarks : wrap.session.lastEventsRequest, 
                         wrap.slots) || wrap.session.selectedEvent
 
         if(event){

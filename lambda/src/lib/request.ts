@@ -166,6 +166,7 @@ export enum EventRequestOrder {
 export interface EventRequest {
     location_slug?: string,
     rows?: number,
+    offset?: number,
     order?: EventRequestOrder,
     start_date?: string,
     end_date?: string,

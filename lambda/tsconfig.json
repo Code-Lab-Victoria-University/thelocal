@@ -12,6 +12,8 @@
         "moduleResolution": "node",
         "esModuleInterop": true,
         "resolveJsonModule": true,
+        "strictFunctionTypes": true,
+        
     },
     "include": [
         "./src/**/*.ts"

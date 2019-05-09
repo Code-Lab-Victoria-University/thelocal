@@ -91,9 +91,10 @@ exports.handler = skillBuilder
 
         //handle all
         {
+            //TODO: give the user a yes/no way to exit here
             canHandle: () => true,
             handle: input => input.responseBuilder
-                .speak("I couldn't figure out what to do with your request. Please contact the developer.")
+                .speak("Sorry, you can't do that here.")
                 .getResponse()
         }
         )

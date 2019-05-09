@@ -56,7 +56,10 @@ export default class InputWrap {
         [key: string]: any
 
         selectedEvent?: Event
-        lastEvents?: Response<Event>
+
+        lastEventsSlots?: Slots
+        lastEventsRequest?: Response<Event>
+        eventRequestPage?: number
 
         /** stores the slots from the last request */
         lastSlots?: Slots
@@ -108,9 +111,9 @@ export default class InputWrap {
             }
         }
 
-        this.resolvedPreviousIntent = this.resolvePreviousIntent()
-        if(this.resolvedPreviousIntent)
-            console.log("PREVIOUSRESOLVED: " + this.resolvedPreviousIntent)
+        this.previousRedirect = this.resolvePreviousRedirect()
+        if(this.previousRedirect)
+            console.log("PREVIOUSRESOLVED: " + this.previousRedirect)
     }
 
     /**
@@ -179,15 +182,12 @@ export default class InputWrap {
         return this.intent !== undefined && includesOrEqual(this.intent.name, intentName)
     }
 
-    readonly resolvedPreviousIntent?: string;
+    readonly previousRedirect?: string;
     /**
      * resolves what the intentname of a string of PreviousIntents would be
      * @returns IntentName
      */
-    private resolvePreviousIntent() {
-        if(this.resolvedPreviousIntent)
-            return this.resolvedPreviousIntent
-            
+    private resolvePreviousRedirect() {
         if(!this.session.prevRequests || !this.intent || this.intent.name !== Schema.AMAZON.PreviousIntent)
             return
 
@@ -198,12 +198,19 @@ export default class InputWrap {
             if(elm === Schema.AMAZON.PreviousIntent){
                 prevCount++
             } else {
-                //one previous and started on event details
-                if(prevCount === 1 && Object.values(Schema.DetailIntents).concat(Schema.BookmarkEventIntent).includes(elm))
-                    return Schema.SelectIntent
-                //more than one previous or started higher up
-                else
-                    return EventUtil.bookmarkMoreRecent(this) ? Schema.ListBookmarksIntent : Schema.EventsIntent
+                let startLevel;
+                if(Object.values(Schema.DetailIntents).concat(Schema.BookmarkEventIntent).includes(elm))
+                    startLevel = 2
+                else if(elm === Schema.SelectIntent)
+                    startLevel = 1
+
+                if(startLevel !== undefined){
+                    let newLevel = startLevel-prevCount;
+                    if(newLevel === 1)
+                        return Schema.SelectIntent
+                    else if(newLevel === 0)
+                        return EventUtil.bookmarkMoreRecent(this) ? Schema.ListBookmarksIntent : Schema.EventsIntent
+                }
             }
         }
     }

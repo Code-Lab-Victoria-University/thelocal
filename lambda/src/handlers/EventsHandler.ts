@@ -38,13 +38,34 @@ function getCategoryName(id?: number) {
     return cat ? cat.title : ""
 }
 
+const backIntents = [Schema.PreviousPageIntent, Schema.AMAZON.PreviousIntent]
+const nextIntents = [Schema.AMAZON.YesIntent, Schema.NextPageIntent]
+
 export class EventsHandler extends AutoNavigationHandler {
-    intent = Object.values(Schema.SetIntents).concat(Schema.EventsIntent)
+    intent = Object.values(Schema.SetIntents).concat(Schema.EventsIntent, ...backIntents, ...nextIntents)
+
+    canWrap(input: InputWrap){
+        //will only accept if the right info exists for pagination requests
+        return !input.isIntent(backIntents.concat(nextIntents)) || input.session.lastEventsRequest !== undefined
+    }
 
     async handleWrap(input: InputWrap){
         //any request that isn't a strict EventsIntent should overwrite slots with lastSlots
-        if(!input.isIntent(Schema.EventsIntent) && input.session.lastSlots !== undefined)
-            input.slots = Object.assign(input.session.lastSlots, input.slots)
+        if(!input.isIntent(Schema.EventsIntent) && input.session.lastEventsSlots !== undefined)
+            input.slots = Object.assign(input.session.lastEventsSlots, input.slots)
+
+        input.session.lastEventsSlots = input.slots
+
+        if(input.session.eventRequestPage === undefined || input.isIntent(Schema.EventsIntent))
+            input.session.eventRequestPage = 0
+        
+        //only change page if requested before and wasn't redirected (PreviousPageIntent is real)
+        if(input.session.lastEventsRequest !== undefined && input.previousRedirect === undefined)
+            if(input.isIntent(nextIntents))
+                input.session.eventRequestPage++
+            else if(input.isIntent(backIntents))
+                input.session.eventRequestPage = Math.max(input.session.eventRequestPage-1, 0)
+
         
         //check for venue (more specific) first
         let venueSlot = input.slots[Schema.VenueSlot]
@@ -99,16 +120,27 @@ export class EventsHandler extends AutoNavigationHandler {
                     end_date: range && range.endISO(),
                     //sort by date if venue or any more specific info was given
                     order: (isVenue || range || category) ? EventRequestOrder.date : EventRequestOrder.popularity,
-                    category: categoryId
+                    category: categoryId,
+                    offset: input.session.eventRequestPage*items
                 } as EventRequest
 
                 //request events list
                 let events = await getEvents(req)
-                    
+                //go back a page if no entries
+                while(events.list.length === 0 && input.session.eventRequestPage){
+                    console.log("NO EVENTS ON PAGE: " + input.session.eventRequestPage)
+                    input.session.eventRequestPage = Math.max(input.session.eventRequestPage-1, 0)
+                    events = await getEvents(req)
+                }
+                
                 let categoryName = getCategoryName(categoryId)
 
                 //compile response
                 let speech = new AmazonSpeech()
+
+                if(input.isIntent(backIntents.concat(nextIntents)) || 0 < input.session.eventRequestPage)
+                    speech.sayAs({interpret: "ordinal", word: `${input.session.eventRequestPage+1} page`}).pauseByStrength("x-strong")
+
                 if(events.count == 0)
                     speech.say(`I couldn't find any ${categoryName} events`)
                 else
@@ -216,14 +248,19 @@ export class EventsHandler extends AutoNavigationHandler {
                         .say((i+1).toString()).pauseByStrength("x-strong")
                     })
 
-                    input.session.lastEvents = events
-
-                    speech.sentence('Tell me which event you want to know more about by saying Alexa followed by the number')
+                    input.session.lastEventsRequest = events
                 }
+
+                let reprompt = `You can ${1 < events.list.length ? `choose one of the ${events.list.length} events, ` : ""}
+                adjust this request, make a new request
+                ${0 < input.session.eventRequestPage ? ", go to the previous page" : ""}
+                or would you like me to read out the next page of results?`
+                
+                speech.sentence(reprompt)
                 
                 return input.response
                     .speak(speech.ssml())
-                    .reprompt(`You can ${1 < events.list.length ? `choose one of the ${events.list.length} events, ` : ""}refine a search filter or start from scratch`)
+                    .reprompt(reprompt)
                     .getResponse()
             } else
                 return input.response
