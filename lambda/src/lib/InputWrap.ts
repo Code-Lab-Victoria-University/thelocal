@@ -7,6 +7,7 @@ import { Handler } from "aws-sdk/clients/lambda";
 import { TutorialStage } from "../handlers/TutorialHandler";
 import * as EventUtil from "./EventUtil"
 import { includesOrEqual } from "./Util";
+import AmazonDate from "./AmazonDate";
 
 export class CustomSlot {
     /** name of slot */
@@ -39,7 +40,6 @@ export interface Slots {
 
 interface PersistentAttrs {
     // [key: string]: any;
-
     prevLocations?: OldLocations
     refineRecommendCount?: number
     
@@ -87,20 +87,13 @@ export default class InputWrap {
         this.input = input
         this.attrs = input.attributesManager;
         this.session = this.attrs.getSessionAttributes();
-        // this.persistentPromise = this.attrs.getPersistentAttributes()
 
         let req = input.requestEnvelope.request
 
         this.response = input.responseBuilder
 
-        // this.prevIntents = this.sessionAttrs.prevIntents || []
-
         if(req.type === "IntentRequest"){
             this.intent = req.intent;
-            
-            //this should never happen
-            // if(this.prevIntents.includes(this.intent))
-            //     throw new Error("prevIntents already contains current intent. Did you run #endRequest() before end?")
 
             if(this.intent.slots){
                 for (let slotKey in this.intent.slots){
@@ -225,9 +218,16 @@ export default class InputWrap {
             return InputWrap.instance
         else {
             InputWrap.instance = new InputWrap(input)
-            InputWrap.instance.persistent = await InputWrap.instance.attrs.getPersistentAttributes()
+            InputWrap.instance.persistent = await this.loadPersistent()
             return InputWrap.instance
         }
+    } 
+
+    static async loadPersistent(): Promise<PersistentAttrs>{
+        let attrs: PersistentAttrs = (await InputWrap.instance.attrs.getPersistentAttributes())
+        if(attrs.bookmarks)
+            attrs.bookmarks = attrs.bookmarks.filter(bookmark => new AmazonDate(bookmark.datetime_start, bookmark.datetime_end).end().isBefore())
+        return attrs;
     }
 }
 

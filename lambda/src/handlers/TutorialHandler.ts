@@ -191,14 +191,14 @@ export class TutorialHandler implements RequestHandler {
             if(wrap.isIntent([Schema.AMAZON.StopIntent, Schema.AMAZON.CancelIntent])){
                 speech.say(`Congrats, you now have all the basics needed to use the local. 
                     You can open up this tutorial at any time in the future by saying start the tutorial while the local is open.
-                    I'll leave you now, remember you can open me up by saying 'Alexa start the local'. Goodbye`)
+                    I'll stay open now. From here you can exit or go ahead and start a new search`)
+                    
+                reprompt = "You can exit or go ahead and start a new search"
     
                 wrap.persistent.finishedTutorial = true
                 wrap.session.prevTutorialStage = undefined
-
-                return builder.speak(speech.ssml()).getResponse()
             } else{
-                reprompt = "Say 'Alexa Stop'"
+                reprompt = wait5s("Say 'Alexa stop'")
                 speech.say(reprompt)
             }
         } else
