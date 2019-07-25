@@ -39,3 +39,7 @@ export function getEvent(eventsOrResponse?: Event[]|Response<Event>, slots?: Slo
 
     return undefined
 }
+
+export function getPhone(event: Event): string|undefined{
+    return event.booking_phone || event.location && event.location.booking_phone
+}

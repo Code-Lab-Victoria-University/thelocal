@@ -47,8 +47,7 @@ export class EventSelectHandler extends AutoNavigationHandler {
 
         let curActions = actions.slice()
 
-        //TODO: use event phone
-        if(event.location.booking_phone)
+        if(EventUtil.getPhone(event))
             curActions.push("request the booking phone number")
         if(!alreadyBookmarked)
             curActions.unshift("save this event to your bookmarks")

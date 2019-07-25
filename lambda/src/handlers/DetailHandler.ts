@@ -3,6 +3,7 @@ import InputWrap, { CustomSlot, Slots } from "../lib/InputWrap"
 import {Schema} from '../lib/Schema'
 import AmazonSpeech from "ssml-builder/amazon_speech";
 import { AutoNavigationHandler } from "./NavigationHandler";
+import { getPhone } from "../lib/EventUtil";
 
 export class DetailHandler extends AutoNavigationHandler {
     intent = Object.values(Schema.DetailIntents)
@@ -16,12 +17,13 @@ export class DetailHandler extends AutoNavigationHandler {
         let event = wrap.session.selectedEvent!
         let reprompt = "You can go back to the event info or make a new search"
 
-        if(wrap.isIntent(Schema.DetailIntents.Phone) && event.location.booking_phone){
+        let phone = getPhone(event)
+        if(wrap.isIntent(Schema.DetailIntents.Phone) && phone){
             let speech = new AmazonSpeech()
                 .say("The phone number is")
                 .sayAs({
                     interpret: "telephone",
-                    word: event.location.booking_phone
+                    word: phone
                 })
                 .sentence(reprompt)
 

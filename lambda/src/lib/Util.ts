@@ -62,3 +62,4 @@ export function hasElements<T>(arr?: T[]){
 export function includesOrEqual<T>(elm: T, itemOrArr?: T|T[]): boolean{
     return Array.isArray(itemOrArr) ? itemOrArr.includes(elm) : elm === itemOrArr
 }
+
