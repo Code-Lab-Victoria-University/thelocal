@@ -18,7 +18,7 @@
             "codeUri": "lambda",
             "functionName": "ask-custom-thelocal-default",
             "handler": "dist/index.handler",
-            "revisionId": "9f980bb8-5c60-42f4-a574-24324e9f0c4e",
+            "revisionId": "8afdd124-f439-4ef5-b348-c683ae31db89",
             "runtime": "nodejs8.10"
           }
         ],

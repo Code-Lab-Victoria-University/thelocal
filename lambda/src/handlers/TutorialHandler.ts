@@ -56,7 +56,7 @@ export class TutorialHandler implements RequestHandler {
         if(curStage === TutorialStage.Intro){ //basic intro, get user to say start the local (unverified)
             speech.say(
                 `Hi, I'm alexa. Welcome to the local.
-                In this tutorial I'm going to teach you how to find local events in New Zealand in 4 steps.`)
+                In this 4 step tutorial I'm going to teach you how to find local events in New Zealand.`)
             .pause(newStepPause).say(
                 `Step 1. You can say 'Alexa' at any time to get my attention.
                 When speaking to me, make sure to speak slowly and clearly in a quiet environment.
@@ -86,7 +86,7 @@ export class TutorialHandler implements RequestHandler {
             //read back location, ask for verify
             if(slotLoc && slotLoc.resValue){
                 speech.say(`Thanks. I heard you ask for events in ${slotLoc.resValue}. 
-                Say Yes if that's correct and I'll use it if you don't mention a location.
+                Say Yes if that's correct, and I'll use it if you don't mention a location.
                 If that's wrong, please ask for events in your location again, making sure to speak slowly and clearly.`)
 
                 reprompt = `Say Yes if ${slotLoc.resValue} is correct.
@@ -142,7 +142,7 @@ export class TutorialHandler implements RequestHandler {
                     .say(`I found ${exampleDateEventsCount} events in ${locSlot.resValue}`)
                 date.toSpeech(speech)
                 speech.say(`, I'll read you the first ${EventsHandler.items}.`)
-                    .say('Nice work. You can now refine your search for events with a date and location.')
+                    .say('Nice work. You can now refine your search for events with a <phoneme alphabet="ipa" ph="ˈdāt">date</phoneme> and location.')
                     .pause(newStepPause)
                     .say(`Step 4.
                         I also understand different types of events.
