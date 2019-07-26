@@ -72,7 +72,7 @@ export class TutorialHandler implements RequestHandler {
             .pause(newStepPause)
             .say(
                 `Step 2. I'm going to teach you how to make a request to find events in a location.
-                Valid locations include any popular New Zealand city or town, like Auckland or Nelson.
+                Valid locations include any major New Zealand city or town, like Auckland or Nelson.
                 For example, if you lived in nelson, you could say 'What's on in Nelson', just like how you would ask a real person.
                 Let's try that with your city or town now.`
             )
@@ -87,7 +87,7 @@ export class TutorialHandler implements RequestHandler {
             if(slotLoc && slotLoc.resValue){
                 speech.say(`Thanks. I heard you ask for events in ${slotLoc.resValue}. 
                 Say Yes if that's correct, and I'll use it if you don't mention a location.
-                If that's wrong, please ask for events in your location again, making sure to speak slowly and clearly.`)
+               Otherwise, please ask for events in your location again, making sure to speak slowly and clearly.`)
 
                 reprompt = `Say Yes if ${slotLoc.resValue} is correct.
                 If I'm wrong, please ask for events in your location again, making sure to speak slowly and clearly.`
@@ -109,7 +109,7 @@ export class TutorialHandler implements RequestHandler {
                     Along with location, you could specify a date, time, venue or an event category.
                     Let's use a date first. 
                     Just like the location request, you will ask me a natural question, except this time you will provide a date as well.
-                    You can say a date in many ways such as; next week, saturday, november the 3rd, next year, and tomorrow.
+                    Some valid dates are; next week, saturday, november the 3rd, next year, and tomorrow.
                     For example, you could say, 'are there any events in Wellington next weekend?'
                     Your turn, make a request with your location and a date now.`
                 )
@@ -142,7 +142,9 @@ export class TutorialHandler implements RequestHandler {
                     .say(`I found ${exampleDateEventsCount} events in ${locSlot.resValue}`)
                 date.toSpeech(speech)
                 speech.say(`, I'll read you the first ${EventsHandler.items}.`)
-                    .say('Nice work. You can now refine your search for events with a <phoneme alphabet="ipa" ph="ˈdāt">date</phoneme> and location.')
+                    .say('Nice work. You can now refine your search for events with a')
+                    .phoneme("ipa", "ˈdāt", "date").say('and location.')
+                    
                     .pause(newStepPause)
                     .say(`Step 4.
                         I also understand different types of events.

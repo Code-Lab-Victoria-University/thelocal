@@ -8,6 +8,7 @@ declare class Speech{
     prosody(options: object, text: string): this
     paragraph(text: string): this
     sentence(text: string): this
+    phoneme(type: string, phoneme: string, original: string): this
 
     /**
      * @param time in seconds eg: 0.5s
