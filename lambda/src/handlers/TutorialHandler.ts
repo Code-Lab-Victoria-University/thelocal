@@ -24,7 +24,8 @@ let exampleLocEventsCount = 100
 let exampleDateEventsCount = 10
 let newStepPause = "1s"
 
-let rootCategories = (async () => prettyJoin((await getCategoryChildren()).map(child => getCategoryName(child.id)), "or"))()
+let rootCategories: string|undefined;
+(async () => rootCategories = prettyJoin((await getCategoryChildren()).map(child => getCategoryName(child.id)), "or"))()
 
 function wait5s(text: string): string{
     return new AmazonSpeech().say(text).pause('5s').ssml()
