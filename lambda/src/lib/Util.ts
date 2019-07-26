@@ -63,3 +63,16 @@ export function includesOrEqual<T>(elm: T, itemOrArr?: T|T[]): boolean{
     return Array.isArray(itemOrArr) ? itemOrArr.includes(elm) : elm === itemOrArr
 }
 
+import categories from '../data/category-names.json'
+
+/**
+ * @returns empty string when invalid id
+ * @param id 
+ */
+export function getCategoryName(id?: number) {
+    if(id === undefined)
+        return ""
+
+    let cat = categories.find(cat => cat.id === id.toString())
+    return cat ? cat.title : ""
+}

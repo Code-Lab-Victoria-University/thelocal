@@ -4,6 +4,8 @@ import {Schema} from '../lib/Schema'
 import AmazonSpeech from 'ssml-builder/amazon_speech'
 import AmazonDate from "../lib/AmazonDate";
 import * as EventsHandler from './EventsHandler'
+import { prettyJoin, getCategoryName } from "../lib/Util";
+import { getCategoryChildren } from "../lib/request";
 
 // let tutorialStages = 0 | 1 | 2
 /**
@@ -22,10 +24,7 @@ let exampleLocEventsCount = 100
 let exampleDateEventsCount = 10
 let newStepPause = "1s"
 
-//TODO: use actual categories file, proper gaps
-let rootCategories = "Workshops. Conferences & Classes. Music. Performing Arts. Festivals & Lifestyle. Sports & Outdoors. Exhibitions"
-
-//TODO: allow user to start tutorial
+let rootCategories = (async () => prettyJoin((await getCategoryChildren()).map(child => getCategoryName(child.id)), "or"))()
 
 function wait5s(text: string): string{
     return new AmazonSpeech().say(text).pause('5s').ssml()

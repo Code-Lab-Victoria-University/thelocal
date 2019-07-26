@@ -7,8 +7,7 @@ import AmazonDate from "../lib/AmazonDate";
 import AmazonTime from "../lib/AmazonTime";
 import { EventSelectHandler } from "./EventSelectHandler";
 import DateRange from "../lib/DateRange";
-import { prettyJoin } from "../lib/Util";
-import categories from '../data/category-names.json'
+import { prettyJoin, getCategoryName } from "../lib/Util";
 import * as EventUtil from '../lib/EventUtil'
 import { AutoNavigationHandler } from "./NavigationHandler";
 
@@ -25,18 +24,6 @@ interface LocationFrequency {
 
 //TODO: only trigger recommendation on multiple pages (3)
 export const items = 4
-
-/**
- * @returns empty string when invalid id
- * @param id 
- */
-function getCategoryName(id?: number) {
-    if(id === undefined)
-        return ""
-
-    let cat = categories.find(cat => cat.id === id.toString())
-    return cat ? cat.title : ""
-}
 
 const backIntents = [Schema.PreviousPageIntent, Schema.AMAZON.PreviousIntent]
 const nextIntents = [Schema.AMAZON.YesIntent, Schema.NextPageIntent]
@@ -195,8 +182,7 @@ export class EventsHandler extends AutoNavigationHandler {
 
                             if(awaits.length)
                                 await Promise.all(awaits)
-
-                            //TODO: use nicer category names, derived from model generator
+                                
                             //if less than 0, a first
                             catCounts = catCounts.sort((a, b) => b.count-a.count)
                             catCounts.splice(6)
