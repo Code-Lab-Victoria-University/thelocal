@@ -54,8 +54,8 @@ exports.handler = skillBuilder
 
     .addRequestHandlers(
         //always allow reset
-        new EasyIntentHandler(Schema.RESET, (wrap, input) => {
-            input.attributesManager.setPersistentAttributes({})
+        new EasyIntentHandler(Schema.RESET, async (wrap, input) => {
+            (await InputWrap.load(input)).persistent = {}
             return "Successful reset"
         }),
 
