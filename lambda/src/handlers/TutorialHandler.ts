@@ -110,7 +110,7 @@ export class TutorialHandler implements RequestHandler {
                     Let's use a date first. 
                     Just like the location request, you will ask me a natural question, except this time you will provide a date as well.
                     Some valid dates are; next week, saturday, november the 3rd, next year, and tomorrow.
-                    For example, you could say, 'are there any events in Wellington next weekend?'
+                    For example, you could say, 'are there any events in ${wrap.getTopLocation()!.value} next weekend?'
                     Your turn, make a request with your location and a date now.`
                 )
                 reprompt = "Ask for events with your location and a date, for example, 'Is there anything on in Hamilton on Tuesday?'"
