@@ -23,7 +23,7 @@ let exampleDateEventsCount = 10
 let newStepPause = "1s"
 
 //TODO: use actual categories file, proper gaps
-let rootCategories = "Workshops, Conferences & Classes, Music, Performing Arts, Festivals & Lifestyle, Sports & Outdoors, Exhibitions"
+let rootCategories = "Workshops. Conferences & Classes. Music. Performing Arts. Festivals & Lifestyle. Sports & Outdoors. Exhibitions"
 
 //TODO: allow user to start tutorial
 
@@ -143,7 +143,7 @@ export class TutorialHandler implements RequestHandler {
                 date.toSpeech(speech)
                 speech.say(`, I'll read you the first ${EventsHandler.items}.`)
                     .say('Nice work. You can now refine your search for events with a')
-                    .phoneme("ipa", "ˈdāt", "date").say('and location.')
+                    .phoneme("ipa", "deɪt", "date").say('and location.')
                     
                     .pause(newStepPause)
                     .say(`Step 4.
