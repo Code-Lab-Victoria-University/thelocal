@@ -190,7 +190,7 @@ export class EventsHandler extends AutoNavigationHandler {
                             //TODO: look for extraneous gap inside cat name
                             let catInfos = catCounts.map(catInfo => catInfo.count.toString() + " in " + getCategoryName(catInfo.cat.id))
 
-                            speech.say("The top categories available to make this search more specific are")
+                            speech.say("The categories available to make this search more specific are")
                                 .say(prettyJoin(catInfos, "or"))
                                 .pauseByStrength("strong")
                                 .say("You could apply that now by saying alexa followed by the category")
@@ -223,12 +223,12 @@ export class EventsHandler extends AutoNavigationHandler {
                     speech.pause('0.8s')
                 
                     events.list.forEach((event, i) => {
-                        let startDate = new AmazonDate(event.datetime_start, event.datetime_end)
+                        let range = new AmazonDate(event.datetime_start, event.datetime_end)
                         if(!isVenue)
                             speech.say('At').say(event.location.name)
                             
                         speech.say("I have").say(event.name)
-                        startDate.toSpeech(speech, true)
+                        range.toSpeech(speech, true)
 
                         speech.pauseByStrength("medium").say("for details say number")
                         .say((i+1).toString()).pauseByStrength("x-strong")

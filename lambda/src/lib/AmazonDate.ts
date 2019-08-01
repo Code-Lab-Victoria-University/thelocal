@@ -96,19 +96,43 @@ export default class AmazonDate extends DateRange {
     toSpeech(speech?: AmazonSpeech, eventPrefix?: boolean): AmazonSpeech{
         speech = speech || new AmazonSpeech()
 
-        // console.log("curdate: " + moment().toString())
+        let days = this.start().startOf('day').diff(this.end().startOf("day"), 'days')
+        const dayDiff = this.start().startOf('day').diff(moment().startOf('day'), 'days')
+        let dateBefore = days < 0
+        
 
-        // const start = this.start()
-        const thisYear = this.startM.isSame(moment(), 'year')
+        if(this.endM){
+            this.toSpeechSingle(newthis.endM)
+        }
+        else 
+            this.toSpeechSingle(speech.say(dateBefore ? "which was" : ""), this)
+
+        if(eventPrefix){
+            //TODO: some of this is wrong
+
+            if(days !== 0){
+                speech.say(dateBefore ? "which start")
+            }
+
+            speech.say( == 0 ? 
+                (dateBefore ? "which was" : "") :
+                (dateBefore ? "which started" : "starting"))
+        }
+
+        return speech
+    }
+
+    private toSpeechSingle(speech: AmazonSpeech, date: AmazonDate){
+        const thisYear = date.startM.isSame(moment(), 'year')
         //relative to current year or absolute
-        const yearStr = thisYear ? "????" : this.startM.year().toString()
+        const yearStr = thisYear ? "????" : date.startM.year().toString()
 
         // console.log(this.start().toString(), this.end().toString(), moment().toString())
 
-        const dayDiff = this.start().startOf('day').diff(moment().startOf('day'), 'days')
-        const weekDiff = this.start().startOf('isoWeek').diff(moment().startOf('isoWeek'), 'weeks')
-        const monthDiff = this.start().startOf('month').diff(moment().startOf('month'), 'months')
-        const yearDiff = this.start().startOf('year').diff(moment().startOf('year'), 'years')
+        const dayDiff = date.start().startOf('day').diff(moment().startOf('day'), 'days')
+        const weekDiff = date.start().startOf('isoWeek').diff(moment().startOf('isoWeek'), 'weeks')
+        const monthDiff = date.start().startOf('month').diff(moment().startOf('month'), 'months')
+        const yearDiff = date.start().startOf('year').diff(moment().startOf('year'), 'years')
  
         //this value is undefined if the week isn't close enough to be one of the three
         let adjacentWeekText = undefined as string|undefined
@@ -119,87 +143,77 @@ export default class AmazonDate extends DateRange {
         else if(weekDiff == -1)
             adjacentWeekText = "last"
 
-        if(eventPrefix){
-            //TODO: some of this is wrong
-            let dateBefore = dayDiff < 0
-            speech.say(this.start().diff(this.end(), 'days') == 0 ? 
-                (dateBefore ? "which was" : "") :
-                (dateBefore ? "which started" : "starting"))
-        }
-
-        if(this.isWeek){
-            //if week type, then follow that print
-            const weekOrWeekend = this.isWeekend ? "weekend" : "week"
-            
-            //in relation to this week
-            if(adjacentWeekText)
-                speech.say(adjacentWeekText).say(weekOrWeekend)
-            //other week
-            else
-                speech.say("the").say(weekOrWeekend).say("of").sayAs({
-                    word: yearStr + this.startM.format('MMDD'),
-                    interpret: "date"
-                })
-        //specified only year
-        } else if (this.isOnlyYear) {
-            if(yearDiff == 1)
-                speech.say("next year")
-            else if(yearDiff == 0)
-                speech.say("this year")
-            else if(yearDiff == -1)
-                speech.say("last year")
-            else
-                speech.say(this.startM.year().toString())
-        //basic date fallback
-        } else {
-            //used both for date and month variants
-            const monthStr = this.startM.format('MM')
-
-            if(this.isDay) {
-                //in relation to today
-                if(Math.abs(dayDiff) <= 1 || adjacentWeekText){
-                    if(dayDiff == 1)
-                        speech.say("tomorrow")
-                    else if(dayDiff == 0)
-                        speech.say("today")
-                    else if(dayDiff == -1)
-                        speech.say("yesterday")
-                    //in relation to curWeek
-                    else if(adjacentWeekText) {
-                        speech.say(adjacentWeekText)
-                            .say(this.startM.format('dddd'))
-                    }
-                    
-                    if(this.time)
-                        this.time.toSpeech(speech, true)
-                }
-                //other date
-                else{
-                    speech.say("on")
-                    if(this.time)
-                        this.time.toSpeech(speech.say("the"), true).say("of")
-                    speech.sayAs({
-                        interpret: "date",
-                        word: yearStr+monthStr+this.startM.format('DD')
-                    })
-                }
-            } else {
-                //in relation to curMonth
-                if(monthDiff == 1)
-                    speech.say("next month")
-                else if(monthDiff == 0)
-                    speech.say("this month")
-                else if(monthDiff == -1)
-                    speech.say("last month")
-                //other month
-                else 
-                    speech.say("on").sayAs({
-                        word: yearStr+monthStr+"??",
+            if(date.isWeek){
+                //if week type, then follow that print
+                const weekOrWeekend = date.isWeekend ? "weekend" : "week"
+                
+                //in relation to this week
+                if(adjacentWeekText)
+                    speech.say(adjacentWeekText).say(weekOrWeekend)
+                //other week
+                else
+                    speech.say("the").say(weekOrWeekend).say("of").sayAs({
+                        word: yearStr + date.startM.format('MMDD'),
                         interpret: "date"
                     })
+            //specified only year
+            } else if (date.isOnlyYear) {
+                if(yearDiff == 1)
+                    speech.say("next year")
+                else if(yearDiff == 0)
+                    speech.say("this year")
+                else if(yearDiff == -1)
+                    speech.say("last year")
+                else
+                    speech.say(date.startM.year().toString())
+            //basic date fallback
+            } else {
+                //used both for date and month variants
+                const monthStr = date.startM.format('MM')
+    
+                if(date.isDay) {
+                    //in relation to today
+                    if(Math.abs(dayDiff) <= 1 || adjacentWeekText){
+                        if(dayDiff == 1)
+                            speech.say("tomorrow")
+                        else if(dayDiff == 0)
+                            speech.say("today")
+                        else if(dayDiff == -1)
+                            speech.say("yesterday")
+                        //in relation to curWeek
+                        else if(adjacentWeekText) {
+                            speech.say(adjacentWeekText)
+                                .say(date.startM.format('dddd'))
+                        }
+                        
+                        if(date.time)
+                            date.time.toSpeech(speech, true)
+                    }
+                    //other date
+                    else{
+                        speech.say("on")
+                        if(date.time)
+                            date.time.toSpeech(speech.say("the"), true).say("of")
+                        speech.sayAs({
+                            interpret: "date",
+                            word: yearStr+monthStr+date.startM.format('DD')
+                        })
+                    }
+                } else {
+                    //in relation to curMonth
+                    if(monthDiff == 1)
+                        speech.say("next month")
+                    else if(monthDiff == 0)
+                        speech.say("this month")
+                    else if(monthDiff == -1)
+                        speech.say("last month")
+                    //other month
+                    else 
+                        speech.say("on").sayAs({
+                            word: yearStr+monthStr+"??",
+                            interpret: "date"
+                        })
+                }
             }
-        }
-
-        return speech
     }
 }

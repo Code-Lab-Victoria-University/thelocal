@@ -172,13 +172,12 @@ export class TutorialHandler implements RequestHandler {
             if(catSlot && catSlot.resValue){
                 speech.say(`I heard you say ${catSlot.resValue}.
                     Easy. In the future, if you already know the category you want, you can include it in your question
-                    by saying something like 'Find me music events next weekend'.
+                    by saying something like, 'Find me music events next weekend'.
 
                     Onto the final step, Stopping the skill.
                     I will keep asking you questions unless you stay silent or tell me to stop.
                     This will exit out of the skill and stop our conversation.
-                    As with other requests, you can interrupt me at any time by saying my name, then tell me to stop,
-                    for example by saying 'Alexa Stop'.
+                    As with other requests, you can interrupt me at any time by saying my name, then requesting an action like stop.
                     Try saying 'Alexa Stop' now.`)
                 .pause('5s')
 
