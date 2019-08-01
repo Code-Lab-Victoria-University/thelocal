@@ -107,19 +107,19 @@ export default class AmazonDate extends DateRange {
         
         this.toSpeechSingle(speech.say(dateBefore ? "which was" : ""), this)
 
-        if(eventPrefix){
-            //TODO: some of this is wrong
-            //TODO: make a flow chart for all dates
+        // if(eventPrefix){
+        //     //TODO: some of this is wrong
+        //     //TODO: make a flow chart for all dates
 
-            if(days !== 0){
-                speech.say(dateBefore ? "which started" : "which will start")
-            } else
+        //     if(days !== 0){
+        //         speech.say(dateBefore ? "which started" : "which will start")
+        //     } else
 
 
-            speech.say( == 0 ? 
-                (dateBefore ? "which was" : "") :
-                (dateBefore ? "which started" : "starting"))
-        }
+        //     // speech.say( == 0 ? 
+        //     //     (dateBefore ? "which was" : "") :
+        //     //     (dateBefore ? "which started" : "starting"))
+        // }
 
         return speech
     }
