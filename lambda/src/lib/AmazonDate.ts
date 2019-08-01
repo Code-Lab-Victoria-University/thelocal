@@ -100,19 +100,21 @@ export default class AmazonDate extends DateRange {
         const dayDiff = this.start().startOf('day').diff(moment().startOf('day'), 'days')
         let dateBefore = days < 0
         
-
-        if(this.endM){
-            this.toSpeechSingle(newthis.endM)
-        }
-        else 
-            this.toSpeechSingle(speech.say(dateBefore ? "which was" : ""), this)
+        //TODO: make toSpeechSingle take a moment instead of my AmazonDate obj
+        // if(this.endM){
+        //     this.toSpeechSingle(new this.endM)
+        // }
+        
+        this.toSpeechSingle(speech.say(dateBefore ? "which was" : ""), this)
 
         if(eventPrefix){
             //TODO: some of this is wrong
+            //TODO: make a flow chart for all dates
 
             if(days !== 0){
-                speech.say(dateBefore ? "which start")
-            }
+                speech.say(dateBefore ? "which started" : "which will start")
+            } else
+
 
             speech.say( == 0 ? 
                 (dateBefore ? "which was" : "") :
