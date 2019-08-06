@@ -1,9 +1,9 @@
-import 'mocha'
-import assert, { AssertionError } from 'assert'
-import AmazonDate from "../lib/AmazonDate";
-import {padN} from '../lib/Util'
-import AmazonSpeech from 'ssml-builder/amazon_speech'
-import AmazonTime from '../lib/AmazonTime';
+import assert from 'assert';
+import 'mocha';
+import AmazonSpeech from 'ssml-builder/amazon_speech';
+import { DateTime } from "../lib/SpokenDateTime";
+import { padN } from '../lib/Util';
+
 
 let now = new Date()
 let year = now.getFullYear()
@@ -13,18 +13,17 @@ let tomorrow = new Date()
 tomorrow.setDate(now.getDate()+1)
 
 //TODO: do tests with different timezones
-
 let yesterday = new Date()
 yesterday.setDate(now.getDate()-1)
 
-function dateToStr(date: Date): string{
+function toAZNStr(date: Date): string{
     return `${date.getFullYear()}-${padN(date.getMonth()+1, 2)}-${padN(date.getDate(), 2)}`
 }
 
-let datePairs = [
-    [dateToStr(yesterday), "yesterday"],
-    [dateToStr(now), "today"],
-    [dateToStr(tomorrow), "tomorrow"],
+let testPairs = [
+    [toAZNStr(yesterday), "yesterday"],
+    [toAZNStr(now), "today"],
+    [toAZNStr(tomorrow), "tomorrow"],
     [[year-1, "XX", "XX"].join('-'), "last year"],
     [[year, "XX", "XX"].join('-'), "this year"],
     [[year+1, "XX", "XX"].join('-'), "next year"],
@@ -33,10 +32,11 @@ let datePairs = [
 // datePairs.forEach(pair => console.log(pair + " " + dateToStr(pair[0] as Date)))
 
 describe("DatePrint", () => {
-    for(let testPair of datePairs){
+    for(let testPair of testPairs){
         let dateStr = testPair[0]
         let expected = testPair[1]
-        let dateObj = new AmazonDate(dateStr)
+
+        let dateObj = new DateTime(dateStr)
         let ssml = dateObj.toSpeech().ssml()
 
         let expectedSsml = `<speak>${expected}</speak>`
@@ -48,10 +48,8 @@ describe("DatePrint", () => {
 })
 
 describe("DateTime", () => {
-    let dateObj = new AmazonDate(dateToStr(tomorrow))
-    let timeObj = new AmazonTime("NI")
+    let dateObj = new DateTime(toAZNStr(tomorrow), "NI")
 
-    dateObj.setTime(timeObj)
     it(`should be tomorrow night`, () => {
         assert.equal(dateObj.toSpeech().ssml(), "<speak>tomorrow night</speak>")
     })

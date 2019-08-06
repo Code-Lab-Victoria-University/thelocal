@@ -1,14 +1,11 @@
-import { HandlerInput, RequestHandler } from "ask-sdk-core";
-import InputWrap, { CustomSlot } from "../lib/InputWrap"
-import {getEvents, EventRequestOrder, EventRequest, Response, Event, getCategoryChildren, CategoryInfo, eventFindaRequest, maxParallelRequests} from '../lib/request'
-import {Schema} from '../lib/Schema'
-import AmazonSpeech from 'ssml-builder/amazon_speech'
-import AmazonDate from "../lib/AmazonDate";
-import AmazonTime from "../lib/AmazonTime";
+import AmazonSpeech from 'ssml-builder/amazon_speech';
+import { DateRange } from "../lib/DateRange";
+import InputWrap, { CustomSlot } from "../lib/InputWrap";
+import { CategoryInfo, EventRequest, EventRequestOrder, getCategoryChildren, getEvents, maxParallelRequests } from '../lib/request';
+import { Schema } from '../lib/Schema';
+import { DateTime } from "../lib/SpokenDateTime";
+import { getCategoryName, prettyJoin } from "../lib/Util";
 import { EventSelectHandler } from "./EventSelectHandler";
-import DateRange from "../lib/DateRange";
-import { prettyJoin, getCategoryName } from "../lib/Util";
-import * as EventUtil from '../lib/EventUtil'
 import { AutoNavigationHandler } from "./NavigationHandler";
 
 //TODO: https://developer.amazon.com/docs/alexa-design/voice-experience.html
@@ -84,17 +81,8 @@ export class EventsHandler extends AutoNavigationHandler {
                 //parse date
                 let dateSlot = input.slots[Schema.DateSlot]
                 let timeSlot = input.slots[Schema.TimeSlot]
-                let range: DateRange|undefined = undefined
-                if(dateSlot)
-                    range = new AmazonDate(dateSlot.value)
 
-                if(timeSlot){
-                    let time = new AmazonTime(timeSlot.value)
-                    if(range instanceof AmazonDate)
-                        range.setTime(time)
-                    else
-                        range = time
-                }
+                let date = new DateTime(dateSlot && dateSlot.value, timeSlot && timeSlot.value)
 
                 let category = input.slots[Schema.CategorySlot]
                 let categoryId = category && category.resId ? Number.parseInt(category.resId) : undefined
@@ -103,10 +91,10 @@ export class EventsHandler extends AutoNavigationHandler {
                 let req = {
                     location_slug: slug,
                     rows: items,
-                    start_date: range && range.startISO(),
-                    end_date: range && range.endISO(),
+                    start_date: date && date.start().toISOString(true),
+                    end_date: date && date.end().toISOString(true),
                     //sort by date if venue or any more specific info was given
-                    order: (isVenue || range || category) ? EventRequestOrder.date : EventRequestOrder.popularity,
+                    order: (isVenue || date || category) ? EventRequestOrder.date : EventRequestOrder.popularity,
                     category: categoryId,
                     offset: input.session.eventRequestPage*items
                 } as EventRequest
@@ -136,8 +124,8 @@ export class EventsHandler extends AutoNavigationHandler {
                 
                 speech.say((isVenue ? "at " : "in ") + placeName)
 
-                if(range)
-                    range.toSpeech(speech)
+                if(date)
+                    date.toSpeech(speech)
 
                 if(events.count === 0){
                     speech.pauseByStrength("strong")
@@ -148,8 +136,7 @@ export class EventsHandler extends AutoNavigationHandler {
                 } else {
                     //recommend filters
                     if((items*3 < events.count)){
-                        speech.pauseByStrength("strong")
-
+                        speech.pauseByStrength("medium")
                         //get list of categories (either root list or)
                         let catChildren = await getCategoryChildren(categoryId)
 
@@ -190,7 +177,8 @@ export class EventsHandler extends AutoNavigationHandler {
                             //TODO: look for extraneous gap inside cat name
                             let catInfos = catCounts.map(catInfo => catInfo.count.toString() + " in " + getCategoryName(catInfo.cat.id))
 
-                            speech.say("The categories available to make this search more specific are")
+                            speech.say("in the following categories")
+                                .pauseByStrength("medium")
                                 .say(prettyJoin(catInfos, "or"))
                                 .pauseByStrength("strong")
                                 .say("You could apply that now by saying alexa followed by the category")
@@ -223,12 +211,12 @@ export class EventsHandler extends AutoNavigationHandler {
                     speech.pause('0.8s')
                 
                     events.list.forEach((event, i) => {
-                        let range = new AmazonDate(event.datetime_start, event.datetime_end)
+                        let range = new DateRange(event.datetime_start, event.datetime_end)
                         if(!isVenue)
                             speech.say('At').say(event.location.name)
                             
-                        speech.say("I have").say(event.name)
-                        range.toSpeech(speech, true)
+                        speech.say("I have").say(event.name).say("on")
+                        range.toSpeech(speech)
 
                         speech.pauseByStrength("medium").say("for details say number")
                         .say((i+1).toString()).pauseByStrength("x-strong")

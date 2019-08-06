@@ -1,7 +1,5 @@
 import InputWrap, { Slots } from "./InputWrap";
-import AmazonSpeech from "ssml-builder/amazon_speech";
 import { Event, Response } from "./request";
-import AmazonDate from "./AmazonDate";
 import { Schema } from "./Schema";
 
 //TODO: use list of lastRequests, and most recent one will be which path we go down in bookmark vs request list

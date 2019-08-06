@@ -1,11 +1,9 @@
 import { HandlerInput, RequestHandler } from "ask-sdk-core";
-import { Response } from "ask-sdk-model"
-import { rand, randN, prettyJoin } from "../lib/Util";
+import { Response } from "ask-sdk-model";
+import AmazonSpeech from "ssml-builder/amazon_speech";
+import categories from "../data/category-names.json";
 import InputWrap from "../lib/InputWrap";
-import AmazonSpeech from "ssml-builder/amazon_speech"
-import {readFile, readFileSync} from "fs"
-import {join} from "path"
-import categories from "../data/category-names.json"
+import { prettyJoin, rand, randN } from "../lib/Util";
 
 const examples = [
     "Find me opera concerts in wellington next week",

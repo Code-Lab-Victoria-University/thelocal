@@ -1,6 +1,4 @@
-import DateRange from "./DateRange";
 import AmazonSpeech from "ssml-builder/amazon_speech";
-import moment = require("moment-timezone");
 
 export enum TimePeriod{
     NIGHT = "NI",
@@ -9,7 +7,7 @@ export enum TimePeriod{
     EVENING = "EV"
 }
 
-export default class AmazonTime extends DateRange {
+export default class SpokenTime {
     readonly hours: number = 0;
     readonly minutes: number = 0;
 
@@ -17,33 +15,25 @@ export default class AmazonTime extends DateRange {
 
     static readonly endHours: number = 6
 
-    constructor(time: string){
-        super()
-        this.timeStr = time
-        if(time.includes(":"))
-            [this.hours, this.minutes] = time.split(":").map(val => Number.parseInt(val))
+    constructor(spokenTime: string){
+        this.timeStr = spokenTime
+        if(spokenTime.includes(":"))
+            [this.hours, this.minutes] = spokenTime.split(":").map(val => Number.parseInt(val))
         else {
-            if(time == TimePeriod.MORNING)
+            if(spokenTime == TimePeriod.MORNING)
                 this.hours = 8 //8am
-            else if (time == TimePeriod.AFTERNOON)
+            else if (spokenTime == TimePeriod.AFTERNOON)
                 this.hours = 12 //12pm
-            else if (time == TimePeriod.EVENING)
+            else if (spokenTime == TimePeriod.EVENING)
                 this.hours = 17 //5pm
-            else if (time == TimePeriod.NIGHT)
+            else if (spokenTime == TimePeriod.NIGHT)
                 this.hours = 20 //8pm
         }
     }
 
-    start(){
-        return moment().hours(this.hours).minutes(this.minutes)
-    }
-
-    end(){
-        return this.start().add(AmazonTime.endHours, 'hours')
-    }
-
-    toSpeech(speech?: AmazonSpeech, noPrefix?: boolean): AmazonSpeech {
+    toSpeech(speech?: AmazonSpeech): AmazonSpeech {
         speech = speech || new AmazonSpeech()
+        const noPrefix = false;
 
         switch(this.timeStr){
             case TimePeriod.MORNING:

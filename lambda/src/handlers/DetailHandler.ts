@@ -1,9 +1,8 @@
-import { HandlerInput, RequestHandler } from "ask-sdk-core";
-import InputWrap, { CustomSlot, Slots } from "../lib/InputWrap"
-import {Schema} from '../lib/Schema'
 import AmazonSpeech from "ssml-builder/amazon_speech";
-import { AutoNavigationHandler } from "./NavigationHandler";
 import { getPhone } from "../lib/EventUtil";
+import InputWrap from "../lib/InputWrap";
+import { Schema } from '../lib/Schema';
+import { AutoNavigationHandler } from "./NavigationHandler";
 
 export class DetailHandler extends AutoNavigationHandler {
     intent = Object.values(Schema.DetailIntents)

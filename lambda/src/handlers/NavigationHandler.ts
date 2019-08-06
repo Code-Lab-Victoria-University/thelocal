@@ -1,7 +1,6 @@
 import { HandlerInput, RequestHandler } from "ask-sdk-core";
-import InputWrap, { CustomSlot, Slots } from "../lib/InputWrap"
-import {Schema} from '../lib/Schema'
 import { Response } from "ask-sdk-model";
+import InputWrap from "../lib/InputWrap";
 import { includesOrEqual } from "../lib/Util";
 
 /**

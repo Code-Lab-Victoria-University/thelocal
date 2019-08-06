@@ -1,13 +1,11 @@
-import { HandlerInput, RequestHandler } from "ask-sdk-core";
-import InputWrap, { CustomSlot, Slots } from "../lib/InputWrap"
-import {Schema} from '../lib/Schema'
-import { hasElements, prettyJoin } from "../lib/Util";
-import * as EventUtil from '../lib/EventUtil'
-import { DetailHandler } from "./DetailHandler";
-import { Event } from "../lib/request";
 import { Response } from "ask-sdk-model";
 import AmazonSpeech from "ssml-builder/amazon_speech";
-import AmazonDate from "../lib/AmazonDate";
+import { DateRange } from "../lib/DateRange";
+import * as EventUtil from '../lib/EventUtil';
+import InputWrap from "../lib/InputWrap";
+import { Event } from "../lib/request";
+import { Schema } from '../lib/Schema';
+import { hasElements, prettyJoin } from "../lib/Util";
 import { AutoNavigationHandler } from "./NavigationHandler";
 
 //TODO: make go back to results work for bookmarks?
@@ -29,7 +27,7 @@ export class EventSelectHandler extends AutoNavigationHandler {
         speech.say(event.name)
             .say("is at").say(event.location.name)
             // .say("on").say(event.datetime_summary.replace("-", "to"))
-        new AmazonDate(event.datetime_start, event.datetime_end).toSpeech(speech, true)
+        new DateRange(event.datetime_start, event.datetime_end).toSpeech(speech)
     
         let shortenedDesc = event.description.split(".").reduce((prev, cur) => {
             let newLength = prev.length+cur.length

@@ -35,7 +35,7 @@ declare module 'ssml-builder/amazon_speech' {
          * Interjections: https://developer.amazon.com/docs/custom-skills/speechcon-reference-interjections-english-australia.html
         */
         sayAs(options: {
-            interpret: string,
+            interpret: "ordinal"|"date"|"time"|"telephone",
             word: string,
             format?: string
         }): this

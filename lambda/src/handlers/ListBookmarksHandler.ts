@@ -1,9 +1,7 @@
-import { RequestHandler, HandlerInput } from "ask-sdk-core";
 import InputWrap from "../lib/InputWrap";
 import { Schema } from "../lib/Schema";
 import { prettyJoin } from "../lib/Util";
 import { EventSelectHandler } from "./EventSelectHandler";
-import * as EventUtil from '../lib/EventUtil'
 import { AutoNavigationHandler } from "./NavigationHandler";
 
 export class ListBookmarksHandler extends AutoNavigationHandler {

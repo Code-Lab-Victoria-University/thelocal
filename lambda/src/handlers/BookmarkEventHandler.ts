@@ -1,11 +1,6 @@
-import { HandlerInput, RequestHandler } from "ask-sdk-core";
-import { Response, IntentRequest } from "ask-sdk-model";
-import { NodeStringDecoder } from "string_decoder";
-import InputWrap from '../lib/InputWrap'
-import { Schema } from "../lib/Schema";
-import { EventSelectHandler } from "./EventSelectHandler";
 import AmazonSpeech from "ssml-builder/amazon_speech";
-import * as EventUtil from '../lib/EventUtil'
+import InputWrap from '../lib/InputWrap';
+import { Schema } from "../lib/Schema";
 import { AutoNavigationHandler } from "./NavigationHandler";
 
 export class BookmarkEventHandler extends AutoNavigationHandler {

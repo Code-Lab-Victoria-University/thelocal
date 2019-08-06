@@ -1,7 +1,6 @@
 import { HandlerInput, RequestHandler } from "ask-sdk-core";
-import { Response, IntentRequest } from "ask-sdk-model";
-import { NodeStringDecoder } from "string_decoder";
-import InputWrap from '../lib/InputWrap'
+import { Response } from "ask-sdk-model";
+import InputWrap from '../lib/InputWrap';
 
 interface HandleResponse {
     (handlerInput: InputWrap, input: InputWrap): string|Response|Promise<string>|Promise<Response>

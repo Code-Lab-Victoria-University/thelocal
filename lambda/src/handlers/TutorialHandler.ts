@@ -1,11 +1,11 @@
 import { HandlerInput, RequestHandler } from "ask-sdk-core";
-import InputWrap, { CustomSlot } from "../lib/InputWrap"
-import {Schema} from '../lib/Schema'
-import AmazonSpeech from 'ssml-builder/amazon_speech'
-import AmazonDate from "../lib/AmazonDate";
-import * as EventsHandler from './EventsHandler'
-import { prettyJoin, getCategoryName } from "../lib/Util";
+import AmazonSpeech from 'ssml-builder/amazon_speech';
+import InputWrap from "../lib/InputWrap";
 import { getCategoryChildren } from "../lib/request";
+import { Schema } from '../lib/Schema';
+import { DateTime } from "../lib/SpokenDateTime";
+import { getCategoryName, prettyJoin } from "../lib/Util";
+import * as EventsHandler from './EventsHandler';
 
 // let tutorialStages = 0 | 1 | 2
 /**
@@ -132,7 +132,7 @@ export class TutorialHandler implements RequestHandler {
 
             //heard a location and date correctly
             if(locSlot && locSlot.resValue && dateSlot){
-                let date = new AmazonDate(dateSlot.value)
+                let date = new DateTime(dateSlot.value)
                 speech.say(`I heard a location of ${locSlot.resValue} and a date of`)
                 date.toSpeech(speech)
                 speech.pauseByStrength("strong")

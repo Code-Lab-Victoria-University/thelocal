@@ -1,27 +1,30 @@
-import moment, { Moment } from 'moment-timezone'
 import AmazonSpeech from 'ssml-builder/amazon_speech'
+import moment, { dateTimeFormat, Moment } from './MomentUtil'
 
-const ISOformat = "YYYY-MM-DDTHH:MM"
+//date and time are inside the start/end strings
+export class DateRange {
+    readonly start: Moment;
+    readonly end: Moment;
 
-moment.tz.setDefault("Pacific/Auckland")
-
-export default abstract class DateRange {
-    //remove the Z indication, meaning local time.
-    startISO(): string {
-        return this.start().format(ISOformat)
-    }
-    endISO(): string {
-        return this.end().format(ISOformat)
+    constructor(start: string, end: string){
+        this.start = moment(start)
+        this.end = moment(end)
     }
 
-    // static now(): Moment {
-    //     // return new Date()
-    //     return moment()
-    //     // return moment.tz("Pacific/Auckland").ut
-    //     // return new Date()
-    // }
+    toSpeech(speech?: AmazonSpeech): AmazonSpeech{
+        speech = speech || new AmazonSpeech()
 
-    abstract start(): Moment
-    abstract end(): Moment
-    abstract toSpeech(speech?: AmazonSpeech): AmazonSpeech
+        //end is same day
+        if(this.start.diff(this.end, "days") === 0){
+            speech.say(this.start.calendar(undefined, dateTimeFormat))
+            speech.say("till")
+            speech.say(this.end.format("h:mm a"))
+        } else{
+            speech.say(this.start.calendar())
+            speech.say("till")
+            speech.say(this.end.calendar())
+        }
+
+        return speech
+    }
 }

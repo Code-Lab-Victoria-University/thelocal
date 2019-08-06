@@ -3,11 +3,10 @@ import { Intent, Slot } from "ask-sdk-model";
 import {Schema} from './Schema'
 import { Event, Response } from "./request";
 import {OldLocations} from '../handlers/EventsHandler'
-import { Handler } from "aws-sdk/clients/lambda";
 import { TutorialStage } from "../handlers/TutorialHandler";
 import * as EventUtil from "./EventUtil"
 import { includesOrEqual } from "./Util";
-import AmazonDate from "./AmazonDate";
+import moment = require("moment");
 
 export class CustomSlot {
     /** name of slot */
@@ -226,7 +225,7 @@ export default class InputWrap {
     static async loadPersistent(): Promise<PersistentAttrs>{
         let attrs: PersistentAttrs = (await InputWrap.instance.attrs.getPersistentAttributes())
         if(attrs.bookmarks)
-            attrs.bookmarks = attrs.bookmarks.filter(bookmark => new AmazonDate(bookmark.datetime_start, bookmark.datetime_end).end().isBefore())
+            attrs.bookmarks = attrs.bookmarks.filter(bookmark => moment(bookmark.datetime_end).isBefore())
         return attrs;
     }
 }

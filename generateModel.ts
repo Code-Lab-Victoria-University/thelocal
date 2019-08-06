@@ -283,21 +283,11 @@ async function saveData(name: string, saveObj: any) {
 
     console.log(`\n${venues.length} total venues found`)
 
-    // let venues = await getVenues(undefined, 500)
-    // console.log(Object.keys(venues).length + " venues retrieved")
-
-    //remove all venues with 0 events for brevity
-    // venues = venues.filter(val => val.count_current_events !== 0)
-    // console.log(venues.length + " venues with events")
-    // //only keep first appearance of venueId
-    // venues = venues.filter((venue, i) => venues.findIndex(earlierVenue => earlierVenue.id === venue.id) === i)
-    // console.log(venues.length + " unique venues (final)")
-
     app.customSlot(venueTypeName, venues.map(node => {
         return {
             id: node.url_slug,
             value: node.name,
-            synonyms: permutations(node.name)//.concat(node.summary)
+            synonyms: permutations(node.name)
         } as CustomSlot
     }))
     
@@ -314,7 +304,7 @@ async function saveData(name: string, saveObj: any) {
     //I was tempted to remove lawn bowls but I gotta think about the target audience haha
     rootCat.children!.children.forEach(mainCat => {
         let mainCatSynonyms = catNameToSynonyms(mainCat.name)
-        let mainCatTitle = mainCatSynonyms.join(' and ')
+        let mainCatTitle = prettyJoin(mainCatSynonyms, "and")
 
         //concerts and gig guide
         if(mainCat.id === 6){
@@ -336,7 +326,7 @@ async function saveData(name: string, saveObj: any) {
             let subCatSynonyms = catNameToSynonyms(subCat.name)
             return {
                 id: subCat.id.toString(),
-                value: subCatSynonyms.join(' and '),
+                value: prettyJoin(subCatSynonyms, "and"),
 
                 //append main category name (jazz category has jazz music as a synonym)
                 synonyms: subCatSynonyms.flatMap(

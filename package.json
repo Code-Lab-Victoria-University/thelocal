@@ -28,8 +28,8 @@
     "alexa-utterances": "^0.2.1",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5",
-    "tsc": "^1.20150623.0",
-    "typescript": "^3.5.3"
+    "typescript": "^3.5.3",
+    "tsc": "^1.20150623.0"
   },
   "devDependencies": {
     "bespoken-tools": "^2.1.9"
