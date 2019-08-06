@@ -1,11 +1,12 @@
 {
     "compilerOptions": {
-        "lib": [ "es2018" ],
+        "lib": [ "es2018", ],
         "module": "commonjs",
         "strict": true,
         "outDir": "./dist/",
         "target": "es6",
         "sourceMap": true, 
+        "types": ["node"],
         
         "strictNullChecks": true,
         "noImplicitAny": true,
@@ -16,8 +17,5 @@
     },
     "include": [
         "generateModel.ts"
-    ],
-    "exclude": [
-        "node_modules"
     ]
 }

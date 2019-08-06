@@ -2,6 +2,7 @@ import {writeFile, read, write} from 'fs'
 import {join} from 'path'
 import {promisify} from 'util'
 
+//TODO: remove usage of alexa-app: errors
 import { app as alexaApp, CustomSlot } from 'alexa-app'
 import {getLocations, getVenues, VenueNode, getCategoryTree, eventFindaRequest, LocationNode} from './lambda/src/lib/request'
 import './lambda/src/lib/ArrayExt'
@@ -251,7 +252,8 @@ async function saveData(name: string, saveObj: any) {
     console.log(`${locations.length} locations retrieved`)
     console.log(`${locations.filter(loc => loc.count_current_events !== 0).length} happenin' locations`)
 
-    app.customSlot(locationTypeName, locations.map(node => {return{id:node.url_slug, value:node.name}}))
+    //TODO: customSlots
+    app.customSlots[locationTypeName] = locations.map(node => {return{id:node.url_slug, value:node.name}})
     
     await saveData("location-names", locations.map(node => node.name))
 
