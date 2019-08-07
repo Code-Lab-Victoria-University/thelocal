@@ -16,6 +16,6 @@
         "strictFunctionTypes": true,
     },
     "include": [
-        "generateModel.ts"
+        "src/**/*.ts"
     ]
 }

@@ -3,11 +3,11 @@ import {join} from 'path'
 import {promisify} from 'util'
 
 //TODO: remove usage of alexa-app: errors
-import { app as alexaApp, CustomSlot } from 'alexa-app'
-import {getLocations, getVenues, VenueNode, getCategoryTree, eventFindaRequest, LocationNode} from './lambda/src/lib/request'
-import './lambda/src/lib/ArrayExt'
-import {Schema} from './lambda/src/lib/Schema'
-import { prettyJoin } from './lambda/src/lib/Util';
+import utterances from 'alexa-utterances'
+import {getLocations, getVenues, VenueNode, getCategoryTree, eventFindaRequest, LocationNode} from '../lambda/src/lib/request'
+import '../lambda/src/lib/ArrayExt'
+import {Schema} from '../lambda/src/lib/Schema'
+import { prettyJoin } from '../lambda/src/lib/Util';
 
 /**
  * returns all ordered, touching sentense permuatations of length at least 2 excluding original. eg "a1 a2 a3" = ["a1 a2", "a2 a3"]
@@ -52,17 +52,15 @@ async function saveData(name: string, saveObj: any) {
 
 (async () => {
 
-    let app = new alexaApp()
-
     const venueTypeName = "VenueType"
     const locationTypeName = "LocationType"
     const categoryTypeName = "CategoryType"
     const dateTypeName = "AMAZON.DATE"
     const timeTypeName = "AMAZON.TIME"
 
-    app.invocationName = "the local"
+    const invocationName = "the local"
 
-    app.dictionary = {
+    const dictionary = {
         "homeName": ["location","home","house","residence"],
         "thanks": ["Please", "Thanks", "Thank you", "Cheers"],
         "whats": [
