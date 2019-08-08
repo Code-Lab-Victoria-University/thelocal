@@ -133,10 +133,9 @@ export class EventsHandler extends AutoNavigationHandler {
                 } else if(events.list.length == 1) {
                     speech.pauseByStrength("strong")
                     EventSelectHandler.getEventDetails(events.list[0], speech)
-                } else {
+                } else if(input.session.eventRequestPage === 0) {
                     //recommend filters
                     if((items*3 < events.count)){
-                        speech.pauseByStrength("medium")
                         //get list of categories (either root list or)
                         let catChildren = await getCategoryChildren(categoryId)
 
@@ -177,9 +176,10 @@ export class EventsHandler extends AutoNavigationHandler {
                             //TODO: look for extraneous gap inside cat name
                             let catInfos = catCounts.map(catInfo => catInfo.count.toString() + " in " + getCategoryName(catInfo.cat.id))
 
-                            speech.say("within the following categories")
+                            speech.pauseByStrength("medium")
+                                .say("They fall into the following categories")
                                 .pauseByStrength("medium")
-                                .say(prettyJoin(catInfos, "or"))
+                                .say(prettyJoin(catInfos, "or", true))
                                 .pauseByStrength("strong")
                                 .say("You could apply that now by saying alexa followed by the category")
                             // eventsForCategory.forEach(catInfo => {

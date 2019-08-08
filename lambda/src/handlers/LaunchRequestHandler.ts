@@ -22,10 +22,6 @@ let filterSuggestions = [
     ["a category", () => `find me ${rand(...categories)} events this week`]
 ]
 
-function categoriesString(n: number){
-    return prettyJoin(randN(categories.map(cat => cat.title), n), "or")
-}
-
 //TODO: make intro phrases short and sweet and decrease over time
 
 const orderedTutorials = [

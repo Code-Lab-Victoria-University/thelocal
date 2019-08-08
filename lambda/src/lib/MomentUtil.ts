@@ -6,7 +6,7 @@ const sameElseDate: moment.CalendarSpecVal = function(this: Moment, now) {
     const monthDiff = this.clone().startOf('month').diff(moment().startOf('month'), 'months')
     const yearDiff = this.clone().startOf('year').diff(moment().startOf('year'), 'years')
     
-    console.log(`DIFFS: ${yearDiff} ${monthDiff} ${weekDiff}`)
+    console.log(`DIFFS: ${weekDiff} ${monthDiff} ${yearDiff}`)
 
     if(Math.abs(weekDiff) <= 1){
         let text = ""
@@ -24,7 +24,7 @@ const sameElseDate: moment.CalendarSpecVal = function(this: Moment, now) {
     }
     
     if(Math.abs(monthDiff) <= 1 || Math.abs(yearDiff) <= 1){
-        let text = "[the] Qo [of] "
+        let text = "[the] Mo [of] "
 
         if(monthDiff === 1)
             text += "[next month]"
@@ -32,22 +32,24 @@ const sameElseDate: moment.CalendarSpecVal = function(this: Moment, now) {
             text += "[this month]"
         else if(monthDiff === -1)
             text += "[last month]"
-
-        //not near month, near year though.
-        else{
-            if(yearDiff == -1)
-                text += "[last year]"
-            else if(yearDiff == 1){
-                text += "[next year]"
-            }
-            
-            text += " MMMM"
-        }
         
         return text;
     }
+
+    //not near month, near year though.
+    if(yearDiff == 1 || yearDiff == -1){
+        let text = "MMMM [the] Mo "
+
+        if(yearDiff == -1)
+            text += "[last year]"
+        else if(yearDiff == 1){
+            text += "[next year]"
+        }
+
+        return text;
+    }
     
-    return 'L'
+    return 'LL'
 }
 
 export const dateOnlyFormat: moment.CalendarSpec =  {

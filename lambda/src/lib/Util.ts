@@ -49,10 +49,10 @@ export function isLambda(): boolean {
  * 
  * ([apples, oranges, pineapples, pears], "and") --> "apples, oranges, pineapples and pears"
  */
-export function prettyJoin(arr: string[], lastSepChar: string){
+export function prettyJoin(arr: string[], lastSepChar: string, extraComma?: boolean){
     if(arr.length < 2)
         return arr[0]
-    return arr.slice(0, -1).join(", ") + ` ${lastSepChar} ` + arr[arr.length-1]
+    return arr.slice(0, -1).join(", ") + `${extraComma ? ',' : ''} ${lastSepChar} ` + arr[arr.length-1]
 }
 
 export function hasElements<T>(arr?: T[]){
