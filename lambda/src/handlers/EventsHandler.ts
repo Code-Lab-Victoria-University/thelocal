@@ -172,12 +172,12 @@ export class EventsHandler extends AutoNavigationHandler {
                                 
                             //if less than 0, a first
                             catCounts = catCounts.sort((a, b) => b.count-a.count)
-                            catCounts.splice(6)
+                            catCounts.splice(5)
 
                             //TODO: look for extraneous gap inside cat name
                             let catInfos = catCounts.map(catInfo => catInfo.count.toString() + " in " + getCategoryName(catInfo.cat.id))
 
-                            speech.say("in the following categories")
+                            speech.say("within the following categories")
                                 .pauseByStrength("medium")
                                 .say(prettyJoin(catInfos, "or"))
                                 .pauseByStrength("strong")

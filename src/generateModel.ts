@@ -322,7 +322,7 @@ class Intent{
         //concerts and gig guide
         if(mainCat.id === 6){
             mainCatSynonyms.push("music", "concert", "gigs", mainCatTitle)
-            mainCatTitle = "music and concerts"
+            mainCatTitle = prettyJoin(["music", "concerts"], "and")
         //art exhibitions
         } else if(mainCat.id === 11){
             mainCatSynonyms.push("art", mainCat.name)
