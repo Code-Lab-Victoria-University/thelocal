@@ -13,9 +13,12 @@
         {
             "type": "npm",
             "script": "deploy-model",
-            "problemMatcher": [
-                "$tsc"
-            ]
+            "problemMatcher": []
+        },
+        {
+            "type": "npm",
+            "script": "deploy-skill",
+            "problemMatcher": []
         },
         {
             "type": "npm",

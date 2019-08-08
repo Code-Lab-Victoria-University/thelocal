@@ -60,9 +60,9 @@ export class TutorialHandler implements RequestHandler {
             .pause(newStepPause).say(
                 `Step 1. You can say 'Alexa' at any time to get my attention.
                 When speaking to me, make sure to speak slowly and clearly in a quiet environment.
-                I should make a tone whenever I'm listening.
-                After I'm listening, say your command. Let's try the command that starts the local.
-                Say 'Alexa', wait for the tone, then say 'start the local'`
+                Depending on my settings, I will make a tone or light up whenever I'm listening.
+                When I'm listening, you can say a command. Let's try the command to start the local.
+                Say 'Alexa', then say 'start the local'`
             ).pause("5s")
             reprompt = wait5s("Say 'Alexa', wait for the tone, then say 'start the local")
             nextStage()

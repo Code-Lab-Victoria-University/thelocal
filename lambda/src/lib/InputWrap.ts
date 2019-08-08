@@ -134,6 +134,7 @@ export default class InputWrap {
         this.persistent.prevLocations = {}
     }
 
+    //TODO: test alexa permissions
     getTopLocation(){
         let prevLocations = this.persistent.prevLocations
 

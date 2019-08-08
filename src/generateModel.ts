@@ -3,7 +3,7 @@ import {join} from 'path'
 import {promisify} from 'util'
 
 //TODO: remove usage of alexa-app: errors
-import utterances from 'alexa-utterances'
+import utterances from './alexa-utterances'
 import {getLocations, getVenues, VenueNode, getCategoryTree, eventFindaRequest, LocationNode} from '../lambda/src/lib/request'
 import '../lambda/src/lib/ArrayExt'
 import {Schema} from '../lambda/src/lib/Schema'
@@ -50,56 +50,103 @@ async function saveData(name: string, saveObj: any) {
     await promisify(writeFile)(join("lambda", "src", "data", name+".json"), JSON.stringify(saveObj))
 }
 
-(async () => {
+const dictionary = {
+    "homeName": ["location","home","house","residence"],
+    "thanks": ["Please", "Thanks", "Thank you", "Cheers"],
+    "whats": [
+        "What's", 
+        "What is", 
+        "What events are", 
+        "are there events",
+    ],
+    "findMeWhats": [
+        "anything", 
+        // "anything that is", 
+        // "anything thats",
+        "the events" ,
+        "any events" ,
+        // "the events that are", 
+        // "any events that are", 
+        "events" ,
+        // "events that are", 
+    ],
+    "happening": ["on", "happening", "playing"],
+    "searchPrefix": ["Tell me", "Find", "Find me", "Search for", "Request", "List", "Is there"],
+    "eventsName": ["events", "shows", "concerts", "gigs", "productions"],
+    "eventChoice": ["number", "option", "event", "choice"]
+}
 
-    const venueTypeName = "VenueType"
-    const locationTypeName = "LocationType"
-    const categoryTypeName = "CategoryType"
-    const dateTypeName = "AMAZON.DATE"
-    const timeTypeName = "AMAZON.TIME"
+class Slot {
+    samples = []
+
+    constructor(readonly name: string, readonly type: string){
+
+    }
+}
+
+class SlotValue {
+    name: {value: string, synonyms?: string[]}
+    constructor(public id: string, value: string, synonyms?: string[]){
+        this.name = {
+            synonyms: synonyms,
+            value: value
+        }
+    }
+}
+
+class CustomSlot {
+    public static readonly all: CustomSlot[] = [];
+
+    name: string;
+
+    constructor(slot: Slot, public values: SlotValue[]){
+        this.name = slot.type
+
+        console.log("SLOT: " + JSON.stringify(this, null, 2))
+
+        CustomSlot.all.push(this)
+    }
+}
+
+class Intent{
+    public static readonly all: Intent[] = []
+
+    constructor(public name: string, public samples?: string[], public slots?: Slot[]){
+        //trim whitespace
+        this.samples = (samples || []).flatMap(sample => utterances(sample, {}, dictionary)).map(sample => sample.replace(/\s{2,}/, " ").trim())
+        this.slots = slots || []
+
+        // console.log("INTENT: " + JSON.stringify(this, null, 2))
+
+        //add to global list
+        Intent.all.push(this)
+    }
+}
+
+(async () => {
+    const dateSlot = new Slot(Schema.DateSlot, "AMAZON.DATE");
+    const timeSlot = new Slot(Schema.TimeSlot, "AMAZON.TIME");
+    const categorySlot = new Slot(Schema.CategorySlot, "CategoryType");
+    const locationSlot = new Slot(Schema.LocationSlot, "LocationType")
+    const venueSlot = new Slot(Schema.VenueSlot, "VenueType")
+    const numberSlot = new Slot(Schema.NumberSlot, "AMAZON.NUMBER")
 
     const invocationName = "the local"
-
-    const dictionary = {
-        "homeName": ["location","home","house","residence"],
-        "thanks": ["Please", "Thanks", "Thank you", "Cheers"],
-        "whats": [
-            "What's", 
-            "What is", 
-            "What events are", 
-            "are there events",
-        ],
-        "findMeWhats": [
-            "anything", 
-            // "anything that is", 
-            // "anything thats",
-            "the events" ,
-            "any events" ,
-            // "the events that are", 
-            // "any events that are", 
-            "events" ,
-            // "events that are", 
-        ],
-        "happening": ["on", "happening", "playing"],
-        "search": ["Tell me", "Find", "Find me", "Search for", "Request", "List", "Is there"],
-        "eventsName": ["events", "shows", "concerts", "gigs", "productions"],
-        "eventChoice": ["number", "option", "event", "choice"]
-    }
 
     let eventsUtterances = [] as string[]
 
     //explores all combinations of these in the different synatatic locations. Will add categories here later. This can probably be connected to the places list in some way for simplicity
-    let optionDetails = [`{-|${Schema.DateSlot}}`, `{-|${Schema.TimeSlot}}`]
+    let optionDetails = [`{-|${dateSlot.name}}`, `{-|${timeSlot.name}}`]
 
     //explores both types of place as well as no place (use home location)
-    let placeTypes = [`at {-|${Schema.VenueSlot}}`, `in {-|${Schema.LocationSlot}}`]
+    let placeTypes = [`at {-|${venueSlot.name}}`, `in {-|${locationSlot.name}}`]
 
     let preTexts = [
         "{whats} {happening}",
-        "{search} {findMeWhats} {happening}",
+        "{searchPrefix} {findMeWhats} {happening}",
         // "{search {eventsName}",
-        `{search} {What |Any |The |}{-|${Schema.CategorySlot}} {eventsName|} {happening|}`,
-        `What {-|${Schema.CategorySlot}} {eventsName} are {happening}`
+        `{searchPrefix} {What |Any |The |}{-|${categorySlot.name}} {eventsName|} {happening|}`,
+        `What {-|${categorySlot.name}} {eventsName} are {happening}`
     ]
     eventsUtterances.push(...preTexts)
 
@@ -118,132 +165,103 @@ async function saveData(name: string, saveObj: any) {
 
     // eventsUtterances.push(...mixes.map(mix => preTexts +" "+ mix).concat(mixes.map()))
 
-    app.intent(Schema.EventsIntent, {
-        slots: {
-            [Schema.VenueSlot]: venueTypeName,
-            [Schema.LocationSlot]: locationTypeName,
-            [Schema.DateSlot]: dateTypeName,
-            [Schema.TimeSlot]: timeTypeName,
-            [Schema.CategorySlot]: categoryTypeName
-        },
-        utterances: eventsUtterances
-    })
+    new Intent(Schema.EventsIntent, eventsUtterances, [venueSlot, locationSlot, dateSlot, timeSlot, categorySlot])
 
-    let makeSetIntent = (setIntentName: string, slot: string, slotType: string, ...names: string[]) => {
-        app.intent(setIntentName, {
-            slots: {[slot]: slotType},
-            utterances: names.flatMap(name => [
-                `Set ${name} to {-|${slot}}`,
-                `Set the ${name} to {-|${slot}}`,
-                `${name} is {-|${slot}}`,
-                `The ${name} is {-|${slot}}`,
-                `Change ${name} to {-|${slot}}`,
-                `Change the ${name} to {-|${slot}}`,
-                `{-|${slot}}`
-            ])
-        })
+    let makeSetIntent = (setIntentName: string, slot: Slot, ...names: string[]) => {
+        new Intent(setIntentName,
+            names.flatMap(name => [
+                `Set ${name} to {-|${slot.name}}`,
+                `Set the ${name} to {-|${slot.name}}`,
+                `${name} is {-|${slot.name}}`,
+                `The ${name} is {-|${slot.name}}`,
+                `Change ${name} to {-|${slot.name}}`,
+                `Change the ${name} to {-|${slot.name}}`,
+                `{-|${slot.name}}` ]),
+            [slot])
     }
 
-    makeSetIntent(Schema.SetIntents.Category, Schema.CategorySlot, categoryTypeName, "Category")
-    makeSetIntent(Schema.SetIntents.Date, Schema.DateSlot, dateTypeName, "Date", "Day", "Week", "Month")
-    makeSetIntent(Schema.SetIntents.Time, Schema.TimeSlot, timeTypeName, "Time")
-    makeSetIntent(Schema.SetIntents.Venue, Schema.VenueSlot, venueTypeName, "Venue", "Bar", "")
-    makeSetIntent(Schema.SetIntents.Location, Schema.LocationSlot, locationTypeName, "Location", "Home", "City", "Town")
+    makeSetIntent(Schema.SetIntents.Category, categorySlot, "Category")
+    makeSetIntent(Schema.SetIntents.Date, dateSlot, "Date", "Day", "Week", "Month")
+    makeSetIntent(Schema.SetIntents.Time, timeSlot, "Time")
+    makeSetIntent(Schema.SetIntents.Venue, venueSlot, "Venue", "Bar", "")
+    makeSetIntent(Schema.SetIntents.Location, locationSlot, "Location", "Home", "City", "Town")
 
     //builtin amazon intents
-    let identityIntent = {utterances: []}
-    app.intent(Schema.AMAZON.HelpIntent, identityIntent)
-    app.intent(Schema.AMAZON.StopIntent, identityIntent)
-    app.intent(Schema.AMAZON.CancelIntent, identityIntent)
-    app.intent(Schema.AMAZON.YesIntent, identityIntent)
+    new Intent(Schema.AMAZON.HelpIntent)
+    new Intent(Schema.AMAZON.StopIntent)
+    new Intent(Schema.AMAZON.CancelIntent)
+    new Intent(Schema.AMAZON.YesIntent)
 
-    app.intent(Schema.TutorialIntent, {
-        utterances: [
-            "{|start the |open the |redo the }{|basic |intro }tutorial"
-        ]
-    })
+    new Intent(Schema.TutorialIntent, [
+        "{|start the |open the |redo the }{|basic |intro }tutorial"
+    ])
 
-    app.intent(Schema.AMAZON.PreviousIntent, {
-        utterances: [
-            "go back to {my|the} {results|bookmarks|list of results|search}",
-            "{results|bookmarks|list of results}"
-        ]
-    })
+    new Intent(Schema.AMAZON.PreviousIntent, [
+        "go back to {my|the} {results|bookmarks|list of results|search}",
+        "{results|bookmarks|list of results}"
+    ])
 
-    app.intent(Schema.PreviousPageIntent, {
-        utterances: [
-            "go back",
-            "go back a page",
-            "go to the previous page",
-            "previous page",
-            "previous"
-        ]
-    })
+    new Intent(Schema.PreviousPageIntent, [
+        "go back",
+        "go back a page",
+        "go to the previous page",
+        "previous page",
+        "previous"
+    ])
 
-    app.intent(Schema.NextPageIntent, {
-        utterances: [
-            "go forwards",
-            "go forwards a page",
-            "go to the next page",
-            "next page",
-            "next",
-            "forwards"
-        ]
-    })
+    new Intent(Schema.NextPageIntent, [
+        "go forwards",
+        "go forwards a page",
+        "go to the next page",
+        "next page",
+        "next",
+        "forwards"
+    ])
+
+    new Intent(Schema.RESET, [
+        "Reset database"
+    ])
+
+    new Intent(Schema.SKIPTUTORIAL, [
+        "Skip tutorial"
+    ])
 
     //TODO: should be more genreal than list bookmarks
     let bookmarkNames = ["save", "bookmark", "keep"]
-    app.intent(Schema.BookmarkEventIntent, {
-        utterances: [
+    new Intent(Schema.BookmarkEventIntent, [
             "this event",
             "this for later",
             "this",
             "event",
             "for later"
         ].flatMap(utterance => bookmarkNames.map(prefix => prefix + " " + utterance))
-        .concat(bookmarkNames)
-    })
+            .concat(bookmarkNames)
+    )
 
     let bookmarksListName = ["bookmarks", "bookmarked events", "saved events"]
-    app.intent(Schema.ListBookmarksIntent, {
-        utterances: [
+    new Intent(Schema.ListBookmarksIntent, [
             "what are my",
             "show me my",
             "list my",
             "display my"
         ].flatMap(utterance => bookmarksListName.map(suffix => utterance + " " + suffix))
-        .concat(bookmarksListName)
-    })
-
-    app.intent(Schema.RESET, {
-        utterances: [
-            "Reset database"
-        ]
-    })
+            .concat(bookmarksListName)
+    )
 
     function makeDetailIntent(intent: string, ...nouns: string[]){
-        app.intent(intent, {
-            utterances: nouns.map(noun => `{what is the|tell me the|read out the|} ${noun}`)
-        })
+        new Intent(intent, nouns.map(noun => `{what is the|tell me the|read out the|} ${noun}`))
     }
 
     makeDetailIntent(Schema.DetailIntents.Phone, "phone", "number", "phone number", "telephone", "telephone number", "contact")
     makeDetailIntent(Schema.DetailIntents.Description, "description", "long description", "all the description", "full description")
 
-    app.intent(Schema.SelectIntent, {
-        slots: { [Schema.NumberSlot]: "AMAZON.NUMBER" },
-        utterances: [
+    new Intent(Schema.SelectIntent, [
             "{Tell me|Describe|Explain}{| about| more about}{| eventChoice} {-|Number}",
             "{eventChoice} {-|Number}",
             "{-|Number}"
-        ]
-    })
-
-    //remove edge whitespace (doesn't work on template syntax. TODO: work on template syntax underneath), replace multi space with single space
-    for(let intent in app.intents){
-        app.intents[intent].utterances = app.intents[intent].utterances
-            .map(utterance => utterance.replace(/\s{2,}/, " ").trim())
-    }
+        ],
+        [numberSlot]
+    )
 
     //generate location custom slot
     let locations = await getLocations(3)
@@ -251,15 +269,12 @@ async function saveData(name: string, saveObj: any) {
     console.log(`${locations.filter(loc => loc.count_current_events !== 0).length} happenin' locations`)
 
     //TODO: customSlots
-    app.customSlots[locationTypeName] = locations.map(node => {return{id:node.url_slug, value:node.name}})
+    new CustomSlot(locationSlot, locations.map(node => new SlotValue(node.url_slug, node.name)))
     
     await saveData("location-names", locations.map(node => node.name))
 
     //generate venue custom slot
     let venues: VenueNode[] = []
-    // let topLocations = (await getLocations(2)).filter(loc => loc.count_current_events != 0)
-    // console.log(topLocations.length + " locations being used to find venues")
-
     
     let regions = (await eventFindaRequest<LocationNode>('locations', {
         fields: "location:(id,name,summary,url_slug,count_current_events,children)",
@@ -283,19 +298,17 @@ async function saveData(name: string, saveObj: any) {
 
     console.log(`\n${venues.length} total venues found`)
 
-    app.customSlot(venueTypeName, venues.map(node => {
-        return {
-            id: node.url_slug,
-            value: node.name,
-            synonyms: permutations(node.name)
-        } as CustomSlot
-    }))
+    new CustomSlot(venueSlot, venues.map(node => new SlotValue(
+        node.url_slug,
+        node.name,
+        permutations(node.name)
+    )))
     
     // await saveData("venue-names", venues.map(node => node.name))
 
     let rootCat = await getCategoryTree()
 
-    let categorySlots: CustomSlot[] = []
+    let categorySlotValues: SlotValue[] = []
 
     //expands multiple words out of comma, ampersand separation
     let catNameToSynonyms = (name: string) => name.split(", ").flatMap(val => val.split(" & "))
@@ -316,29 +329,39 @@ async function saveData(name: string, saveObj: any) {
             mainCatTitle = "art and exhibitions"
         }
 
-        categorySlots.push({
-            id: mainCat.id.toString(),
-            value: mainCatTitle,
-            synonyms: mainCatSynonyms
-        })
-
-        categorySlots.push(...mainCat.children!.children.map(subCat => {
-            let subCatSynonyms = catNameToSynonyms(subCat.name)
-            return {
-                id: subCat.id.toString(),
-                value: prettyJoin(subCatSynonyms, "and"),
-
-                //append main category name (jazz category has jazz music as a synonym)
-                synonyms: subCatSynonyms.flatMap(
-                    synonym => mainCatSynonyms.map(mainCatSynonym => synonym + " " + mainCatSynonym))
-            }
-        }))
+        categorySlotValues.push(new SlotValue(
+                mainCat.id.toString(),
+                mainCatTitle,
+                mainCatSynonyms
+            ),
+            ...mainCat.children!.children.map(subCat => {
+                let subCatSynonyms = catNameToSynonyms(subCat.name)
+                return new SlotValue(
+                    subCat.id.toString(),
+                    prettyJoin(subCatSynonyms, "and"),
+    
+                    //append main category name (jazz category has jazz music as a synonym)
+                    subCatSynonyms.flatMap(
+                        synonym => mainCatSynonyms.map(mainCatSynonym => synonym + " " + mainCatSynonym))
+                )
+            })
+        )
     })
 
-    console.log(categorySlots.length + " categories found")
-    app.customSlot(categoryTypeName, categorySlots)
+    console.log(categorySlotValues.length + " categories found")
+    new CustomSlot(categorySlot, categorySlotValues)
 
-    await saveData("category-names", categorySlots.map(slot => {return {title: slot.value, id: slot.id}}))
+    await saveData("category-names", categorySlotValues.map(slot => {return {title: slot.name.value, id: slot.id}}))
 
-    await promisify(writeFile)(join("models", "en-AU.json"), app.schemas.askcli())
+    await promisify(writeFile)(join("models", "en-AU.json"), JSON.stringify({
+        interactionModel: {
+            languageModel: {
+                intents: Intent.all,
+                types: CustomSlot.all,
+                invocationName: invocationName
+            }
+        }
+    }, null, 2))
+
+    console.log("done")
 })()

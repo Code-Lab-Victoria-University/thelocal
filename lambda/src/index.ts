@@ -54,7 +54,7 @@ exports.handler = skillBuilder
 
     .addRequestHandlers(
         //always allow reset
-        new EasyIntentHandler(Schema.RESET, async (wrap, input) => {
+        new EasyIntentHandler(Schema.RESET, input => {
             input.persistent = {}
             return "Successful reset"
         }),
@@ -62,6 +62,11 @@ exports.handler = skillBuilder
         //TODO: use EXIT if blind foundation lets you EXIT to exit the skill as well
 
         //tutorial always at start (overrides launch request)
+        new EasyIntentHandler(Schema.SKIPTUTORIAL, input => {
+            input.persistent.finishedTutorial = true;
+            return "Tutorial skipped"
+        }),
+
         new TutorialHandler(),
 
         new LaunchRequestHandler(),

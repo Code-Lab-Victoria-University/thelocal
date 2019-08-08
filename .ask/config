@@ -6,7 +6,7 @@
       "merge": {},
       "resources": {
         "manifest": {
-          "eTag": "ddf8de0c5095174b0c241f31160350c7"
+          "eTag": "f5d474c9fe8ac40592a30baecc00514d"
         },
         "lambda": [
           {
@@ -18,13 +18,13 @@
             "codeUri": "lambda",
             "functionName": "ask-custom-thelocal-default",
             "handler": "dist/index.handler",
-            "revisionId": "4a49aa7b-ee76-49c2-841d-948deab174f0",
+            "revisionId": "cd741eff-74fa-4e45-a749-9baf881fcd84",
             "runtime": "nodejs8.10"
           }
         ],
         "interactionModel": {
           "en-AU": {
-            "eTag": "d41daa28f11a55fdf598c4506b09f3d3"
+            "eTag": "ccc7adc29f84e6cebf20ddbb56e9ea67"
           }
         }
       }

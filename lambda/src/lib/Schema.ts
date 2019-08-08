@@ -35,6 +35,7 @@ export class Schema {
 
     static readonly SelectIntent = "SelectIntent"
     static readonly RESET = "RESET"
+    static readonly SKIPTUTORIAL = "SKIPTUTORIAL"
     
     static readonly NumberSlot = "Number"
 

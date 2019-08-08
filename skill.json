@@ -3,21 +3,44 @@
     "publishingInformation": {
       "locales": {
         "en-AU": {
-          "summary": "Sample Short Description",
+          "summary": "Find local events in New Zealand",
           "examplePhrases": [
-            "Alexa open hello world",
-            "hello",
-            "help"
+            "Alexa start the local",
+            "What's on in Auckland this friday?",
+            "Find me jazz events in Wellington next week"
           ],
           "name": "thelocal",
-          "description": "Sample Full Description"
+          "description": "Finds you local New Zealand events using eventfinda. \nUnderstands dates, event categories, dates, times, venues and NZ cities",
+          "keywords": ["event", "eventfinda", "nz", "nz events", "new zealand", "new zealand events", "blind", "blind foundation"]
+        },
+        "en-US": {
+          "summary": "Find local events in New Zealand",
+          "examplePhrases": [
+            "Alexa start the local",
+            "What's on in Auckland this friday?",
+            "Find me jazz events in Wellington next week"
+          ],
+          "name": "thelocal",
+          "description": "Finds you local New Zealand events using eventfinda. \nUnderstands dates, event categories, dates, times, venues and NZ cities",
+          "keywords": ["event", "eventfinda", "nz", "nz events", "new zealand", "new zealand events", "blind", "blind foundation"]
         }
       },
-      "isAvailableWorldwide": true,
-      "testingInstructions": "Sample Testing Instructions.",
-      "category": "KNOWLEDGE_AND_TRIVIA",
-      "distributionCountries": []
+      "testingInstructions": "'Reset database' and 'Skip tutorial' are available as utterances for testing",
+      "category": "EVENT_FINDERS",
+      "isAvailableWorldwide": false,
+      "distributionCountries": [
+        "NZ"
+      ]
     },
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "usesPersonalInfo": false,
+      "isChildDirected": false,
+      "isExportCompliant": true,
+      "containsAds": false,
+      "locales": {}
+    },
+    "permissions": [],
     "apis": {
       "custom": {
         "endpoint": {
