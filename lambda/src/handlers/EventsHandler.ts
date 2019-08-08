@@ -133,9 +133,9 @@ export class EventsHandler extends AutoNavigationHandler {
                 } else if(events.list.length == 1) {
                     speech.pauseByStrength("strong")
                     EventSelectHandler.getEventDetails(events.list[0], speech)
-                } else if(input.session.eventRequestPage === 0) {
+                } else {
                     //recommend filters
-                    if((items*3 < events.count)){
+                    if(items*3 < events.list.length && input.session.eventRequestPage === 0){
                         //get list of categories (either root list or)
                         let catChildren = await getCategoryChildren(categoryId)
 
