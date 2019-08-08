@@ -23,7 +23,7 @@ const sameElseDate: moment.CalendarSpecVal = function(this: Moment, now) {
         return text;
     }
     
-    if(Math.abs(monthDiff) <= 1 || Math.abs(yearDiff) <= 1){
+    if(Math.abs(monthDiff) <= 1){
         let text = "[the] Mo [of] "
 
         if(monthDiff === 1)
@@ -37,14 +37,15 @@ const sameElseDate: moment.CalendarSpecVal = function(this: Moment, now) {
     }
 
     //not near month, near year though.
-    if(yearDiff == 1 || yearDiff == -1){
+    if(Math.abs(yearDiff) <= 1){
         let text = "MMMM [the] Mo "
 
         if(yearDiff == -1)
             text += "[last year]"
         else if(yearDiff == 1){
             text += "[next year]"
-        }
+        } else
+            text += "YYYY"
 
         return text;
     }

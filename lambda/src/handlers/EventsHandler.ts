@@ -135,7 +135,7 @@ export class EventsHandler extends AutoNavigationHandler {
                     EventSelectHandler.getEventDetails(events.list[0], speech)
                 } else {
                     //recommend filters
-                    if(items*3 < events.list.length && input.session.eventRequestPage === 0){
+                    if(items*3 < events.count && input.session.eventRequestPage === 0){
                         //get list of categories (either root list or)
                         let catChildren = await getCategoryChildren(categoryId)
 
