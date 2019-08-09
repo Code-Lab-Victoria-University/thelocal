@@ -1,56 +1,55 @@
-import moment, { Moment } from 'moment-timezone'
+import moment, { Moment, unitOfTime } from 'moment-timezone'
+
+export function alignedDiff(to: Moment, format: unitOfTime.Base){
+    return to.clone().startOf(format) .diff(moment().startOf(format), format)
+}
 
 const sameElseDate: moment.CalendarSpecVal = function(this: Moment, now) {
 
-    const weekDiff = this.clone().startOf('isoWeek').diff(moment().startOf('isoWeek'), 'weeks')
-    const monthDiff = this.clone().startOf('month').diff(moment().startOf('month'), 'months')
-    const yearDiff = this.clone().startOf('year').diff(moment().startOf('year'), 'years')
+    const dayDiff = alignedDiff(this, "day")
+    const monthDiff = alignedDiff(this, 'months')
+    const yearDiff = alignedDiff(this, 'years')
     
-    console.log(`DIFFS: ${weekDiff} ${monthDiff} ${yearDiff}`)
+    // console.log(`DIFFS: ${dayDi,ff}, ${this.format(" DD/MM")}`)
 
-    if(Math.abs(weekDiff) <= 1){
+    if(-7 < dayDiff && dayDiff < 14){
         let text = ""
 
-        if(weekDiff === 1)
-            text = "[next]"
-        else if(weekDiff === 0)
-            text = "[this]"
-        else if(weekDiff === -1)
-            text = "[last]"
+        if(6 < dayDiff)
+            text = "[next] "
+        else if(dayDiff < 0)
+            text = "[last] "
         
-        text += " dddd"
+        text += "dddd"
 
         return text;
     }
     
     if(Math.abs(monthDiff) <= 1){
-        let text = "[the] Mo [of] "
+        let text = "dddd [the] Do"
 
         if(monthDiff === 1)
-            text += "[next month]"
-        else if(monthDiff === 0)
-            text += "[this month]"
+            text += " [of next month]"
         else if(monthDiff === -1)
-            text += "[last month]"
+            text += " [of last month]"
         
         return text;
     }
 
     //not near month, near year though.
     if(Math.abs(yearDiff) <= 1){
-        let text = "MMMM [the] Mo "
+        let text = "[the] Do [of] MMMM"
 
         if(yearDiff == -1)
-            text += "[last year]"
+            text += " [last year]"
         else if(yearDiff == 1){
-            text += "[next year]"
-        } else
-            text += "YYYY"
+            text += " [next year]"
+        }
 
         return text;
     }
     
-    return 'LL'
+    return 'Do of MMMM YYYY'
 }
 
 export const dateOnlyFormat: moment.CalendarSpec =  {
@@ -64,11 +63,11 @@ export const dateOnlyFormat: moment.CalendarSpec =  {
 
 export const dateTimeFormat: moment.CalendarSpec = {
     lastDay : '[yesterday at] LT',
-    sameDay : '[today at] LT',
+    sameDay : '[at] LT',
     nextDay : '[tomorrow at] LT',
-    lastWeek : '[last] dddd [at] LT',
+    lastWeek : 'dddd [at] LT',
     nextWeek : 'dddd [at] LT',
-    sameElse : (now) => sameElseDate(now) + 'LT'
+    sameElse : (now) => sameElseDate(now) + ' [at] LT'
 }
 
 moment.updateLocale('en', {

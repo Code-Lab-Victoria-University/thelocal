@@ -3,7 +3,7 @@ import { DateRange } from "../lib/DateRange";
 import InputWrap, { CustomSlot } from "../lib/InputWrap";
 import { CategoryInfo, EventRequest, EventRequestOrder, getCategoryChildren, getEvents, maxParallelRequests } from '../lib/request';
 import { Schema } from '../lib/Schema';
-import { DateTime } from "../lib/SpokenDateTime";
+import { SpokenDateTime } from "../lib/SpokenDateTime";
 import { getCategoryName, prettyJoin } from "../lib/Util";
 import { EventSelectHandler } from "./EventSelectHandler";
 import { AutoNavigationHandler } from "./NavigationHandler";
@@ -82,7 +82,7 @@ export class EventsHandler extends AutoNavigationHandler {
                 let dateSlot = input.slots[Schema.DateSlot]
                 let timeSlot = input.slots[Schema.TimeSlot]
 
-                let date = new DateTime(dateSlot && dateSlot.value, timeSlot && timeSlot.value)
+                let date = new SpokenDateTime(dateSlot && dateSlot.value, timeSlot && timeSlot.value)
 
                 let category = input.slots[Schema.CategorySlot]
                 let categoryId = category && category.resId ? Number.parseInt(category.resId) : undefined

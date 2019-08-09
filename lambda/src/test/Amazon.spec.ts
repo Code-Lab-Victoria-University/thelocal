@@ -1,8 +1,9 @@
 import assert from 'assert';
 import 'mocha';
 import AmazonSpeech from 'ssml-builder/amazon_speech';
-import { DateTime } from "../lib/SpokenDateTime";
+import { SpokenDateTime } from "../lib/SpokenDateTime";
 import { padN } from '../lib/Util';
+import { alignedDiff } from '../lib/MomentUtil';
 
 
 let now = new Date()
@@ -18,6 +19,10 @@ yesterday.setDate(now.getDate()-1)
 
 function toAZNStr(date: Date): string{
     return `${date.getFullYear()}-${padN(date.getMonth()+1, 2)}-${padN(date.getDate(), 2)}`
+}
+
+function speakWrap(text: string){
+    return`<speak>${text}</speak>`
 }
 
 let testPairs = [
@@ -36,22 +41,38 @@ describe("DatePrint", () => {
         let dateStr = testPair[0]
         let expected = testPair[1]
 
-        let dateObj = new DateTime(dateStr)
+        let dateObj = new SpokenDateTime(dateStr)
         let ssml = dateObj.toSpeech().ssml()
 
-        let expectedSsml = `<speak>${expected}</speak>`
-
-        it(`${dateStr} should become ${expected}`, () => {
-            assert.equal(ssml, expectedSsml, JSON.stringify(dateObj))
+        it(`${dateStr} => ${expected}`, () => {
+            assert.equal(ssml, speakWrap(expected), JSON.stringify(dateObj))
         })
     }
 })
 
-describe("DateTime", () => {
-    let dateObj = new DateTime(toAZNStr(tomorrow), "NI")
+describe("Times", () => {
+    // let times = [new SpokenDateTime(toAZNStr(tomorrow), "NI"),
+    //     new SpokenDateTime(toAZNStr(today), "NI")]
+    let time = 'NI'
 
-    it(`should be tomorrow night`, () => {
-        assert.equal(dateObj.toSpeech().ssml(), "<speak>tomorrow night</speak>")
+    testPairs.forEach(testPair => {
+        let dateStr = testPair[0]
+        let date = new SpokenDateTime(dateStr, time)
+        let dayDiff = alignedDiff(date.start(), "day")
+        dateStr += " " + time
+
+        let expected = testPair[1]
+
+        if(date.isDay){
+            if(dayDiff == 0)
+                expected = "tonight"
+            else
+                expected += " at night"
+        }
+
+        it(`${dateStr} => ${expected}`, () => {
+            assert.strictEqual(date.toSpeech().ssml(), speakWrap(expected))
+        })
     })
 })
 

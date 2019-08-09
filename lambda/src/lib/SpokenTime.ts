@@ -31,25 +31,28 @@ export default class SpokenTime {
         }
     }
 
-    toSpeech(speech?: AmazonSpeech): AmazonSpeech {
+    toSpeech(speech?: AmazonSpeech, isToday?: boolean): AmazonSpeech {
         speech = speech || new AmazonSpeech()
-        const noPrefix = false;
+
+        const prefixStr =isToday ? "this " : "in the "
+
+        const nightPrefix = isToday ? "to": "at "
 
         switch(this.timeStr){
             case TimePeriod.MORNING:
-                speech.say((noPrefix ? "" : "This ") + "morning")
+                speech.say(prefixStr + "morning")
                 break;
             case TimePeriod.AFTERNOON:
-                speech.say((noPrefix ? "" : "This ") + "afternoon")
+                speech.say(prefixStr + "afternoon")
                 break;
             case TimePeriod.EVENING:
-                speech.say((noPrefix ? "" : "This ") + "evening")
+                speech.say(prefixStr + "evening")
                 break;
             case TimePeriod.NIGHT:
-                speech.say((noPrefix ? "" : "To") + "night")
+                speech.say(nightPrefix + "night")
                 break;
             default:
-                speech.sayAs({
+                speech.say("at").sayAs({
                     interpret: "time",
                     word: this.timeStr
                 })

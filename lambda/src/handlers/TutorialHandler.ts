@@ -3,7 +3,7 @@ import AmazonSpeech from 'ssml-builder/amazon_speech';
 import InputWrap from "../lib/InputWrap";
 import { getCategoryChildren } from "../lib/request";
 import { Schema } from '../lib/Schema';
-import { DateTime } from "../lib/SpokenDateTime";
+import { SpokenDateTime } from "../lib/SpokenDateTime";
 import { getCategoryName, prettyJoin } from "../lib/Util";
 import * as EventsHandler from './EventsHandler';
 
@@ -132,7 +132,7 @@ export class TutorialHandler implements RequestHandler {
 
             //heard a location and date correctly
             if(locSlot && locSlot.resValue && dateSlot){
-                let date = new DateTime(dateSlot.value)
+                let date = new SpokenDateTime(dateSlot.value)
                 speech.say(`I heard a location of ${locSlot.resValue} and a date of`)
                 date.toSpeech(speech)
                 speech.pauseByStrength("strong")

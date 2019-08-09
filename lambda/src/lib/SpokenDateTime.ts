@@ -1,6 +1,6 @@
 import AmazonSpeech from 'ssml-builder/amazon_speech'
 import SpokenTime from "./SpokenTime";
-import moment, {Moment} from './MomentUtil'
+import moment, {Moment, alignedDiff} from './MomentUtil'
 
 //TODO: test on device
 
@@ -12,7 +12,7 @@ export enum Season {
 }
 
 //date and time are separate slots
-export class DateTime {
+export class SpokenDateTime {
     readonly date: Moment;
 
     readonly isYear: boolean = false;
@@ -24,6 +24,7 @@ export class DateTime {
     readonly time?: SpokenTime;
 
     constructor(spokenDate: string|undefined, spokenTime?: string|undefined){
+
         if(spokenDate !== undefined){
             let elements = spokenDate.split(" ")[0].split("-").filter(el => el != "XX")
             
@@ -48,20 +49,23 @@ export class DateTime {
     
             //has month/date
             } else if(elements[1].match(/^\d+$/)) {
-                //zero indexed
-                if(elements[2] && elements[2].match(/^\d+$/))
+                if(elements[2] && elements[2].match(/^\d+$/)){
                     this.isDay = true
-                else{
+                } else{
                     this.isMonth = true;
                     elements[2] = "01"
                 }
             }
     
             this.date = moment(elements.join('-')).startOf("day")
-        } else
-            this.date = moment().startOf("day")
 
-        if(spokenTime)
+        } else{
+            this.isDay = true
+            this.date = moment().startOf("day")
+        }
+
+        //only use if specific day
+        if(this.isDay && spokenTime)
             this.time = new SpokenTime(spokenTime)
     }
 
@@ -90,9 +94,14 @@ export class DateTime {
         const thisYear = this.date.isSame(moment(), 'year')
         //relative to current year or absolute
         const yearStr = thisYear ? "????" : this.date.year().toString()
-        const weekDiff = this.date.clone().startOf('isoWeek').diff(moment().startOf('isoWeek'), 'weeks')
-        const monthDiff = this.date.clone().startOf('month').diff(moment().startOf('month'), 'months')
-        const yearDiff = this.date.clone().startOf('year').diff(moment().startOf('year'), 'years')
+        const weekDiff = alignedDiff(this.date, 'weeks')
+        const monthDiff = alignedDiff(this.date, 'months')
+        const yearDiff = alignedDiff(this.date, 'years')
+        const dayDiff = alignedDiff(this.date, "day");
+
+        if(dayDiff == 0 && this.time){
+            return this.time.toSpeech(speech, true)
+        }
  
         //this value is undefined if the week isn't close enough to be one of the three
         let adjacentWeekText = undefined as string|undefined
@@ -150,7 +159,7 @@ export class DateTime {
 
         //specific date
         } else {
-            speech.say(this.date.calendar())
+            speech.say(this.date.calendar().toLowerCase())
         }
 
         if(this.time)
