@@ -2,15 +2,24 @@ import 'mocha';
 import moment, { alignedDiff } from '../lib/MomentUtil'
 import assert from 'assert'
 
+console.log(moment().startOf('week').format('ddd'))
+
 describe("Days", () => {
-    let day = moment().subtract(10, "days").startOf("day")
-    while(day.isBefore(moment().add(8, "days"))){
+    let dayDiffs = [-15, -10, -5, -3, -2, -1]
+    dayDiffs = [
+        ...dayDiffs,
+        0,
+        ...dayDiffs.reverse().map(diff => -diff)
+    ]
+
+    dayDiffs.forEach(diff => {
+        let day = moment().add(diff, "days")
+
         const dayText = day.calendar().toLowerCase()
         const dayDiff = alignedDiff(day, "days")
+        const weekDiff = alignedDiff(day, "weeks")
 
-        console.log(dayText)
-
-        it(dayText + day.format(" | L | ") + dayDiff, () => {
+        it(dayText + day.format(" | L"), () => {
             assert.notStrictEqual(day, null)
 
             if(dayDiff == 0)
@@ -19,23 +28,32 @@ describe("Days", () => {
                 assert.strictEqual(dayText, "tomorrow")
             else if(dayDiff == -1)
                 assert.strictEqual(dayText, "yesterday")
-            else if(-7 < dayDiff && dayDiff < 0)
-                assert(dayText.startsWith("last"))
-        })
 
-        day.add(1, "day")
-    }
+            else if(weekDiff == -1)
+                assert(dayText.startsWith("last"))
+            else if(weekDiff == 0)
+                assert(dayText.startsWith("this"))
+            else if(weekDiff == 1)
+                assert(dayText.startsWith("next"))
+        })
+    })
 })
 
 describe("Months", () => {
-    let month = moment().subtract(20, "months").add(10, "days")
+    let monthDiffs = [-50, -12, -3, -1]
+    monthDiffs = [
+        ...monthDiffs,
+        0,
+        ...monthDiffs.reverse().map(diff => -diff)
+    ]
 
-    while(month.isBefore(moment().add(20, "months"))){
+    monthDiffs.forEach(diff => {
+        let month = moment().add(diff, "months")
+
         var monthText = month.calendar().toLowerCase()
         var yearDiff = alignedDiff(month, "years")
-        console.log(monthText)
 
-        it(monthText + month.format(" | L | ") + yearDiff, () => {
+        it(monthText + month.format(" | L"), () => {
             assert.notStrictEqual(month, null)
 
             if(yearDiff == -1)
@@ -46,7 +64,5 @@ describe("Months", () => {
                 assert(monthText.endsWith(month.format('YYYY')))
             }
         })
-
-        month.add(3, "months")
-    }
+    })
 })

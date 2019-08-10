@@ -4,21 +4,24 @@ export function alignedDiff(to: Moment, format: unitOfTime.Base){
     return to.clone().startOf(format) .diff(moment().startOf(format), format)
 }
 
-const sameElseDate: moment.CalendarSpecVal = function(this: Moment, now) {
+const sameElseDate: moment.CalendarSpecVal = function(this: Moment) {
 
-    const dayDiff = alignedDiff(this, "day")
+    // const dayDiff = alignedDiff(this, "day")
+    const weekDiff = alignedDiff(this, "weeks")
     const monthDiff = alignedDiff(this, 'months')
     const yearDiff = alignedDiff(this, 'years')
     
     // console.log(`DIFFS: ${dayDi,ff}, ${this.format(" DD/MM")}`)
 
-    if(-7 < dayDiff && dayDiff < 14){
+    if(Math.abs(weekDiff) <= 1){
         let text = ""
 
-        if(6 < dayDiff)
+        if(weekDiff == 1)
             text = "[next] "
-        else if(dayDiff < 0)
+        else if(weekDiff == -1)
             text = "[last] "
+        else if(weekDiff == 0)
+            text = "[this] "
         
         text += "dddd"
 
@@ -56,25 +59,33 @@ export const dateOnlyFormat: moment.CalendarSpec =  {
     lastDay : '[yesterday]',
     sameDay : '[today]',
     nextDay : '[tomorrow]',
-    lastWeek : '[last] dddd',
-    nextWeek : 'dddd',
+    lastWeek : sameElseDate,
+    nextWeek : sameElseDate,
     sameElse : sameElseDate
+}
+
+let sameElseTime: moment.CalendarSpecVal = function (this: Moment) {
+    return sameElseDate(this) + ' [at] LT'
 }
 
 export const dateTimeFormat: moment.CalendarSpec = {
     lastDay : '[yesterday at] LT',
     sameDay : '[at] LT',
     nextDay : '[tomorrow at] LT',
-    lastWeek : 'dddd [at] LT',
-    nextWeek : 'dddd [at] LT',
-    sameElse : (now) => sameElseDate(now) + ' [at] LT'
+    lastWeek : sameElseTime,
+    nextWeek : sameElseTime,
+    sameElse : sameElseTime
 }
 
 moment.updateLocale('en', {
-    calendar : dateOnlyFormat
+    calendar : dateOnlyFormat,
+    week: {
+        dow: 1,
+    }
 });
 
 moment.tz.setDefault("Pacific/Auckland")
+
 
 export default moment;
 

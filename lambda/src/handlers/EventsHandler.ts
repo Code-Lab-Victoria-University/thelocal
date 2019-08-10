@@ -94,6 +94,7 @@ export class EventsHandler extends AutoNavigationHandler {
                     start_date: date && date.start().toISOString(true),
                     end_date: date && date.end().toISOString(true),
                     //sort by date if venue or any more specific info was given
+                    //TODO: make it display days running for short time first
                     order: (isVenue || date || category) ? EventRequestOrder.date : EventRequestOrder.popularity,
                     category: categoryId,
                     offset: input.session.eventRequestPage*items
@@ -211,12 +212,12 @@ export class EventsHandler extends AutoNavigationHandler {
                     speech.pause('0.8s')
                 
                     events.list.forEach((event, i) => {
-                        let range = new DateRange(event.datetime_start, event.datetime_end)
+                        let eventRange = new DateRange(event, date.start(), date.end())
                         if(!isVenue)
                             speech.say('At').say(event.location.name)
                             
                         speech.say("I have").say(event.name).say("on")
-                        range.toSpeech(speech)
+                        eventRange.toSpeech(speech)
 
                         speech.pauseByStrength("medium").say("for details say number")
                         .say((i+1).toString()).pauseByStrength("x-strong")

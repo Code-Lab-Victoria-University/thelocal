@@ -146,6 +146,11 @@ export async function getVenues(url_slug?: string, pages?: number, order?: strin
     return venues.list
 }
 
+export interface Times {
+    datetime_start: string,
+    datetime_end: string
+}
+
 export interface Event {
     location: VenueNode,
     id: number,
@@ -155,6 +160,7 @@ export interface Event {
     datetime_end: string,
     datetime_start: string,
     datetime_summary: string
+    sessions?: {sessions: Times[]}
     booking_phone?: string
 }
 
@@ -176,7 +182,7 @@ export interface EventRequest {
 export async function getEvents(req?: EventRequest) {
     return (await eventFindaRequest<Event>('events', Object.assign({
         order: EventRequestOrder.popularity,
-        fields: "event:(id,name,url_slug,description,datetime_end,datetime_start,datetime_summary,location,booking_phone),"+venueFields,
+        fields: "event:(id,name,url_slug,session,description,datetime_end,datetime_start,datetime_summary,location,booking_phone),session:(datetime_end,datetime_start)"+venueFields,
         rows: 10
     }, req)))!
 }
@@ -204,13 +210,3 @@ export async function getCategoryTree(){
         rows: 1
     }))!.list[0]
 }
-
-// export async function getEvent(req?: EventRequest): Promise<Response<Event>>{
-//     let events = await eventFindaRequest<Event>('events', Object.assign({
-//         order: EventRequestOrder.popularity,
-//         fields: "event:(id,name,url_slug,description,datetime_end,datetime_start,datetime_summary,location),"+venueFields,
-//         rows: 10
-//     }, req))
-    
-//     return events
-// }
