@@ -68,7 +68,7 @@ export default class InputWrap {
          */
         prevRequests?: string[]
 
-        prevTutorialStage?: TutorialStage
+        completedTutorialStage?: TutorialStage
     };
     
     persistent: PersistentAttrs = {}

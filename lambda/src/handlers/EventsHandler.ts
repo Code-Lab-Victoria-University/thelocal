@@ -39,6 +39,7 @@ export class EventsHandler extends AutoNavigationHandler {
             input.slots = Object.assign(input.session.lastEventsSlots, input.slots)
 
         input.session.lastEventsSlots = input.slots
+        input.session.selectedEvent = undefined;
 
         if(input.session.eventRequestPage === undefined || input.isIntent(Schema.EventsIntent))
             input.session.eventRequestPage = 0

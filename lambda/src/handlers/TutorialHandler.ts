@@ -37,13 +37,13 @@ export class TutorialHandler implements RequestHandler {
         let reqs = wrap.persistent.totRequests || 0
 
         //do tutorial if never finished or requested or currently in tutorial (was requested)
-        return !wrap.persistent.finishedTutorial || wrap.isIntent(Schema.TutorialIntent) || wrap.session.prevTutorialStage !== undefined
+        return !wrap.persistent.finishedTutorial || wrap.isIntent(Schema.TutorialIntent) || wrap.session.completedTutorialStage !== undefined
     }
     
     async handle(input: HandlerInput) {
         let wrap = await InputWrap.load(input)
 
-        let prevTutorialStage = wrap.session.prevTutorialStage
+        let prevTutorialStage = wrap.session.completedTutorialStage
         let curStage = prevTutorialStage !== undefined ? prevTutorialStage+1 : 0
         // wrap.sessionAttrs.prevTutorialState = prevTutorialStage !== undefined ? prevTutorialStage+1 : TutorialStage.Intro
 
@@ -51,7 +51,7 @@ export class TutorialHandler implements RequestHandler {
         let reprompt: string|undefined;
         let builder = input.responseBuilder
 
-        let nextStage = () => wrap.session.prevTutorialStage = curStage
+        let nextStage = () => wrap.session.completedTutorialStage = curStage
 
         if(curStage === TutorialStage.Intro){ //basic intro, get user to say start ${Schema.INVOCATION} (unverified)
             speech.say(
@@ -197,7 +197,7 @@ export class TutorialHandler implements RequestHandler {
                 reprompt = "You can exit or go ahead and start a new search"
     
                 wrap.persistent.finishedTutorial = true
-                wrap.session.prevTutorialStage = undefined
+                wrap.session.completedTutorialStage = undefined
             } else{
                 reprompt = wait5s("Say 'Alexa stop'")
                 speech.say(reprompt)
