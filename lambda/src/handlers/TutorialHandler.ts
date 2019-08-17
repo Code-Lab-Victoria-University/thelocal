@@ -53,18 +53,18 @@ export class TutorialHandler implements RequestHandler {
 
         let nextStage = () => wrap.session.prevTutorialStage = curStage
 
-        if(curStage === TutorialStage.Intro){ //basic intro, get user to say start the local (unverified)
+        if(curStage === TutorialStage.Intro){ //basic intro, get user to say start ${Schema.INVOCATION} (unverified)
             speech.say(
-                `Hi, I'm alexa. Welcome to the local.
+                `Hi, I'm alexa. Welcome to ${Schema.INVOCATION}.
                 In this 4 step tutorial I'm going to teach you how to find local events in New Zealand.`)
             .pause(newStepPause).say(
                 `Step 1. You can say 'Alexa' at any time to get my attention.
                 When speaking to me, make sure to speak slowly and clearly in a quiet environment.
                 Depending on my settings, I will make a tone or light up whenever I'm listening.
-                When I'm listening, you can say a command. Let's try the command to start the local.
-                Say 'Alexa', then say 'start the local'`
+                When I'm listening, you can say a command. Let's try the command to start ${Schema.INVOCATION}.
+                Say 'Alexa', then say 'start ${Schema.INVOCATION}'`
             ).pause("5s")
-            reprompt = wait5s("Say 'Alexa', wait for the tone, then say 'start the local")
+            reprompt = wait5s(`Say 'Alexa', wait for the tone, then say 'start ${Schema.INVOCATION}`)
             nextStage()
 
         } else if(curStage === TutorialStage.LocationReq) { //request a location
@@ -99,7 +99,7 @@ export class TutorialHandler implements RequestHandler {
 
                 speech.say(
                     `Awesome. 
-                    Whenever you have the local open, you can ask a question like that to hear a list of events.
+                    Whenever you have ${Schema.INVOCATION} open, you can ask a question like that to hear a list of events.
                     With your location, I would start responding to you by saying:`)
                 .sentence(`I found ${exampleLocEventsCount} events in ${lastLoc.resValue}, I'll read you the first ${EventsHandler.items}.`)
                 .pause(newStepPause)
@@ -190,8 +190,8 @@ export class TutorialHandler implements RequestHandler {
             }
         } else if(curStage === TutorialStage.Final){
             if(wrap.isIntent([Schema.AMAZON.StopIntent, Schema.AMAZON.CancelIntent])){
-                speech.say(`Congrats, you now have all the basics needed to use the local. 
-                    You can open up this tutorial at any time in the future by saying start the tutorial while the local is open.
+                speech.say(`Congrats, you now have all the basics needed to use ${Schema.INVOCATION}. 
+                    You can open up this tutorial at any time in the future by saying start the tutorial while ${Schema.INVOCATION} is open.
                     I'll stay open now. From here you can exit or go ahead and start a new search`)
                     
                 reprompt = "You can exit or go ahead and start a new search"

@@ -131,8 +131,6 @@ class Intent{
     const venueSlot = new Slot(Schema.VenueSlot, "VenueType")
     const numberSlot = new Slot(Schema.NumberSlot, "AMAZON.NUMBER")
 
-    const invocationName = "the local"
-
     let eventsUtterances = [] as string[]
 
     //explores all combinations of these in the different synatatic locations. Will add categories here later. This can probably be connected to the places list in some way for simplicity
@@ -358,7 +356,7 @@ class Intent{
             languageModel: {
                 intents: Intent.all,
                 types: CustomSlot.all,
-                invocationName: invocationName
+                invocationName: Schema.INVOCATION
             }
         }
     }, null, 2))

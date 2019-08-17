@@ -1,6 +1,8 @@
 
 
 export class Schema {
+    static readonly INVOCATION = "local events"
+
     static readonly EventsIntent = "EventsIntent"
 
     static readonly LocationSlot = "Location"

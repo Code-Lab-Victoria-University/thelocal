@@ -4,14 +4,15 @@ import AmazonSpeech from "ssml-builder/amazon_speech";
 import categories from "../data/category-names.json";
 import InputWrap from "../lib/InputWrap";
 import { prettyJoin, rand, randN } from "../lib/Util";
+import { Schema } from "../lib/Schema.js";
 
 const examples = [
     "Find me opera concerts in wellington next week",
     "What's on in Auckland tomorrow",
     "Search for alternative gigs tonight",
     "Tell me what's happening at city gallery next month",
-    "Ask the local is there anything on tomorrow",
-    "Tell the local to search for dj gigs tonight"
+    `Ask ${Schema.INVOCATION} is there anything on tomorrow`,
+    `Tell ${Schema.INVOCATION} to search for dj gigs tonight`
 ]
 
 let filterSuggestions = [
@@ -30,7 +31,7 @@ const orderedTutorials = [
     "I will answer your queries about events in New Zealand. Did you know you can interrupt me while I'm talking by saying Alexa",
     // () => `You can filter events based off your location in New Zealand, a specific venue, a category such as ${categoriesString(3)}, a date or time. For example, Tell me what's happening at city gallery next month`,
     // "You can change your location, venue, category, date or time filter at any time by interrupting. For example, Set the location to auckland",
-    // "You can skip this introduction by stating your request straight after saying 'alexa start the local' and I will go straight to the results. For example, Alexa ask the local what's on"
+    // "You can skip this introduction by stating your request straight after saying 'alexa start ${Schema.INVOCATION}' and I will go straight to the results. For example, Alexa ask ${Schema.INVOCATION} what's on"
 
 ]
 
@@ -71,7 +72,7 @@ export class LaunchRequestHandler implements RequestHandler {
         if(typeof tutorialAppend === "function")
             tutorialAppend = tutorialAppend()
 
-        let speech = new AmazonSpeech().say("Welcome to the local.")
+        let speech = new AmazonSpeech().say(`Welcome to ${Schema.INVOCATION}.`)
             .say(tutorialAppend)
 
         // this.getExample(speech)

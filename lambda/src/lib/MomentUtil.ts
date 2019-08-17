@@ -65,7 +65,7 @@ export const dateOnlyFormat: moment.CalendarSpec =  {
 }
 
 let sameElseTime: moment.CalendarSpecVal = function (this: Moment) {
-    return sameElseDate(this) + ' [at] LT'
+    return sameElseDate.call(this) + ' [at] LT'
 }
 
 export const dateTimeFormat: moment.CalendarSpec = {
