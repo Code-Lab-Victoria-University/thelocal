@@ -7,7 +7,7 @@
     "build-model": "rm -Rf dist && tsc && node dist/src/generateModel",
     "debug-model": "node --inspect-brk=9229 dist/src/generateModel",
 
-    "deploy-model": "cp -f models/en-AU.json models/en-US.json && ask deploy -t model",
+    "deploy-model": "cp -f models/en-AU.json models/en-US.json && ask deploy --force -t model",
     "deploy-skill": "ask deploy -t skill",
     
     "build-deploy-model": "npm run build-model && npm run deploy-model",
