@@ -87,7 +87,6 @@ export interface Node {
     id: number,
     name: string,
     url_slug: string
-    count_current_events: number,
 }
 
 function flattenNode(node: Node, list?: Node[]) {
@@ -121,11 +120,13 @@ export async function getLocations(levels: number) {
 
 
 export interface LocationNode extends Node{
-    summary: string
+    // summary: string,
+    count_current_events: number,
+    contacts?: {contacts: {name: string, value: string}[]}
 }
 
 export interface VenueNode extends LocationNode{
-    description: string,
+    // description: string,
     point: {
         lat: number,
         lng: number
@@ -133,13 +134,13 @@ export interface VenueNode extends LocationNode{
     booking_phone?: string
 }
 
-let venueFields = "location:(id,name,summary,url_slug,count_current_events,description,booking_phone)"
+const locationFields = "location:(id,name,summary,url_slug,count_current_events,booking_phone,amenities,contacts)"
 
 export async function getVenues(url_slug?: string, pages?: number, order?: string) {
     let venues = await eventFindaRequestMultiple<VenueNode>('locations', pages||2, {
         venue: true,
         order: order,
-        fields: venueFields,
+        fields: locationFields,
         location_slug: url_slug
     })
 
@@ -179,10 +180,13 @@ export interface EventRequest {
     category?: number,
 }
 
+const eventFields = "event:(id,name,url_slug,sessions,description,datetime_end,datetime_start,datetime_summary,location,booking_phone,is_cancelled)"
+const sessionFields = "session:(datetime_end,datetime_start)"
+
 export async function getEvents(req?: EventRequest) {
     return (await eventFindaRequest<Event>('events', Object.assign({
         order: EventRequestOrder.popularity,
-        fields: "event:(id,name,url_slug,session,description,datetime_end,datetime_start,datetime_summary,location,booking_phone),session:(datetime_end,datetime_start)"+venueFields,
+        fields: eventFields+','+sessionFields+','+locationFields,
         rows: 10
     }, req)))!
 }

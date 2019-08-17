@@ -18,6 +18,8 @@ export class DateRange {
 
     toSpeech(speech?: AmazonSpeech): AmazonSpeech{
         speech = speech || new AmazonSpeech()
+            
+        speech.say(this.start.isBefore() ? "from" : "on")
 
         //end is same day
         if(this.start.diff(this.end, "days") === 0){

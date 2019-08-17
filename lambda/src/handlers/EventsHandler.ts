@@ -216,7 +216,7 @@ export class EventsHandler extends AutoNavigationHandler {
                         if(!isVenue)
                             speech.say('At').say(event.location.name)
                             
-                        speech.say("I have").say(event.name).say("on")
+                        speech.say("I have").say(event.name)
                         eventRange.toSpeech(speech)
 
                         speech.pauseByStrength("medium").say("for details say number")

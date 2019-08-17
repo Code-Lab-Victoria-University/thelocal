@@ -28,13 +28,13 @@ const sameElseDate: moment.CalendarSpecVal = function(this: Moment) {
         return text;
     }
     
-    if(Math.abs(monthDiff) <= 1){
+    if(Math.abs(monthDiff) == 0){
         let text = "dddd [the] Do"
 
-        if(monthDiff === 1)
-            text += " [of next month]"
-        else if(monthDiff === -1)
-            text += " [of last month]"
+        // if(monthDiff === 1)
+        //     text += " [of next month]"
+        // else if(monthDiff === -1)
+        //     text += " [of last month]"
         
         return text;
     }

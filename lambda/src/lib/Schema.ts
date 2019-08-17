@@ -1,7 +1,7 @@
 
 
 export class Schema {
-    static readonly INVOCATION = "local events"
+    static readonly INVOCATION = "kiwi events"
 
     static readonly EventsIntent = "EventsIntent"
 

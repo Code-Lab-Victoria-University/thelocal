@@ -25,7 +25,7 @@ export class EventSelectHandler extends AutoNavigationHandler {
         speech = speech || new AmazonSpeech()
     
         speech.say(event.name)
-            .say("is at").say(event.location.name).say('from')
+            .say("is at").say(event.location.name)
             // .say("on").say(event.datetime_summary.replace("-", "to"))
         new DateRange(event).toSpeech(speech)
     

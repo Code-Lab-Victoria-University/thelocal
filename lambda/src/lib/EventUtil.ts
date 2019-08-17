@@ -39,5 +39,17 @@ export function getEvent(eventsOrResponse?: Event[]|Response<Event>, slots?: Slo
 }
 
 export function getPhone(event: Event): string|undefined{
-    return event.booking_phone || event.location && event.location.booking_phone
+    if(event.booking_phone)
+        return event.booking_phone
+    else if(event.location){
+        if(event.location.booking_phone)
+            return event.location.booking_phone
+        else if(event.location.contacts) {
+            let phoneContact = event.location.contacts.contacts.find(x => x.name.toLowerCase() == "phone")
+            if(phoneContact)
+                return phoneContact.value
+        }
+    }
+
+    return undefined;
 }
