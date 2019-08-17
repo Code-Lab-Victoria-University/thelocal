@@ -7,13 +7,13 @@ import { AutoNavigationHandler } from "./NavigationHandler";
 export class ListBookmarksHandler extends AutoNavigationHandler {
     intent = Schema.ListBookmarksIntent
     
-    async handleWrap(input: InputWrap) {
+    handleWrap(input: InputWrap) {
         let bookmarks = input.persistent.bookmarks
 
         //TODO: read it out if just one
         if(bookmarks && 0 < bookmarks.length){
             if(bookmarks.length === 1)  {
-                return EventSelectHandler.getInteractiveResponse(bookmarks[0], input)
+                return EventSelectHandler.getInteractiveResponse(bookmarks[0])
             } else {
                 let bookmarksText = prettyJoin(bookmarks.map((event, i) => `for ${event.name} say option ${i+1}`), "and")
     

@@ -11,7 +11,7 @@ export class DetailHandler extends AutoNavigationHandler {
         return input.session.selectedEvent !== undefined
     }
     
-    async handleWrap(wrap: InputWrap) {
+    handleWrap(wrap: InputWrap) {
         //can assume true due to handler
         let event = wrap.session.selectedEvent!
         let reprompt = "You can go back to the event info or make a new search"

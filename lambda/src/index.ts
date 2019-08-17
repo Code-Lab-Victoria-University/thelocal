@@ -34,7 +34,8 @@ function speechString(speech: ui.OutputSpeech) {
 
 exports.handler = skillBuilder
     .addRequestInterceptors(async input => {
-        let wrap = await InputWrap.load(input)
+        await InputWrap.load(input)
+        let wrap = InputWrap.get()
         let output = ""
         if(wrap.intent){
             output += `INTENT: ${wrap.intent.name}\n`
@@ -109,7 +110,7 @@ exports.handler = skillBuilder
 
     .addResponseInterceptors(async (input, response) => {
         //save metadata for consequtive requests
-        (await InputWrap.load(input)).endRequest()
+        await InputWrap.get().endRequest()
             
         if(response && response.outputSpeech){
             console.log("OUTPUT: " + speechString(response.outputSpeech))

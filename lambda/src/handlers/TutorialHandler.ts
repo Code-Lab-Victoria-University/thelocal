@@ -32,16 +32,16 @@ function wait5s(text: string): string{
 }
 
 export class TutorialHandler implements RequestHandler {
-    async canHandle(input: HandlerInput) {
-        let wrap = await InputWrap.load(input)
+    canHandle(input: HandlerInput) {
+        let wrap = InputWrap.get()
         let reqs = wrap.persistent.totRequests || 0
 
         //do tutorial if never finished or requested or currently in tutorial (was requested)
         return !wrap.persistent.finishedTutorial || wrap.isIntent(Schema.TutorialIntent) || wrap.session.completedTutorialStage !== undefined
     }
     
-    async handle(input: HandlerInput) {
-        let wrap = await InputWrap.load(input)
+    handle(input: HandlerInput) {
+        let wrap = InputWrap.get()
 
         let prevTutorialStage = wrap.session.completedTutorialStage
         let curStage = prevTutorialStage !== undefined ? prevTutorialStage+1 : 0

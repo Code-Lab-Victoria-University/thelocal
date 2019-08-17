@@ -6,7 +6,7 @@ import { AutoNavigationHandler } from "./NavigationHandler";
 export class BookmarkEventHandler extends AutoNavigationHandler {
     intent = Schema.BookmarkEventIntent
     
-    async handleWrap(input: InputWrap) {
+    handleWrap(input: InputWrap) {
         let event = input.session.selectedEvent
 
         let speech = new AmazonSpeech()

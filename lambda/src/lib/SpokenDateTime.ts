@@ -1,6 +1,8 @@
 import AmazonSpeech from 'ssml-builder/amazon_speech'
 import SpokenTime from "./SpokenTime";
 import moment, {Moment, alignedDiff} from './MomentUtil'
+import { Slots } from './InputWrap';
+import { Schema } from './Schema';
 
 //TODO: test on device
 
@@ -23,7 +25,7 @@ export class SpokenDateTime {
 
     readonly time?: SpokenTime;
 
-    constructor(spokenDate: string|undefined, spokenTime?: string|undefined){
+    constructor(spokenDate?: string, spokenTime?: string){
 
         if(spokenDate !== undefined){
             let elements = spokenDate.split(" ")[0].split("-").filter(el => el != "XX")
@@ -69,8 +71,14 @@ export class SpokenDateTime {
             this.time = new SpokenTime(spokenTime)
     }
 
-    static fromSpoken(spokenDate: string|undefined, spokenTime?: string|undefined){
+    static fromSlots(slots?: Slots){
+        if(!slots)
+            return new SpokenDateTime()
 
+        let dateSlot = slots[Schema.DateSlot]
+        let timeSlot = slots[Schema.TimeSlot]
+
+        return new SpokenDateTime(dateSlot && dateSlot.value, timeSlot && timeSlot.value)
     }
 
     start(){

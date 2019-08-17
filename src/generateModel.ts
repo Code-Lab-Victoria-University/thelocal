@@ -250,7 +250,7 @@ class Intent{
         new Intent(intent, nouns.map(noun => `{what is the|tell me the|read out the|} ${noun}`))
     }
 
-    makeDetailIntent(Schema.DetailIntents.Phone, "phone", "number", "phone number", "telephone", "telephone number", "contact")
+    makeDetailIntent(Schema.DetailIntents.Phone, "phone", "phone number", "telephone", "telephone number", "contact", "contact number")
     makeDetailIntent(Schema.DetailIntents.Description, "description", "long description", "all the description", "full description")
 
     new Intent(Schema.SelectIntent, [

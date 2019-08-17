@@ -9,8 +9,8 @@ interface HandleResponse {
 export class EasyIntentHandler implements RequestHandler {
     constructor(readonly intent: string|string[], readonly handleSpeech: HandleResponse|string){}
     
-    async canHandle(handlerInput: HandlerInput) {
-        return (await InputWrap.load(handlerInput)).isIntent(this.intent)
+    canHandle(handlerInput: HandlerInput) {
+        return InputWrap.get().isIntent(this.intent)
     }
     
     async handle(handlerInput: HandlerInput) {
@@ -18,7 +18,7 @@ export class EasyIntentHandler implements RequestHandler {
         if(typeof this.handleSpeech === "string"){
             return handlerInput.responseBuilder.speak(this.handleSpeech).getResponse()
         } else {
-            let response = await this.handleSpeech(await InputWrap.load(handlerInput))
+            let response = await this.handleSpeech(InputWrap.get())
 
             if(typeof response  === 'string')
                 return handlerInput.responseBuilder.speak(response).getResponse()

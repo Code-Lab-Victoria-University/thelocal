@@ -59,8 +59,8 @@ export class LaunchRequestHandler implements RequestHandler {
             .say(rand(...examples))
     }
 
-    async handle(handlerInput: HandlerInput): Promise<Response> {    
-        let input = await InputWrap.load(handlerInput)
+    handle(handlerInput: HandlerInput) {    
+        let input = InputWrap.get()
 
         let runs = input.persistent.LaunchRequestRuns = input.persistent.LaunchRequestRuns || 0
         input.persistent.LaunchRequestRuns = runs+1

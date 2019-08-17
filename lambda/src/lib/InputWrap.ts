@@ -213,15 +213,25 @@ export default class InputWrap {
      * load or return instance of InputWrap for this request 
      */
     static async load(input: HandlerInput) {
-        //use instance in SaS model
-        if(InputWrap.instance !== undefined && getReqId(InputWrap.instance.input) === getReqId(input))
-            return InputWrap.instance
-        else {
-            InputWrap.instance = new InputWrap(input)
-            InputWrap.instance.persistent = await this.loadPersistent()
-            return InputWrap.instance
-        }
-    } 
+        InputWrap.instance = new InputWrap(input)
+        InputWrap.instance.persistent = await this.loadPersistent()
+
+        // //use instance in SaS model
+        // if(input === undefined)
+        //     return InputWrap.instance
+            
+        // if(InputWrap.instance !== undefined && getReqId(InputWrap.instance.input) === getReqId(input))
+        //     return InputWrap.instance
+        // else {
+        //     InputWrap.instance = new InputWrap(input)
+        //     InputWrap.instance.persistent = await this.loadPersistent()
+        //     return InputWrap.instance
+        // }
+    }
+
+    static get(){
+        return this.instance;
+    }
 
     static async loadPersistent(): Promise<PersistentAttrs>{
         let attrs: PersistentAttrs = (await InputWrap.instance.attrs.getPersistentAttributes())

@@ -80,10 +80,10 @@ export class EventsHandler extends AutoNavigationHandler {
                 }
 
                 //parse date
-                let dateSlot = input.slots[Schema.DateSlot]
-                let timeSlot = input.slots[Schema.TimeSlot]
+                // let dateSlot = input.slots[Schema.DateSlot]
+                // let timeSlot = input.slots[Schema.TimeSlot]
 
-                let date = new SpokenDateTime(dateSlot && dateSlot.value, timeSlot && timeSlot.value)
+                let date = SpokenDateTime.fromSlots(input.slots)
 
                 let category = input.slots[Schema.CategorySlot]
                 let categoryId = category && category.resId ? Number.parseInt(category.resId) : undefined
@@ -188,9 +188,9 @@ export class EventsHandler extends AutoNavigationHandler {
                             //     speech.say(`${catInfo.count} ${catInfo.cat.name}`)
                             // })
                         } else {
-                            let [name, suggestion] = !dateSlot ? ["date", "next week"] :
+                            let [name, suggestion] = !input.slots[Schema.DateSlot] ? ["date", "next week"] :
                                 !isVenue ? ["venue", "city gallery"] :
-                                !timeSlot ? ["time", "tonight"] :
+                                !input.slots[Schema.TimeSlot] ? ["time", "tonight"] :
                                 ["more specific date", "next tuesday"]
     
                             // let unadded = []
@@ -213,7 +213,7 @@ export class EventsHandler extends AutoNavigationHandler {
                     speech.pause('0.8s')
                 
                     events.list.forEach((event, i) => {
-                        let eventRange = new DateRange(event, date.start(), date.end())
+                        let eventRange = new DateRange(event, date)
                         if(!isVenue)
                             speech.say('At').say(event.location.name)
                             
