@@ -32,6 +32,8 @@ function speechString(speech: ui.OutputSpeech) {
         return speech.text
 }
 
+const helpText = "I will respond to your questions to find events happening near you. Say start the tutorial to listen to the tutorial again.";
+
 exports.handler = skillBuilder
     .addRequestInterceptors(async input => {
         await InputWrap.load(input)
@@ -74,7 +76,7 @@ exports.handler = skillBuilder
 
         //could make this dependant on where you are in the skill
         new EasyIntentHandler(Schema.AMAZON.HelpIntent, 
-            "I will respond to your questions to help find events happening near you. Say start the tutorial to listen to the tutorial again."),
+            input => input.response.speak(helpText).reprompt(helpText).getResponse()),
 
         new EasyIntentHandler([Schema.AMAZON.CancelIntent, Schema.AMAZON.StopIntent], 
             rand('Bye', "Goodbye", "Thanks for chatting", "See you next time", "Seeya")),
@@ -89,7 +91,7 @@ exports.handler = skillBuilder
         new EventSelectHandler(),
 
         new ListBookmarksHandler(),
-        
+    
         //most general entry last
         new EventsHandler(),
 

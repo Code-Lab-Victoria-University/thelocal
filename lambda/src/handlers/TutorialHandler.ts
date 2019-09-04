@@ -55,7 +55,7 @@ export class TutorialHandler implements RequestHandler {
 
         if(curStage === TutorialStage.Intro){ //basic intro, get user to say start ${Schema.INVOCATION} (unverified)
             speech.say(
-                `Hi, I'm alexa. Welcome to ${Schema.INVOCATION}.
+                `Hi. Welcome to ${Schema.INVOCATION}.
                 In this 4 step tutorial I'm going to teach you how to find local events in New Zealand.`)
             .pause(newStepPause).say(
                 `Step 1. You can say 'Alexa' at any time to get my attention.

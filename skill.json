@@ -5,7 +5,7 @@
         "en-AU": {
           "summary": "Find local events in New Zealand",
           "examplePhrases": [
-            "Alexa start the local",
+            "Alexa start kiwi events",
             "What's on in Auckland this friday?",
             "Find me jazz events in Wellington next week"
           ],
@@ -16,7 +16,7 @@
         "en-US": {
           "summary": "Find local events in New Zealand",
           "examplePhrases": [
-            "Alexa start the local",
+            "Alexa start kiwi events",
             "What's on in Auckland this friday?",
             "Find me jazz events in Wellington next week"
           ],
