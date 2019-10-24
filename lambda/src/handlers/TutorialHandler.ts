@@ -59,21 +59,21 @@ export class TutorialHandler implements RequestHandler {
                 In this 4 step tutorial I'm going to teach you how to find local events in New Zealand.`)
             .pause(newStepPause).say(
                 `Step 1. You can say 'Alexa' at any time to get my attention.
-                When speaking to me, make sure to speak slowly and clearly in a quiet environment.
+                When talking to me, make sure to speak slowly and clearly in a quiet environment.
                 Depending on my settings, I will make a tone or light up whenever I'm listening.
-                When I'm listening, you can say a command. Let's try the command to start ${Schema.INVOCATION}.
+                When I'm listening, you can give me a command. Let's try the command to start ${Schema.INVOCATION}.
                 Say 'Alexa', then say 'start ${Schema.INVOCATION}'`
             ).pause("5s")
             reprompt = wait5s(`Say 'Alexa', wait for the tone, then say 'start ${Schema.INVOCATION}`)
             nextStage()
 
         } else if(curStage === TutorialStage.LocationReq) { //request a location
-            speech.say("Great! Now you can wake me up and start this skill.")
+            speech.say("Great! Now you can get my attention and start this skill.")
             .pause(newStepPause)
             .say(
                 `Step 2. I'm going to teach you how to make a request to find events in a location.
                 Valid locations include any major New Zealand city or town, like Auckland or Nelson.
-                For example, if you lived in nelson, you could say 'What's on in Nelson', just like how you would ask a real person.
+                For example, if you lived in nelson, you could say 'What's on in Nelson'.
                 Let's try that with your city or town now.`
             )
             reprompt = "Ask me to find events in your location just as you would ask a real person"
@@ -86,7 +86,7 @@ export class TutorialHandler implements RequestHandler {
             //read back location, ask for verify
             if(slotLoc && slotLoc.resValue){
                 speech.say(`Thanks. I heard you ask for events in ${slotLoc.resValue}. 
-                Say Yes if that's correct, and I'll use it if you don't mention a location.
+                Say Yes if that's correct.
                Otherwise, please ask for events in your location again, making sure to speak slowly and clearly.`)
 
                 reprompt = `Say Yes if ${slotLoc.resValue} is correct.
@@ -105,10 +105,10 @@ export class TutorialHandler implements RequestHandler {
                 .pause(newStepPause)
                 .say(
                     `Step 3. 
-                    To avoid going through all ${exampleLocEventsCount} events, let me teach you how to make your request more specific.
+                    To avoid listening to a long list of all ${exampleLocEventsCount} events, let me teach you how to make your request more specific.
                     Along with location, you could specify a date, time, venue or an event category.
                     Let's use a date first. 
-                    Just like the location request, you will ask me a natural question, except this time you will provide a date as well.
+                    Just like the location request, you will ask me a question, except this time you will provide a date as well.
                     Some valid dates are; next week, saturday, november the 3rd, next year, and tomorrow.
                     For example, you could say, 'are there any events in ${wrap.getTopLocation()!.value} next weekend?'
                     Your turn, make a request with your location and a date now.`
@@ -149,8 +149,8 @@ export class TutorialHandler implements RequestHandler {
                     .say(`Step 4.
                         I also understand different types of events.
                         This includes music genres, Sports, Art Exhibitions and many more.
-                        If there are too many events to read out, 
-                        I will tell you the top event categories you could choose from.
+                        If there are too many events on for me to list, 
+                        I will tell you the top event categories you can choose from.
                         For this example, you can select one of the following:
                         ${rootCategories}.
                         Say alexa to interrupt me, wait for the tone, then say one of the categories.`
@@ -171,7 +171,7 @@ export class TutorialHandler implements RequestHandler {
             let catSlot = wrap.slots[Schema.CategorySlot]
             if(catSlot && catSlot.resValue){
                 speech.say(`I heard you say ${catSlot.resValue}.
-                    Easy. In the future, if you already know the category you want, you can include it in your question
+                    Easy. In the future, if you already know the category you want, you can include it in your command
                     by saying something like, 'Find me music events next weekend'.
 
                     Onto the final step, Stopping the skill.
@@ -192,9 +192,9 @@ export class TutorialHandler implements RequestHandler {
             if(wrap.isIntent([Schema.AMAZON.StopIntent, Schema.AMAZON.CancelIntent])){
                 speech.say(`Congrats, you now have all the basics needed to use ${Schema.INVOCATION}. 
                     You can open up this tutorial at any time in the future by saying start the tutorial while ${Schema.INVOCATION} is open.
-                    I'll stay open now. From here you can exit or go ahead and start a new search`)
+                    I'll stay open now. From here you can exit or ask me a question about what's on in your city`)
                     
-                reprompt = "You can exit or go ahead and start a new search"
+                reprompt = "You can exit or go ahead and ask me what's on"
     
                 wrap.persistent.finishedTutorial = true
                 wrap.session.completedTutorialStage = undefined
