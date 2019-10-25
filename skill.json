@@ -10,7 +10,7 @@
             "Find me jazz events in Wellington next week"
           ],
           "name": "thelocal",
-          "description": "Curious about what events are on in New Zealand? Ask this skill what’s on in your city and it will find you upcoming concert, gigs, exhibitions, festivals, sports events, workshops and more. \nThis skill was developed with support from Blind and Low Vision NZ and Eventfinda. \nWhile in the skill you can \nSearch by a New Zealand town, city or venue (e.g., Nelson) \nSearch by a time or date (e.g., this weekend) \nSearch by an event type (e.g., concerts) \nGet more details about an event \nBookmark events you’re interested in \nListen to the tutorial again (say tutorial) \nSay cancel or stop to exit",
+          "description": "Curious about what events are on in New Zealand? Ask this skill what’s on in your city and it will find you upcoming concerts, gigs, exhibitions, festivals, sports events, workshops and more. \nThis skill was developed with support from Blind and Low Vision NZ and Eventfinda. \nWhile in the skill you can \nSearch by a New Zealand town, city or venue (e.g., Nelson) \nSearch by a time or date (e.g., this weekend) \nSearch by an event type (e.g., concerts) \nGet more details about an event \nBookmark events you’re interested in \nListen to the tutorial again (say tutorial) \nSay cancel or stop to exit",
           "keywords": ["event", "eventfinda", "nz", "nz events", "kiwi events", "new zealand", "new zealand events", "blind", "blind foundation"]
         },
         "en-US": {
@@ -21,7 +21,7 @@
             "Find me jazz events in Wellington next week"
           ],
           "name": "thelocal",
-          "description": "Curious about what events are on in New Zealand? Ask this skill what’s on in your city and it will find you upcoming concert, gigs, exhibitions, festivals, sports events, workshops and more. \nThis skill was developed with support from Blind and Low Vision NZ and Eventfinda. \nWhile in the skill you can \nSearch by a New Zealand town, city or venue (e.g., Nelson) \nSearch by a time or date (e.g., this weekend) \nSearch by an event type (e.g., concerts) \nGet more details about an event \nBookmark events you’re interested in \nListen to the tutorial again (say tutorial) \nSay cancel or stop to exit",
+          "description": "Curious about what events are on in New Zealand? Ask this skill what’s on in your city and it will find you upcoming concerts, gigs, exhibitions, festivals, sports events, workshops and more. \nThis skill was developed with support from Blind and Low Vision NZ and Eventfinda. \nWhile in the skill you can \nSearch by a New Zealand town, city or venue (e.g., Nelson) \nSearch by a time or date (e.g., this weekend) \nSearch by an event type (e.g., concerts) \nGet more details about an event \nBookmark events you’re interested in \nListen to the tutorial again (say tutorial) \nSay cancel or stop to exit",
           "keywords": ["event", "eventfinda", "nz", "nz events", "kiwi events", "new zealand", "new zealand events", "blind", "blind foundation"]
         }
       },
